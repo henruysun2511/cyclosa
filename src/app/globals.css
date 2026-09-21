@@ -1,26 +1,519 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   Design System - Global Styles
+   Tailwind CSS v4 + Design Tokens
+   ============================================ */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-placeholder: var(--input-placeholder);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ============================================
+   1. CSS VARIABLES - Color Palette
+   ============================================ */
+:root {
+  /* Primary Theme */
+  --primary: #DC2626;
+  --primary-hover: #B91C1C;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary Colors */
+  --secondary: #4B5563;
+  --secondary-foreground: #FFFFFF;
+
+  /* Accent (Green Active Status) */
+  --accent: #22C55E;
+  --accent-foreground: #FFFFFF;
+
+  /* Destructive */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  /* Muted / Neutral */
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+
+  /* Input & Borders */
+  --input: #E5E7EB;
+  --input-placeholder: #9CA3AF;
+  --border: #E5E7EB;
+  --ring: #DC2626;
+
+  /* Background Colors */
+  --background: #F8F9FA;
+  --foreground: #111827;
+
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+
+  /* Popover */
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+
+  /* Sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #374151;
+  --sidebar-primary: #DC2626;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F3F4F6;
+  --sidebar-accent-foreground: #111827;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #DC2626;
+
+  /* Charts */
+  --chart-1: #DC2626;
+  --chart-2: #22C55E;
+  --chart-3: #EF4444;
+  --chart-4: #38BDF8;
+  --chart-5: #8B5CF6;
+
+
+  /* Rounded corner */
+  --radius: 0.5rem;
+}
+
+/* Dark mode colors */
+.dark {
+  --primary: #DC2626;
+  --primary-hover: #B91C1C;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #9CA3AF;
+  --secondary-foreground: #FFFFFF;
+
+  --accent: #22C55E;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+
+  --border: #334155;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+
+  --input: #334155;
+  --input-placeholder: #64748B;
+  --ring: #DC2626;
+
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #DC2626;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #334155;
+  --sidebar-ring: #DC2626;
+
+  --chart-1: #DC2626;
+  --chart-2: #22C55E;
+  --chart-3: #EF4444;
+  --chart-4: #38BDF8;
+  --chart-5: #A78BFA;
+
+}
+
+/* ============================================
+   2. BASE STYLES
+   ============================================ */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    @apply scroll-smooth;
+    font-size: 14px;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1 {
+    @apply text-2xl font-bold tracking-tight text-foreground;
+  }
+
+  h2 {
+    @apply text-lg font-semibold tracking-tight text-foreground;
+  }
+
+  h3 {
+    @apply text-base font-semibold text-foreground;
+  }
+
+  p {
+    @apply text-sm leading-relaxed text-muted-foreground;
+  }
+
+  a {
+    @apply text-primary hover:underline transition-colors duration-150;
+  }
+
+  ul,
+  ol {
+    @apply list-none;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================
+   3. COMPONENT STYLES (Global Classes)
+   ============================================ */
+
+/* ── Buttons ────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 h-9 bg-primary hover:bg-primary-hover text-white rounded-md font-medium text-sm transition-all duration-150 shadow-sm cursor-pointer;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &:disabled {
+      @apply opacity-50 cursor-not-allowed;
+    }
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-1.5 h-9 rounded-md border border-border bg-white px-3 text-xs font-medium text-foreground hover:bg-muted shadow-2xs transition-colors cursor-pointer;
+
+    &:disabled {
+      @apply opacity-50 cursor-not-allowed;
+    }
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 h-9 bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground rounded-md font-medium text-sm transition-all duration-150 cursor-pointer;
+  }
+
+  .btn-icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-md border border-border bg-white text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer shadow-2xs;
+  }
+
+  .btn-icon-ghost {
+    @apply flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer;
+  }
+
+  .btn-icon-sm {
+    @apply flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer;
+  }
+
+  .btn-ai {
+    @apply inline-flex items-center gap-1.5 rounded-md bg-primary hover:bg-primary-hover px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer;
+  }
+}
+
+/* ── Cards & Containers ─────────────────────── */
+@layer components {
+  .card {
+    @apply bg-card text-card-foreground border border-border rounded-xl p-5 shadow-xs;
+  }
+
+  .kpi-card {
+    @apply flex items-center justify-between rounded-lg border border-border bg-white p-5 shadow-xs hover:shadow-md transition-shadow;
+  }
+
+  .kpi-icon-wrapper {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-white shadow-xs;
+  }
+
+  .kpi-title {
+    @apply text-xs font-semibold text-muted-foreground;
+  }
+
+  .kpi-value {
+    @apply text-2xl font-bold tracking-tight text-foreground mt-0.5;
+  }
+}
+
+/* ── Form Inputs ────────────────────────────── */
+@layer components {
+  .input {
+    @apply flex h-9 w-full rounded-md border border-input bg-white px-3 py-1.5 text-sm text-foreground placeholder:text-input-placeholder focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-150;
+  }
+
+  .input-search {
+    @apply h-9 w-full rounded-md border border-border bg-background pl-9 pr-20 text-sm text-foreground placeholder:text-input-placeholder transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary;
+  }
+
+  .select {
+    @apply flex h-9 rounded-md border border-input bg-white px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer transition-colors duration-150;
+  }
+
+  input[type='checkbox'] {
+    @apply h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer;
+  }
+}
+
+/* ── Badges & Tags ──────────────────────────── */
+@layer components {
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium shadow-2xs;
+  }
+
+  .badge-active {
+    @apply bg-accent text-white;
+  }
+
+  .badge-inactive {
+    @apply bg-destructive text-white;
+  }
+
+  .badge-upgrade {
+    @apply inline-flex items-center rounded-sm bg-[#7C3AED] hover:bg-[#6D28D9] px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-2xs transition-colors cursor-pointer;
+  }
+
+  .badge-hot {
+    @apply rounded bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white uppercase;
+  }
+
+  .badge-new {
+    @apply rounded bg-destructive px-1.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider;
+  }
+
+  .badge-shortcut {
+    @apply inline-flex items-center rounded border border-border bg-white px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-2xs;
+  }
+}
+
+/* ── Data Table & Toolbar ───────────────────── */
+@layer components {
+  .table-card {
+    @apply rounded-xl border border-border bg-white shadow-xs;
+  }
+
+  .table-toolbar {
+    @apply flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border p-4 sm:p-5;
+  }
+
+  .table-sub-toolbar {
+    @apply flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border px-4 py-3 bg-[#FDFDFD];
+  }
+
+  .table-container {
+    @apply w-full overflow-x-auto;
+  }
+
+  .table {
+    @apply w-full text-left border-collapse text-sm;
+  }
+
+  .table thead tr {
+    @apply border-b border-border bg-background text-[11px] uppercase tracking-wider text-muted-foreground font-semibold select-none;
+  }
+
+  .table th {
+    @apply px-4 py-3.5 select-none;
+  }
+
+  .table td {
+    @apply px-4 py-3.5 border-b border-border text-foreground align-middle;
+  }
+
+  .table tbody tr {
+    @apply transition-colors duration-100 hover:bg-[#F9FAFB];
+
+    &.selected {
+      @apply bg-primary/5;
+    }
+  }
+
+  .table-pagination {
+    @apply flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground;
+  }
+
+  .pagination-btn {
+    @apply h-8 w-8 rounded-md font-semibold transition-colors flex items-center justify-center border border-border text-foreground hover:bg-muted;
+
+    &.active {
+      @apply bg-primary text-white border-primary shadow-2xs;
+    }
+  }
+
+  .pagination-nav-btn {
+    @apply inline-flex items-center gap-1 h-8 rounded-md border border-border px-2.5 font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors;
+  }
+}
+
+/* ── Filter Dropdowns ───────────────────────── */
+@layer components {
+  .filter-btn {
+    @apply inline-flex items-center gap-2 h-9 rounded-md border border-border bg-white px-3 text-xs font-medium text-foreground shadow-2xs transition-colors cursor-pointer hover:bg-muted;
+
+    &.active {
+      @apply border-primary bg-primary/5 text-primary;
+    }
+  }
+
+  .filter-dropdown-menu {
+    @apply absolute right-0 mt-1 rounded-md border border-border bg-white p-1 shadow-lg z-20;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  .filter-menu-item {
+    @apply flex w-full items-center px-3 py-1.5 text-xs rounded text-left text-foreground hover:bg-muted transition-colors cursor-pointer;
+
+    &.active {
+      @apply bg-primary/10 text-primary font-semibold;
+    }
+  }
+}
+
+/* ── Sidebar & Navigation Items ─────────────── */
+@layer components {
+  .sidebar-header {
+    @apply flex h-16 items-center border-b border-border px-5 shrink-0;
+  }
+
+  .sidebar-brand-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary;
+  }
+
+  .sidebar-group-label {
+    @apply px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .sidebar-nav-item {
+    @apply flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors text-[#4B5563] hover:bg-muted hover:text-foreground cursor-pointer;
+
+    &.active {
+      @apply bg-primary/10 text-primary font-semibold border-l-3 border-primary -ml-2 pl-4 rounded-r-md;
+    }
+  }
+}
+
+/* ── Header Components ──────────────────────── */
+@layer components {
+  .header-bar {
+    @apply sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-white px-4 sm:px-6 shadow-xs;
+  }
+
+  .header-dot {
+    @apply absolute top-2 right-2 h-2 w-2 rounded-full ring-2 ring-white;
+  }
+
+  .header-avatar-circle {
+    @apply flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-[#EF4444] text-white font-bold text-xs shadow-xs;
+  }
+}
+
+
+/* ── Modal & Dialog ─────────────────────────── */
+@layer components {
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .modal-container {
+    @apply w-full max-w-lg rounded-xl border border-border bg-white p-6 shadow-xl;
+    animation: slideUp 0.25s ease-out;
+  }
+
+  .modal-header {
+    @apply flex items-center justify-between border-b border-border pb-4;
+  }
+
+  .modal-footer {
+    @apply flex items-center justify-end gap-3 border-t border-border pt-4 mt-6;
+  }
+}
+
+/* ── Keyframe Animations ────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
