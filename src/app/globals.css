@@ -66,8 +66,8 @@
   --secondary: #4B5563;
   --secondary-foreground: #FFFFFF;
 
-  /* Accent (Green Active Status) */
-  --accent: #22C55E;
+  /* Accent (Secondary Brand: Deep Slate / Charcoal) */
+  --accent: #0F172A;
   --accent-foreground: #FFFFFF;
 
   /* Destructive */
@@ -141,12 +141,12 @@
   --popover: #1E293B;
   --popover-foreground: #F8FAFC;
 
-  --border: #334155;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
 
   --input: #334155;
   --input-placeholder: #64748B;
+  --border: #334155;
   --ring: #DC2626;
 
   --sidebar: #1E293B;
@@ -177,6 +177,10 @@
   html {
     @apply scroll-smooth;
     font-size: 14px;
+  }
+
+  a, a:hover, a:focus {
+    text-decoration: none;
   }
 
   body {
@@ -328,15 +332,15 @@
   }
 
   .badge-active {
-    @apply bg-accent text-white;
+    @apply bg-slate-900 text-white font-medium border border-slate-900;
   }
 
   .badge-inactive {
-    @apply bg-destructive text-white;
+    @apply bg-slate-100 text-slate-600 border border-slate-200 font-medium;
   }
 
   .badge-upgrade {
-    @apply inline-flex items-center rounded-sm bg-[#7C3AED] hover:bg-[#6D28D9] px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-2xs transition-colors cursor-pointer;
+    @apply inline-flex items-center rounded-sm bg-slate-900 hover:bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-2xs transition-colors cursor-pointer;
   }
 
   .badge-hot {
@@ -445,12 +449,24 @@
     @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary;
   }
 
+  .sidebar-brand-title {
+    @apply text-base font-bold tracking-tight text-foreground ml-3;
+  }
+
   .sidebar-group-label {
-    @apply px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground;
+    @apply px-3 pt-4 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
   }
 
   .sidebar-nav-item {
-    @apply flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors text-[#4B5563] hover:bg-muted hover:text-foreground cursor-pointer;
+    @apply flex w-full items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors duration-150 cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground;
+
+    &.active {
+      @apply bg-primary/10 text-primary font-semibold;
+    }
+  }
+
+  .sidebar-sub-item {
+    @apply flex w-full items-center justify-between px-3 py-1.5 text-xs rounded-md transition-colors duration-150 cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground;
 
     &.active {
       @apply bg-primary/10 text-primary font-semibold border-l-3 border-primary -ml-2 pl-4 rounded-r-md;
@@ -516,4 +532,80 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.15s ease-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.2s ease-out forwards;
+}
+
+/* ── Cartoon & Illustration Animation Keyframes ────────────────────── */
+@keyframes laserScan {
+  0% {
+    top: 6%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 6%;
+    opacity: 0.8;
+  }
+}
+
+@keyframes cartoonFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes cartoonWiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes stampPop {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(-18deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92) rotate(-8deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-10deg);
+  }
+}
+
+.animate-laser {
+  animation: laserScan 3.2s ease-in-out infinite;
+}
+
+.animate-cartoonFloat {
+  animation: cartoonFloat 3s ease-in-out infinite;
+}
+
+.animate-cartoonWiggle {
+  animation: cartoonWiggle 2.5s ease-in-out infinite;
+}
+
+.animate-stampPop {
+  animation: stampPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }

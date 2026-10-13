@@ -129,7 +129,7 @@ export function AdminHeader({
                 }}
                 className="filter-menu-item gap-2"
               >
-                <span className="h-2 w-2 rounded-full bg-accent" />
+                <span className="h-2 w-2 rounded-full bg-slate-400" />
                 <span>Auto-Generate Reports</span>
               </button>
             </div>
@@ -170,7 +170,7 @@ export function AdminHeader({
             className="btn-icon-ghost relative"
           >
             <MessageSquare className="h-4 w-4" />
-            <span className="header-dot bg-destructive" />
+            <span className="header-dot bg-primary" />
           </button>
 
           {/* Emails */}
@@ -198,10 +198,17 @@ export function AdminHeader({
         {/* User avatar */}
         <div className="flex items-center gap-2 pl-1">
           <div className="relative cursor-pointer">
-            <div className="header-avatar-circle">
-              AD
+            <div className="header-avatar-circle overflow-hidden">
+              <img
+                src="/avatars/emp_1.jpg"
+                alt="User Avatar"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
             </div>
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-white" />
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
           </div>
         </div>
       </div>

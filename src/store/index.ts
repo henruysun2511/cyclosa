@@ -1,5 +1,4 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { setupListeners } from "@reduxjs/toolkit/query";
 import { baseApi } from "@/lib/base-api-rtk";
 import { uiSlice } from "./slices/ui.slice";
 import { authSlice } from "./slices/auth.slice";

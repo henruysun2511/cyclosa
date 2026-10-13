@@ -5,17 +5,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Boxes,
+  CheckSquare,
+  Bell,
+  User,
+  Users,
+  Building2,
+  FolderKanban,
+  FileText,
+  Clock,
+  CalendarDays,
+  DollarSign,
+  Award,
+  TrendingUp,
+  MapPin,
+  ShieldAlert,
+  Sparkles,
+  Settings,
   ShieldCheck,
   ChevronDown,
-  ChevronRight,
-  Columns,
-  PanelRight,
-  Monitor,
-  Columns2,
-  ShoppingBag,
-  Sparkles,
+  Building,
+  UserCheck,
+  LogOut,
+  History,
+  GitFork,
+  Film,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SpiderIcon } from "@/components/shared";
 
 export interface AdminSidebarProps {
   collapsed?: boolean;
@@ -23,259 +39,471 @@ export interface AdminSidebarProps {
   onSelectItem?: (item: string) => void;
 }
 
+interface NavGroup {
+  label: string;
+  items: {
+    title: string;
+    href: string;
+    icon: React.ElementType;
+    badge?: string;
+    children?: { title: string; href: string; badge?: string }[];
+  }[];
+}
+
 export function AdminSidebar({
   collapsed = false,
-  activeItem,
   onSelectItem,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [superAdminExpanded, setSuperAdminExpanded] = useState(true);
-  const [applicationsExpanded, setApplicationsExpanded] = useState(false);
-  const [aiCenterExpanded, setAiCenterExpanded] = useState(false);
 
-  const superAdminSubItems = [
-    { name: "Dashboard", href: "#", badge: null },
-    { name: "Companies", href: "/companies", badge: null },
-    { name: "Subscriptions", href: "#", badge: null },
-    { name: "Packages", href: "#", badge: null },
-    { name: "Domain", href: "#", badge: null },
-    { name: "Purchase Transaction", href: "#", badge: null },
-    { name: "Tenant Usage Metrics", href: "#", badge: "New" },
-    { name: "Tenant Support Tickets", href: "#", badge: "New" },
-    { name: "Tickets", href: "#", badge: "New" },
-  ];
+  // Expanded group states
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    ess: true,
+    org: false,
+    rec: false,
+    time: false,
+    payroll: false,
+    perf: false,
+    workplace: false,
+    admin: false,
+  });
 
-  const layoutOptions = [
-    { name: "Horizontal", icon: Columns },
-    { name: "Detached", icon: PanelRight },
-    { name: "Modern", icon: Monitor },
-    { name: "Two Column", icon: Columns2 },
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const navGroups: NavGroup[] = [
+    {
+      label: "TỔNG QUAN & VIỆC CẦN LÀM",
+      items: [
+        {
+          title: "Trang chủ",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+        },
+        {
+          title: "Quy trình & Phê duyệt",
+          href: "/workflows",
+          icon: GitFork,
+          badge: "24",
+          children: [
+            { title: "Hộp thư chờ tôi duyệt", href: "/workflows/pending" },
+            { title: "Yêu cầu tôi đã gửi", href: "/workflows/submitted" },
+            { title: "Tra cứu hồ sơ quy trình", href: "/workflows" },
+            { title: "Định nghĩa 24 quy trình", href: "/admin/workflow-definitions" },
+            { title: "Thiết kế luồng duyệt", href: "/admin/workflow-definitions/new" },
+          ],
+        },
+        {
+          title: "Thông báo",
+          href: "/notifications",
+          icon: Bell,
+        },
+        {
+          title: "Trợ lý AI",
+          href: "/ai/chat",
+          icon: Sparkles,
+          badge: "AI",
+        },
+        {
+          title: "Minh họa Hoạt hình",
+          href: "/animation",
+          icon: Film,
+          badge: "NEW",
+        },
+      ],
+    },
+    {
+      label: "CÁ NHÂN (ESS)",
+      items: [
+        {
+          title: "Không gian của tôi",
+          href: "/me/profile",
+          icon: User,
+          children: [
+            { title: "Hồ sơ của tôi", href: "/me/profile" },
+            { title: "Khuôn mặt Face ID", href: "/me/face-enrollment" },
+            { title: "Chấm công trực tuyến", href: "/me/attendance/check-in" },
+            { title: "Lịch sử chấm công", href: "/me/attendance" },
+            { title: "Đơn nghỉ phép", href: "/me/leave" },
+            { title: "Phiếu lương điện tử", href: "/me/payslips" },
+            { title: "Đánh giá hiệu suất", href: "/me/performance" },
+            { title: "Lộ trình nghề nghiệp", href: "/me/career" },
+            { title: "Hợp đồng của tôi", href: "/me/contracts" },
+            { title: "Văn bản chờ tôi ký", href: "/me/signing" },
+            { title: "Đặt bàn & Phòng họp", href: "/me/workplace" },
+            { title: "Tài sản đang giữ", href: "/me/assets" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "QUẢN TRỊ NHÂN SỰ",
+      items: [
+        {
+          title: "Tổ chức & Phòng ban",
+          href: "/organization/departments",
+          icon: Building2,
+          children: [
+            { title: "Sơ đồ tổ chức", href: "/organization/departments" },
+            { title: "Danh sách công ty", href: "/organization/companies" },
+            { title: "Vùng miền & Chi nhánh", href: "/organization/regions-branches" },
+            { title: "Chức danh & Cấp bậc", href: "/organization/job-titles" },
+            { title: "Trung tâm chi phí", href: "/organization/cost-centers" },
+            { title: "Mô phỏng tái cơ cấu", href: "/org-simulations" },
+          ],
+        },
+        {
+          title: "Hồ sơ nhân viên",
+          href: "/employees",
+          icon: Users,
+          children: [
+            { title: "Danh sách nhân viên", href: "/employees" },
+            { title: "Tiếp nhận nhân sự mới", href: "/employees/new" },
+            { title: "Điều chuyển nhân sự", href: "/transfers" },
+          ],
+        },
+        {
+          title: "Tuyển dụng & Thu hút",
+          href: "/recruitment/openings",
+          icon: UserCheck,
+          children: [
+            { title: "Đề xuất tuyển dụng", href: "/recruitment/requests" },
+            { title: "Vị trí tuyển dụng", href: "/recruitment/openings" },
+            { title: "ATS Pipeline tuyển dụng", href: "/recruitment/pipeline", badge: "ATS" },
+            { title: "Bóc tách & Đánh giá CV", href: "/recruitment/cv-parser", badge: "AI" },
+            { title: "Danh sách ứng viên", href: "/recruitment/candidates" },
+            { title: "Hồ sơ ứng tuyển", href: "/recruitment/applications" },
+            { title: "Lịch phỏng vấn", href: "/recruitment/interviews" },
+            { title: "Thư mời nhận việc", href: "/recruitment/offers" },
+            { title: "Ngân hàng tài năng", href: "/recruitment/talent-pool" },
+            { title: "Cơ hội nội bộ", href: "/marketplace" },
+          ],
+        },
+        {
+          title: "Hội nhập & Thôi việc",
+          href: "/onboarding/plans",
+          icon: LogOut,
+          children: [
+            { title: "Kế hoạch hội nhập", href: "/onboarding/plans" },
+            { title: "Mẫu kế hoạch hội nhập", href: "/onboarding/templates" },
+            { title: "Đơn xin thôi việc", href: "/offboarding/resignations" },
+            { title: "Quy trình thôi việc", href: "/offboarding" },
+            { title: "Phỏng vấn nghỉ việc", href: "/offboarding/exit-interviews" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "HỒ SƠ, HỢP ĐỒNG & PHÁP CHẾ",
+      items: [
+        {
+          title: "Số hóa hồ sơ",
+          href: "/records/documents",
+          icon: FolderKanban,
+          children: [
+            { title: "Kho tài liệu tập trung", href: "/records/documents" },
+            { title: "Tải lên & Quét OCR", href: "/records/upload" },
+            { title: "Hồ sơ sắp hết hạn", href: "/records/expiring" },
+            { title: "Hàng đợi OCR bóc tách", href: "/documents/ocr-queue" },
+            { title: "Đối soát hồ sơ OCR", href: "/documents/ocr-verify" },
+            { title: "Chính sách lưu trữ", href: "/records/config/retention-policies" },
+          ],
+        },
+        {
+          title: "Hợp đồng lao động",
+          href: "/contracts",
+          icon: FileText,
+          children: [
+            { title: "Danh sách hợp đồng", href: "/contracts" },
+            { title: "Hợp đồng sắp hết hạn", href: "/contracts/expiring" },
+            { title: "Mẫu hợp đồng chuẩn", href: "/contract-templates" },
+            { title: "Văn bản chờ ký số", href: "/me/signing" },
+          ],
+        },
+        {
+          title: "Pháp chế & Tuân thủ",
+          href: "/compliance/dashboard",
+          icon: ShieldAlert,
+          children: [
+            { title: "Dashboard tuân thủ", href: "/compliance/dashboard" },
+            { title: "Văn bản pháp luật", href: "/compliance/legal-documents" },
+            { title: "Quy tắc kiểm tra", href: "/compliance/rules" },
+            { title: "Cảnh báo vi phạm", href: "/compliance/alerts" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "CÔNG, PHÉP & BẢNG LƯƠNG",
+      items: [
+        {
+          title: "Chấm công & Ca",
+          href: "/attendance/overview",
+          icon: Clock,
+          children: [
+            { title: "Tổng quan chấm công", href: "/attendance/overview" },
+            { title: "Nhật ký vào ra chi tiết", href: "/attendance/logs" },
+            { title: "Phân ca làm việc", href: "/attendance/shift-assignments" },
+            { title: "Đơn giải trình công", href: "/attendance/requests" },
+            { title: "Bảng tổng hợp công", href: "/attendance/timesheets" },
+          ],
+        },
+        {
+          title: "Nghỉ phép",
+          href: "/leave/requests",
+          icon: CalendarDays,
+          children: [
+            { title: "Danh sách đơn nghỉ phép", href: "/leave/requests" },
+            { title: "Quản lý quỹ phép", href: "/leave/balances" },
+            { title: "Lịch nghỉ toàn công ty", href: "/leave/calendar" },
+          ],
+        },
+        {
+          title: "Tiền lương & Đãi ngộ",
+          href: "/payroll/dashboard",
+          icon: DollarSign,
+          children: [
+            { title: "Dashboard chi phí lương", href: "/payroll/dashboard" },
+            { title: "Kỳ tính lương", href: "/payroll/periods" },
+            { title: "Thành phần thu nhập/khấu trừ", href: "/payroll/components" },
+            { title: "Quản lý tạm ứng", href: "/payroll/advances" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "HIỆU SUẤT & PHÁT TRIỂN",
+      items: [
+        {
+          title: "Hiệu suất & KPI",
+          href: "/performance/cycles",
+          icon: Award,
+          children: [
+            { title: "Chu kỳ đánh giá", href: "/performance/cycles" },
+            { title: "Phiếu đánh giá nhân viên", href: "/performance/reviews" },
+            { title: "Hiệu chuẩn kết quả (Bell Curve)", href: "/performance/calibration" },
+          ],
+        },
+        {
+          title: "Phát triển & Kế nhiệm",
+          href: "/career/skills-matrix",
+          icon: TrendingUp,
+          children: [
+            { title: "Ma trận kỹ năng", href: "/career/skills-matrix" },
+            { title: "Lộ trình thăng tiến", href: "/career/paths" },
+            { title: "Kế hoạch kế nhiệm (9-Box)", href: "/career/succession/9-box" },
+          ],
+        },
+        {
+          title: "Khen thưởng & Kỷ luật",
+          href: "/rewards",
+          icon: Award,
+          children: [
+            { title: "Khen thưởng vinh danh", href: "/rewards" },
+            { title: "Kỷ luật lao động", href: "/discipline" },
+            { title: "Giải quyết khiếu nại", href: "/complaints" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "VĂN PHÒNG & TÀI SẢN",
+      items: [
+        {
+          title: "Smart Workplace",
+          href: "/workplace/dashboard",
+          icon: MapPin,
+          children: [
+            { title: "Sơ đồ chỗ ngồi 2D", href: "/workplace/map", badge: "2D" },
+            { title: "Đặt bàn linh hoạt", href: "/workplace/desk-booking" },
+            { title: "Bàn làm việc của tôi", href: "/workplace" },
+            { title: "Quản lý sơ đồ tầng", href: "/workplace/admin/floors" },
+            { title: "Trình sửa bản đồ", href: "/workplace/admin/floors/fl_03/editor" },
+            { title: "Quản lý phòng họp", href: "/workplace/admin/room-bookings" },
+            { title: "Sự cố cơ sở vật chất", href: "/workplace/admin/issues" },
+          ],
+        },
+        {
+          title: "Tài sản doanh nghiệp",
+          href: "/assets",
+          icon: Building,
+          children: [
+            { title: "Danh sách tài sản", href: "/assets" },
+            { title: "Loại tài sản", href: "/assets/categories" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "HỆ THỐNG & BẢO MẬT",
+      items: [
+        {
+          title: "Quản trị hệ thống",
+          href: "/admin/users",
+          icon: Settings,
+          children: [
+            { title: "Người dùng tài khoản", href: "/admin/users" },
+            { title: "Vai trò & Phân quyền", href: "/admin/roles" },
+            { title: "Định nghĩa quy trình duyệt", href: "/admin/workflow-definitions" },
+            { title: "Cấu hình hệ thống", href: "/admin/system-configs" },
+            { title: "Lịch nghỉ lễ", href: "/admin/holidays" },
+            { title: "Danh mục kỹ năng", href: "/admin/skills" },
+            { title: "Gửi thông báo toàn công ty", href: "/admin/broadcast" },
+          ],
+        },
+        {
+          title: "Nhật ký kiểm toán",
+          href: "/audit-logs",
+          icon: History,
+        },
+        {
+          title: "Quản lý Công ty",
+          href: "/companies",
+          icon: ShieldCheck,
+        },
+      ],
+    },
   ];
 
   return (
     <aside
-      className={`flex flex-col h-full border-r border-border bg-white transition-all duration-300 select-none ${
-        collapsed ? "w-18" : "w-64"
-      }`}
+      className={cn(
+        "flex flex-col h-full border-r border-border bg-white transition-all duration-300 select-none",
+        collapsed ? "w-16" : "w-64"
+      )}
     >
       {/* ── Brand Logo Header ────────────────────────────────────────── */}
-      <div className="sidebar-header">
-        <Link href="/companies" className="flex items-center gap-2.5">
-          {/* Stylized swirl/spiral icon */}
-          <div className="sidebar-brand-icon">
-            <svg
-              className="h-5 w-5 fill-none stroke-current"
-              viewBox="0 0 24 24"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 4a6 6 0 1 1-6 6 6 6 0 0 1 6-6Zm0 4a2 2 0 1 0 2 2 2 2 0 0 0-2-2Z" />
-            </svg>
+      <div className="h-16 border-b border-border flex items-center px-4 shrink-0 bg-white">
+        <Link href="/dashboard" className="flex items-center gap-3 no-underline hover:no-underline select-none">
+          <div className="h-9 w-9 rounded-xl bg-primary text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+            <SpiderIcon className="h-5 w-5" />
           </div>
           {!collapsed && (
-            <div className="flex items-center">
-              <span className="text-xl font-bold tracking-tight text-foreground">
-                Cyclo<span className="text-primary">sa</span>
-              </span>
-            </div>
+            <span className="text-lg font-bold tracking-tight text-foreground font-sans">
+              Cyclo<span className="text-primary font-bold">sa</span>
+            </span>
           )}
         </Link>
       </div>
 
-      {/* ── Navigation Menu ──────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
-        {/* MAIN MENU GROUP */}
-        <div>
-          {!collapsed && (
-            <div className="sidebar-group-label">
-              Main Menu
-            </div>
-          )}
-
-          <nav className="space-y-1">
-            {/* 1. Dashboard with "Hot" badge */}
-            <Link
-              href="/companies"
-              className={`sidebar-nav-item ${
-                pathname === "/" ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <LayoutDashboard className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {!collapsed && <span>Dashboard</span>}
+      {/* ── Navigation Menu Scrollable ────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 scrollbar-thin">
+        {navGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className="space-y-1">
+            {!collapsed && (
+              <div className="px-3 pt-2 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none">
+                {group.label}
               </div>
-              {!collapsed && (
-                <span className="badge-hot">
-                  Hot
-                </span>
-              )}
-            </Link>
+            )}
 
-            {/* 2. Applications (with expandable chevron) */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setApplicationsExpanded(!applicationsExpanded)}
-                className="sidebar-nav-item"
-              >
-                <div className="flex items-center gap-3">
-                  <Boxes className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  {!collapsed && <span>Applications</span>}
-                </div>
-                {!collapsed && (
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      applicationsExpanded ? "rotate-180" : ""
-                    }`}
-                  />
-                )}
-              </button>
+            <nav className="space-y-0.5">
+              {group.items.map((item, itemIdx) => {
+                const Icon = item.icon;
+                const sectionKey = `${groupIdx}_${itemIdx}`;
+                const hasChildren = Boolean(item.children && item.children.length > 0);
+                const isExpanded = expandedSections[sectionKey] ?? false;
+                const isDirectActive = pathname === item.href;
+                const isChildActive = item.children?.some((c) => pathname?.startsWith(c.href));
 
-              {!collapsed && applicationsExpanded && (
-                <div className="mt-1 pl-9 pr-2 space-y-1 border-l-2 border-border ml-4 text-xs">
-                  <Link
-                    href="/products"
-                    className={`flex items-center gap-2 py-1.5 px-2 rounded transition-colors ${
-                      pathname?.startsWith("/products")
-                        ? "text-primary font-semibold bg-primary/5"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <ShoppingBag className="h-3.5 w-3.5" />
-                    <span>Products Manager</span>
-                  </Link>
-                  <button
-                    type="button"
-                    className="flex w-full py-1.5 px-2 rounded hover:text-primary text-muted-foreground text-left transition-colors cursor-pointer"
-                  >
-                    Calendar
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full py-1.5 px-2 rounded hover:text-primary text-muted-foreground text-left transition-colors cursor-pointer"
-                  >
-                    Chat & Messaging
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* 3. Super Admin (Expanded by default) */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setSuperAdminExpanded(!superAdminExpanded)}
-                className="sidebar-nav-item bg-background text-foreground font-semibold"
-              >
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
-                  {!collapsed && <span>Super Admin</span>}
-                </div>
-                {!collapsed && (
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      superAdminExpanded ? "rotate-180" : ""
-                    }`}
-                  />
-                )}
-              </button>
-
-              {/* Sub-menu items */}
-              {!collapsed && superAdminExpanded && (
-                <div className="mt-1 space-y-0.5 pl-2">
-                  {superAdminSubItems.map((subItem) => {
-                    const isActive =
-                      (subItem.name === "Companies" && pathname?.includes("/companies")) ||
-                      (subItem.name === "Dashboard" && pathname === "/dashboard");
-
-                    return (
-                      <Link
-                        key={subItem.name}
-                        href={subItem.href}
-                        onClick={() => onSelectItem?.(subItem.name)}
-                        className={`sidebar-nav-item text-xs ${
-                          isActive ? "active" : ""
-                        }`}
-                      >
-                        <span className="truncate">{subItem.name}</span>
-                        {subItem.badge && (
-                          <span className="badge-new">
-                            {subItem.badge}
-                          </span>
+                if (hasChildren) {
+                  return (
+                    <div key={item.title}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSection(sectionKey)}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium transition-colors cursor-pointer select-none no-underline hover:no-underline",
+                          isChildActive
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-slate-700 hover:text-slate-900 hover:bg-slate-100/80"
                         )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <Icon className={cn("h-4 w-4 shrink-0", isChildActive ? "text-primary" : "text-slate-500")} />
+                          {!collapsed && <span className="truncate">{item.title}</span>}
+                        </div>
+                        {!collapsed && (
+                          <ChevronDown
+                            className={cn(
+                              "h-3.5 w-3.5 text-slate-400 transition-transform duration-200 shrink-0",
+                              isExpanded && "rotate-180"
+                            )}
+                          />
+                        )}
+                      </button>
 
-            {/* 4. AI Center (Menu parent with chevron) */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setAiCenterExpanded(!aiCenterExpanded)}
-                className="sidebar-nav-item"
-              >
-                <div className="flex items-center gap-3">
-                  <Sparkles className="h-4 w-4 shrink-0 text-[#7C3AED]" />
-                  {!collapsed && <span>AI Center</span>}
-                </div>
-                {!collapsed && (
-                  <ChevronRight
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      aiCenterExpanded ? "rotate-90" : ""
-                    }`}
-                  />
-                )}
-              </button>
+                      {!collapsed && isExpanded && (
+                        <div className="mt-1 ml-4 pl-3 border-l border-slate-200 space-y-0.5 py-0.5">
+                          {item.children!.map((child) => {
+                            const active = pathname === child.href;
+                            return (
+                              <Link
+                                key={child.title}
+                                href={child.href}
+                                onClick={() => onSelectItem?.(child.title)}
+                                className={cn(
+                                  "flex items-center justify-between py-1.5 px-2.5 rounded-md text-[12.5px] transition-colors select-none no-underline hover:no-underline",
+                                  active
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                                )}
+                              >
+                                <span className="truncate">{child.title}</span>
+                                {child.badge && (
+                                  <span
+                                    className={cn(
+                                      "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                      active ? "bg-primary text-white" : "bg-primary/10 text-primary"
+                                    )}
+                                  >
+                                    {child.badge}
+                                  </span>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
-              {!collapsed && aiCenterExpanded && (
-                <div className="mt-1 pl-9 pr-2 space-y-1 border-l-2 border-border ml-4 text-xs">
-                  <button
-                    type="button"
-                    className="flex w-full py-1.5 px-2 rounded hover:text-primary text-muted-foreground text-left transition-colors cursor-pointer"
+                return (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() => onSelectItem?.(item.title)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium transition-colors select-none no-underline hover:no-underline",
+                      isDirectActive
+                        ? "bg-primary text-white font-medium shadow-xs"
+                        : "text-slate-700 hover:text-slate-900 hover:bg-slate-100/80"
+                    )}
                   >
-                    AI Assistant
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full py-1.5 px-2 rounded hover:text-primary text-muted-foreground text-left transition-colors cursor-pointer"
-                  >
-                    Smart Analytics
-                  </button>
-                </div>
-              )}
-            </div>
-          </nav>
-        </div>
-
-        {/* LAYOUT GROUP */}
-        <div>
-          {!collapsed && (
-            <div className="sidebar-group-label">
-              Layout
-            </div>
-          )}
-
-          <nav className="space-y-1">
-            {layoutOptions.map((opt) => {
-              const Icon = opt.icon;
-              return (
-                <button
-                  key={opt.name}
-                  type="button"
-                  onClick={() => onSelectItem?.(opt.name)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{opt.name}</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <Icon className={cn("h-4 w-4 shrink-0", isDirectActive ? "text-white" : "text-slate-500")} />
+                      {!collapsed && <span className="truncate">{item.title}</span>}
+                    </div>
+                    {!collapsed && item.badge && (
+                      <span
+                        className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                          isDirectActive ? "bg-white text-primary" : "bg-primary/10 text-primary"
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
       </div>
     </aside>
   );

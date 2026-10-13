@@ -3,14 +3,18 @@ import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: {
-    default: "Product Manager",
-    template: "%s | Product Manager",
+    default: "CYCLOSA HRM | Enterprise Human Capital Management",
+    template: "%s | CYCLOSA HRM",
   },
-  description: "Hệ thống quản lý sản phẩm",
+  description: "Hệ thống Quản trị Nhân sự & Vận hành Doanh nghiệp Toàn diện - FSI Enterprise HCM",
 };
 
 export default function RootLayout({
@@ -19,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="vi" suppressHydrationWarning className={inter.variable}>
+      <body className={`${inter.className} font-sans antialiased text-foreground bg-background`}>
         <Providers>{children}</Providers>
       </body>
     </html>
