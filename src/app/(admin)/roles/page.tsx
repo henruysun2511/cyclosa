@@ -528,9 +528,6 @@ export default function AdminRolesPage() {
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 Vai trò & Phân quyền Hệ thống
               </h1>
-              <Badge variant="outline" className="text-xs font-mono">
-                RBAC MATRIX
-              </Badge>
             </div>
           </div>
 
@@ -891,14 +888,15 @@ export default function AdminRolesPage() {
                               {/* Resource Column */}
                               <td className="py-3 px-4">
                                 <div className="flex items-center justify-between gap-2">
-                                  <div>
+                                  <div className="space-y-0.5">
                                     <div className="font-semibold text-foreground text-xs leading-snug">
                                       {row.resourceName}
                                     </div>
                                     <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                      <span className="font-mono text-primary font-medium">{row.code}</span>
-                                      <span>•</span>
-                                      <span>{row.category}</span>
+                                      <span>Tài nguyên:</span>
+                                      <code className="px-1.5 py-0.5 rounded bg-muted/80 font-mono text-[10px] text-primary font-medium border border-border/60">
+                                        {row.resourceKey.toLowerCase()}
+                                      </code>
                                     </div>
                                   </div>
                                   <Button
