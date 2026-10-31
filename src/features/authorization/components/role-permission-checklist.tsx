@@ -154,6 +154,22 @@ export function RolePermissionChecklist({
               <Square className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
               <span>Bỏ tất cả</span>
             </Button>
+
+            <PermissionGuard permission={PERMISSIONS.ROLE.MANAGE} fallback={null}>
+              <Button
+                size="sm"
+                className="h-8 text-xs bg-primary hover:bg-primary/90 text-white font-medium gap-1.5 shadow-xs"
+                onClick={onSaveMatrix}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Save className="h-3.5 w-3.5" />
+                )}
+                <span>Lưu phân quyền</span>
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 
@@ -342,30 +358,6 @@ export function RolePermissionChecklist({
           );
         })
       )}
-
-      {/* ── 3. Footer Save Button ──────────────────────────────────── */}
-      <div className="p-4 border border-border rounded-xl bg-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
-        <div>
-          Đang thiết lập ma trận phân quyền cho vai trò:{" "}
-          <strong className="text-foreground">{selectedRole.name}</strong>
-        </div>
-
-        <PermissionGuard permission={PERMISSIONS.ROLE.MANAGE} fallback={null}>
-          <Button
-            size="sm"
-            className="h-8 text-xs bg-primary hover:bg-primary/90 text-white font-medium gap-1.5 shadow-xs"
-            onClick={onSaveMatrix}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5" />
-            )}
-            <span>Lưu cấu hình quyền</span>
-          </Button>
-        </PermissionGuard>
-      </div>
     </div>
   );
 }
