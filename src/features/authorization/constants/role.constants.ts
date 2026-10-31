@@ -1,9 +1,9 @@
 export const ROLE_ENDPOINTS = {
-  ROLES: "/api/v1/roles",
-  ROLE_DETAIL: (roleId: string) => `/api/v1/roles/${roleId}`,
-  ROLE_PERMISSIONS: (roleId: string) => `/api/v1/roles/${roleId}/permissions`,
-  PERMISSIONS: "/api/v1/permissions",
-  PERMISSIONS_GROUPED: "/api/v1/permissions/grouped",
+  ROLES: "/roles",
+  ROLE_DETAIL: (roleId: string) => `/roles/${roleId}`,
+  ROLE_PERMISSIONS: (roleId: string) => `/roles/${roleId}/permissions`,
+  PERMISSIONS: "/permissions",
+  PERMISSIONS_GROUPED: "/permissions/grouped",
 } as const;
 
 export const ROLE_FILTER_TABS = {
