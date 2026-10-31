@@ -1,9 +1,11 @@
+import type { PermissionResponse } from "../types/role.types";
+
 export const ROLE_ENDPOINTS = {
-  ROLES: "/roles",
-  ROLE_DETAIL: (roleId: string) => `/roles/${roleId}`,
-  ROLE_PERMISSIONS: (roleId: string) => `/roles/${roleId}/permissions`,
-  PERMISSIONS: "/permissions",
-  PERMISSIONS_GROUPED: "/permissions/grouped",
+  ROLES: "/api/v1/roles",
+  ROLE_DETAIL: (roleId: string) => `/api/v1/roles/${roleId}`,
+  ROLE_PERMISSIONS: (roleId: string) => `/api/v1/roles/${roleId}/permissions`,
+  PERMISSIONS: "/api/v1/permissions",
+  PERMISSIONS_GROUPED: "/api/v1/permissions/grouped",
 } as const;
 
 export const ROLE_FILTER_TABS = {
@@ -15,59 +17,96 @@ export const ROLE_FILTER_TABS = {
 export type RoleFilterTab = typeof ROLE_FILTER_TABS[keyof typeof ROLE_FILTER_TABS];
 
 /**
- * Tiêu đề tiếng Việt và mô tả thân thiện của 12 Phân hệ tài nguyên
+ * 6 Nhóm Phân Hệ Lớn (Level 1: Groups) & Tài nguyên con (Level 2: Sub-resources)
  */
-export const RESOURCE_METADATA: Record<
-  string,
-  { label: string; description: string; badgeVariant?: string }
-> = {
-  ROLE: {
-    label: "Phân quyền & Vai trò",
-    description: "Quản trị danh mục vai trò và ma trận quyền hạn",
+export const PERMISSION_GROUPS = [
+  {
+    key: "HR_GROUP",
+    title: "HỒ SƠ & NHÂN SỰ",
+    resources: [
+      { key: "EMPLOYEE", name: "Hồ sơ nhân viên & Lý lịch" },
+      { key: "CONTRACT", name: "Hợp đồng lao động & Ký số" },
+    ],
   },
-  USER: {
-    label: "Tài khoản Người dùng",
-    description: "Quản lý định danh, tài khoản đăng nhập và phân bổ vai trò",
+  {
+    key: "TIME_GROUP",
+    title: "CHẤM CÔNG & NGHỈ PHÉP",
+    resources: [
+      { key: "ATTENDANCE", name: "Chấm công & Ca làm việc" },
+      { key: "LEAVE", name: "Đơn xin nghỉ phép & Phê duyệt" },
+    ],
   },
-  ORG: {
-    label: "Cơ cấu Tổ chức",
-    description: "Sơ đồ phòng ban, đơn vị trực thuộc và mô phỏng tái cấu trúc",
+  {
+    key: "PAYROLL_GROUP",
+    title: "TIỀN LƯƠNG & ĐÃI NGỘ",
+    resources: [
+      { key: "PAYROLL", name: "Bảng tính lương & Phiếu lương" },
+    ],
   },
-  EMPLOYEE: {
-    label: "Hồ sơ Nhân sự",
-    description: "Hồ sơ lý lịch, thông tin hợp đồng và quá trình công tác",
+  {
+    key: "ORG_GROUP",
+    title: "CƠ CẤU & TỔ CHỨC",
+    resources: [
+      { key: "ORG", name: "Sơ đồ tổ chức & Phòng ban" },
+    ],
   },
-  LEAVE: {
-    label: "Quản lý Nghỉ phép",
-    description: "Đơn xin nghỉ, phê duyệt phép và quỹ phép năm",
+  {
+    key: "TALENT_GROUP",
+    title: "TUYỂN DỤNG & HIỆU SUẤT",
+    resources: [
+      { key: "RECRUITMENT", name: "Kế hoạch & Tuyển dụng" },
+      { key: "PERFORMANCE", name: "Đánh giá hiệu suất & KPI" },
+    ],
   },
-  ATTENDANCE: {
-    label: "Chấm công & Ca kíp",
-    description: "Dữ liệu vào/ra, điểm danh GPS/Wifi và phân ca làm việc",
+  {
+    key: "SYSTEM_GROUP",
+    title: "HỆ THỐNG & BẢO MẬT",
+    resources: [
+      { key: "ROLE", name: "Quản lý vai trò & Ma trận phân quyền" },
+      { key: "USER", name: "Tài khoản người dùng" },
+      { key: "WORKPLACE", name: "Không gian số & Tài sản" },
+      { key: "AUDIT", name: "Nhật ký kiểm toán & Tuân thủ" },
+    ],
   },
-  PAYROLL: {
-    label: "Tiền lương & Đãi ngộ",
-    description: "Tính bảng lương, phiếu lương cá nhân và thuế thu nhập",
-  },
-  CONTRACT: {
-    label: "Hợp đồng Lao động",
-    description: "Tạo lập hợp đồng điện tử, ký số và quản lý phụ lục",
-  },
-  RECRUITMENT: {
-    label: "Tuyển dụng & Nhân tài",
-    description: "Tin tuyển dụng, hồ sơ ứng viên và lịch phỏng vấn",
-  },
-  PERFORMANCE: {
-    label: "Hiệu suất & KPI",
-    description: "Thiết lập mục tiêu OKR/KPI và đánh giá chu kỳ",
-  },
-  WORKPLACE: {
-    label: "Không gian Số & Tài sản",
-    description: "Quản lý tài sản cấp phát, phòng họp và thiết bị làm việc",
-  },
-  AUDIT: {
-    label: "Nhật ký Kiểm toán",
-    description: "Theo dõi lịch sử truy vết thao tác và tuân thủ dữ liệu",
-  },
-};
+] as const;
 
+/**
+ * Helper sinh tiêu đề tự nhiên theo chuẩn hành động tiếng Việt
+ */
+export function getPermissionTitle(perm: PermissionResponse, resourceName: string): string {
+  const action = perm.action.toUpperCase();
+  const rawName = resourceName.toLowerCase().replace("quản lý ", "").replace("quản trị ", "");
+  switch (action) {
+    case "VIEW":
+      return `Xem ${rawName}`;
+    case "CREATE":
+    case "APPLY":
+      return `Tạo ${rawName}`;
+    case "UPDATE":
+    case "EDIT":
+    case "PROCESS":
+      return `Sửa ${rawName}`;
+    case "DELETE":
+      return `Xóa ${rawName}`;
+    case "APPROVE":
+      return `Phê duyệt ${rawName}`;
+    case "SIGN":
+      return `Ký duyệt ${rawName}`;
+    case "CHECKIN":
+      return `Điểm danh trực tuyến`;
+    case "EVALUATE":
+      return `Đánh giá ${rawName}`;
+    case "ACTIVATE":
+      return `Kích hoạt / Khóa tài khoản`;
+    case "ASSIGN":
+      return `Phân bổ vai trò`;
+    case "SIMULATE":
+      return `Mô phỏng cơ cấu tổ chức`;
+    case "VIEW_SALARY":
+      return `Xem chi tiết phiếu lương`;
+    case "MANAGE":
+      return `Quản lý ${rawName}`;
+    default:
+      return `${perm.action} ${rawName}`;
+  }
+}
