@@ -100,34 +100,32 @@ export function RolePermissionChecklist({
                 >
                   Đã cấp: {totalGrantedOverall} / {totalPermissionsOverall} quyền
                 </Badge>
-                {!selectedRole.isSystemRole && (
-                  <div className="flex items-center gap-0.5 ml-1">
-                    {onEditRole && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                        onClick={() => onEditRole(selectedRole)}
-                        title="Sửa tên & mô tả vai trò"
-                      >
-                        <Edit3 className="h-3 w-3" />
-                        <span className="sr-only">Sửa vai trò</span>
-                      </Button>
-                    )}
-                    {onDeleteRole && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={() => onDeleteRole(selectedRole)}
-                        title="Xóa vai trò"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        <span className="sr-only">Xóa vai trò</span>
-                      </Button>
-                    )}
-                  </div>
-                )}
+                <div className="flex items-center gap-1.5 ml-2">
+                  {onEditRole && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                      onClick={() => onEditRole(selectedRole)}
+                      title="Sửa tên & mô tả vai trò"
+                    >
+                      <Edit3 className="h-3 w-3" />
+                      <span>Sửa vai trò</span>
+                    </Button>
+                  )}
+                  {onDeleteRole && !selectedRole.isSystemRole && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => onDeleteRole(selectedRole)}
+                      title="Xóa vai trò"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      <span>Xóa vai trò</span>
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {selectedRole.description || "Cấu hình quyền hạn và phạm vi dữ liệu cho vai trò này."}

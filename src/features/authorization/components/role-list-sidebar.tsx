@@ -143,45 +143,52 @@ export function RoleListSidebar({
                         </span>
                       )}
 
-                      {!role.isSystemRole && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="h-3.5 w-3.5" />
-                              <span className="sr-only">Tùy chọn</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-36 text-xs"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {onEditRole && (
-                              <DropdownMenuItem
-                                onClick={() => onEditRole(role)}
-                                className="gap-2 text-xs cursor-pointer"
-                              >
-                                <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span>Sửa vai trò</span>
-                              </DropdownMenuItem>
-                            )}
-                            {onDeleteRole && (
-                              <DropdownMenuItem
-                                onClick={() => onDeleteRole(role)}
-                                className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                <span>Xóa vai trò</span>
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                            <MoreVertical className="h-3.5 w-3.5" />
+                            <span className="sr-only">Tùy chọn vai trò</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-40 text-xs"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {onEditRole && (
+                            <DropdownMenuItem
+                              onClick={() => onEditRole(role)}
+                              className="gap-2 text-xs cursor-pointer"
+                            >
+                              <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span>Sửa thông tin</span>
+                            </DropdownMenuItem>
+                          )}
+                          {onDeleteRole && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (role.isSystemRole) return;
+                                onDeleteRole(role);
+                              }}
+                              disabled={role.isSystemRole}
+                              className={cn(
+                                "gap-2 text-xs cursor-pointer",
+                                role.isSystemRole
+                                  ? "opacity-40 cursor-not-allowed"
+                                  : "text-destructive focus:text-destructive"
+                              )}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>{role.isSystemRole ? "Không thể xóa (Hệ thống)" : "Xóa vai trò"}</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
