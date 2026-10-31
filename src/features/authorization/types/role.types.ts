@@ -27,22 +27,6 @@ export interface RolePermissionResponse {
 }
 
 /**
- * Chi tiết vai trò kèm số lượng user và ma trận quyền từ GET /api/v1/roles/{roleId}
- */
-export interface RoleDetailResponse {
-  id: string;
-  companyId: string | null;
-  code: string;
-  name: string;
-  description: string | null;
-  isSystemRole: boolean;
-  userCount: number;
-  permissions: RolePermissionResponse[];
-  createdAt: string;
-  updatedAt?: string | null;
-}
-
-/**
  * Quyền chức năng hệ thống từ GET /api/v1/permissions
  */
 export interface PermissionResponse {
