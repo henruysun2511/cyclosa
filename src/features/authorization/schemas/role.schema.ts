@@ -19,7 +19,12 @@ export const roleFormSchema = z.object({
     .or(z.literal("")),
 });
 
+export const roleCreateDialogSchema = roleFormSchema.extend({
+  cloneFromRoleId: z.string().optional(),
+});
+
 export type RoleFormValues = z.infer<typeof roleFormSchema>;
+export type RoleCreateDialogValues = z.infer<typeof roleCreateDialogSchema>;
 export type CreateRoleFormValues = RoleFormValues;
 export type UpdateRoleFormValues = RoleFormValues;
 export const createRoleSchema = roleFormSchema;
