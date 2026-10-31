@@ -13,7 +13,6 @@ export * from "./api/role-api";
 export * from "./hooks/use-role-filters";
 
 // ── Feature Components ───────────────────────────────────────────────────────
-export * from "./components/role-management-view";
 export * from "./components/hierarchical-checkbox";
 export * from "./components/role-list-sidebar";
 export * from "./components/role-permission-checklist";
