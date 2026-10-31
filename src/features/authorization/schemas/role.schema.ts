@@ -17,6 +17,7 @@ export const roleFormSchema = z.object({
     .max(500, { message: "Mô tả không được vượt quá 500 ký tự" })
     .optional()
     .or(z.literal("")),
+  cloneFromRoleId: z.string().optional(),
 });
 
 export const roleCreateDialogSchema = roleFormSchema.extend({

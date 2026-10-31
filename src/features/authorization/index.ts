@@ -16,6 +16,5 @@ export * from "./hooks/use-role-filters";
 export * from "./components/hierarchical-checkbox";
 export * from "./components/role-list-sidebar";
 export * from "./components/role-permission-checklist";
-export * from "./components/role-create-dialog";
 export * from "./components/role-form-dialog";
 export * from "./components/role-delete-dialog";

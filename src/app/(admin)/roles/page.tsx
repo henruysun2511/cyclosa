@@ -14,15 +14,12 @@ import {
   useGetGroupedPermissionsQuery,
   useGetRolePermissionsQuery,
   useAssignRolePermissionsMutation,
-  useCreateRoleMutation,
   useRoleFilters,
   RoleListSidebar,
   RolePermissionChecklist,
-  RoleCreateDialog,
   RoleFormDialog,
   RoleDeleteDialog,
   type PermissionScopeItem,
-  type RoleCreateDialogValues,
   type RoleResponse,
 } from "@/features/authorization";
 
@@ -64,11 +61,20 @@ function RolesPageContent() {
   });
 
   const [assignRolePermissions, { isLoading: isSaving }] = useAssignRolePermissionsMutation();
-  const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
 
-  const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<RoleResponse | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formRole, setFormRole] = useState<RoleResponse | null>(null);
   const [deletingRole, setDeletingRole] = useState<RoleResponse | null>(null);
+
+  const handleOpenCreate = () => {
+    setFormRole(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (role: RoleResponse) => {
+    setFormRole(role);
+    setIsFormOpen(true);
+  };
 
   // ── 4. Local Matrix Permission State ───────────────────────────────────────
   const [permissionState, setPermissionState] = useState<
@@ -201,46 +207,6 @@ function RolesPageContent() {
     }
   };
 
-  // ── 7. Create New Role ─────────────────────────────────────────────────────
-  const handleCreateRole = async (values: RoleCreateDialogValues) => {
-    try {
-      const createdRes = await createRole({
-        code: values.code,
-        name: values.name,
-        description: values.description,
-      }).unwrap();
-
-      if (createdRes.success && createdRes.data) {
-        const newRoleId = createdRes.data.id;
-
-        // If clone selected, copy permissions from template role
-        if (values.cloneFromRoleId) {
-          const payload: PermissionScopeItem[] = Object.values(permissionState)
-            .filter((p) => p.granted)
-            .map((p) => ({
-              permissionId: p.permissionId,
-              dataScope: p.dataScope,
-            }));
-
-          if (payload.length > 0) {
-            await assignRolePermissions({
-              roleId: newRoleId,
-              body: { permissions: payload },
-            }).unwrap();
-          }
-        }
-
-        toast.success(`Đã tạo vai trò mới: ${createdRes.data.name}`);
-        setCreateRoleModalOpen(false);
-        refetchRoles();
-        setRoleId(newRoleId);
-      }
-    } catch (err: unknown) {
-      const error = err as { data?: { message?: string } };
-      toast.error(error.data?.message || "Không thể tạo vai trò mới.");
-    }
-  };
-
   return (
     <div className="space-y-6 pb-12">
       {/* ── 1. Page Header ─────────────────────────────────────────── */}
@@ -262,8 +228,8 @@ function RolesPageContent() {
           onSelectRole={setRoleId}
           searchRole={search}
           onSearchChange={setSearch}
-          onOpenCreateModal={() => setCreateRoleModalOpen(true)}
-          onEditRole={setEditingRole}
+          onOpenCreateModal={handleOpenCreate}
+          onEditRole={handleOpenEdit}
           onDeleteRole={setDeletingRole}
           isLoading={isLoadingRoles}
         />
@@ -279,27 +245,24 @@ function RolesPageContent() {
           onToggleGroup={handleToggleGroup}
           onSelectAll={handleSelectAll}
           onSaveMatrix={handleSaveMatrix}
-          onEditRole={setEditingRole}
+          onEditRole={handleOpenEdit}
           onDeleteRole={setDeletingRole}
           isSaving={isSaving}
           isLoadingRolePerms={isLoadingRolePerms}
         />
       </div>
 
-      {/* ── 3. Dialogs Tạo, Sửa, Xóa Vai Trò ─────────────────────────── */}
-      <RoleCreateDialog
-        open={createRoleModalOpen}
-        onOpenChange={setCreateRoleModalOpen}
+      {/* ── 3. Dialogs Tạo/Sửa và Xóa Vai Trò ─────────────────────────── */}
+      <RoleFormDialog
+        role={formRole}
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
         roles={roles}
         defaultCloneRoleId={selectedRole?.id}
-        onSubmit={handleCreateRole}
-        isSubmitting={isCreating}
-      />
-
-      <RoleFormDialog
-        role={editingRole}
-        open={Boolean(editingRole)}
-        onOpenChange={(open) => !open && setEditingRole(null)}
+        onSuccess={(roleId) => {
+          refetchRoles();
+          if (roleId) setRoleId(roleId);
+        }}
       />
 
       <RoleDeleteDialog

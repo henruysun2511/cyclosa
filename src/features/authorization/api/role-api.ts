@@ -100,6 +100,7 @@ export const {
   useUpdateRoleMutation,
   useDeleteRoleMutation,
   useGetRolePermissionsQuery,
+  useLazyGetRolePermissionsQuery,
   useAssignRolePermissionsMutation,
   useGetGroupedPermissionsQuery,
 } = roleApi;
