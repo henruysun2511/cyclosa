@@ -303,11 +303,18 @@ export function RolePermissionChecklist({
                                         size="sm"
                                         className="h-5.5 px-2 text-[11px] font-medium border-border/80 bg-muted/40 hover:bg-muted/70 transition-colors shadow-2xs"
                                       >
-                                        <SelectValue />
+                                        <SelectValue>
+                                          {(val: DataScope) => DATA_SCOPE_LABELS[val] || val}
+                                        </SelectValue>
                                       </SelectTrigger>
                                       <SelectContent align="start" className="text-xs min-w-36">
                                         {Object.values(DATA_SCOPE).map((scope) => (
-                                          <SelectItem key={scope} value={scope} className="text-xs">
+                                          <SelectItem
+                                            key={scope}
+                                            value={scope}
+                                            label={DATA_SCOPE_LABELS[scope]}
+                                            className="text-xs cursor-pointer"
+                                          >
                                             {DATA_SCOPE_LABELS[scope]}
                                           </SelectItem>
                                         ))}

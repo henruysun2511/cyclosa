@@ -22,7 +22,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ShieldPlus, Edit3, Loader2, Save, Sparkles } from "lucide-react";
+import { ShieldPlus, Edit3, Loader2 } from "lucide-react";
 import {
   roleFormSchema,
   type RoleFormValues,
@@ -155,10 +155,10 @@ export function RoleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-6 rounded-2xl shadow-xl border-border bg-card">
-        <DialogHeader className="space-y-3 pb-3 border-b border-border/60">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0">
+      <DialogContent className="sm:max-w-[500px] p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl">
+        <DialogHeader className="space-y-3 pb-4 border-b border-border/60">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0">
               {isEditing ? (
                 <Edit3 className="h-5 w-5" />
               ) : (
@@ -166,29 +166,29 @@ export function RoleFormDialog({
               )}
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold tracking-tight text-foreground">
-                {isEditing ? "Chỉnh sửa Vai trò" : "Thêm Vai trò Mới"}
+              <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+                {isEditing ? "Chỉnh sửa vai trò" : "Thêm vai trò mới"}
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mt-0.5 leading-normal">
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                 {isEditing
-                  ? `Cập nhật thông tin hiển thị và mô tả trách nhiệm cho vai trò ${role?.name}`
-                  : "Khởi tạo vai trò người dùng tùy chỉnh mới và tùy chọn sao chép ma trận quyền ban đầu"}
+                  ? `Cập nhật thông tin hiển thị và mô tả vai trò ${role?.name}`
+                  : "Khởi tạo vai trò mới và tùy chọn sao chép quyền từ vai trò có sẵn"}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-3 pb-1 text-xs">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 pb-1">
           {/* Tên vai trò */}
           <div className="space-y-1.5">
             <Label htmlFor="name" className="text-xs font-semibold text-foreground">
-              Tên Vai trò hiển thị <span className="text-destructive">*</span>
+              Tên vai trò <span className="text-destructive">*</span>
             </Label>
             <Input
               id="name"
-              placeholder="VD: Trưởng Nhóm Dự Án (Tech Lead)"
+              placeholder="VD: Quản lý cửa hàng, Kỹ sư phần mềm..."
               disabled={isSubmitting}
-              className="h-9 text-xs rounded-lg border-input bg-background/50 hover:bg-background focus:bg-background transition-colors"
+              className="h-9 text-xs rounded-lg border-input bg-background focus-visible:ring-1 focus-visible:ring-ring transition-colors"
               {...form.register("name")}
             />
             {form.formState.errors.name && (
@@ -202,7 +202,7 @@ export function RoleFormDialog({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="code" className="text-xs font-semibold text-foreground">
-                Mã Vai trò (Code) <span className="text-destructive">*</span>
+                Mã vai trò <span className="text-destructive">*</span>
               </Label>
               {isEditing && (
                 <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
@@ -212,36 +212,36 @@ export function RoleFormDialog({
             </div>
             <Input
               id="code"
-              placeholder="VD: TECH_LEAD, STORE_MANAGER..."
+              placeholder="VD: STORE_MANAGER, SOFTWARE_ENGINEER..."
               disabled={isEditing || isSubmitting}
-              className="font-mono uppercase text-xs h-9 rounded-lg border-input bg-background/50 hover:bg-background focus:bg-background transition-colors"
+              className="font-mono uppercase text-xs h-9 rounded-lg border-input bg-background focus-visible:ring-1 focus-visible:ring-ring transition-colors disabled:bg-muted/50 disabled:text-muted-foreground"
               {...form.register("code", {
                 onChange: (e) => {
                   e.target.value = e.target.value.toUpperCase();
                 },
               })}
             />
-            {form.formState.errors.code && (
+            {form.formState.errors.code ? (
               <p className="text-[11px] text-destructive font-medium">
                 {form.formState.errors.code.message}
               </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                {isEditing
+                  ? "Mã vai trò là định danh duy nhất và không thể thay đổi sau khi tạo."
+                  : "Chỉ gồm chữ in hoa, chữ số và dấu gạch dưới (_)."}
+              </p>
             )}
-            <p className="text-[11px] text-muted-foreground">
-              {isEditing
-                ? "Mã định danh vai trò được bảo vệ và không thể thay đổi sau khi tạo."
-                : "Chỉ bao gồm chữ in hoa, số và dấu gạch dưới (_)."}
-            </p>
           </div>
 
-          {/* Kế thừa cấu hình quyền ban đầu từ vai trò mẫu (Chỉ hiển thị khi tạo mới) */}
+          {/* Kế thừa quyền từ vai trò mẫu (Chỉ hiển thị khi tạo mới) */}
           {!isEditing && roles.length > 0 && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="cloneFromRoleId" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3 text-primary" />
-                  <span>Kế thừa cấu hình quyền từ</span>
+                <Label htmlFor="cloneFromRoleId" className="text-xs font-semibold text-foreground">
+                  Kế thừa quyền từ vai trò
                 </Label>
-                <span className="text-[10px] text-muted-foreground">Tùy chọn</span>
+                <span className="text-[11px] text-muted-foreground">Tùy chọn</span>
               </div>
 
               <Controller
@@ -253,15 +253,44 @@ export function RoleFormDialog({
                     onValueChange={field.onChange}
                     disabled={isSubmitting}
                   >
-                    <SelectTrigger className="w-full h-9 text-xs rounded-lg border-input bg-background/50 hover:bg-background transition-colors">
-                      <SelectValue placeholder="Chọn vai trò kế thừa quyền..." />
+                    <SelectTrigger className="w-full h-9 text-xs rounded-lg border-input bg-background hover:bg-muted/30 focus-visible:ring-1 focus-visible:ring-ring transition-colors">
+                      <SelectValue placeholder="Chọn vai trò để sao chép quyền...">
+                        {(selectedId: string) => {
+                          if (!selectedId || selectedId === "none") {
+                            return (
+                              <span className="text-muted-foreground font-normal">
+                                -- Không kế thừa (Bắt đầu với 0 quyền) --
+                              </span>
+                            );
+                          }
+                          const target = roles.find((r) => r.id === selectedId);
+                          if (!target) return selectedId;
+                          return (
+                            <span className="flex items-center gap-1.5 truncate">
+                              <span className="font-medium text-foreground">{target.name}</span>
+                              <span className="text-[10px] font-mono text-muted-foreground">
+                                ({target.code})
+                              </span>
+                            </span>
+                          );
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="text-xs max-h-60">
-                      <SelectItem value="none" className="text-xs text-muted-foreground font-normal">
+                      <SelectItem
+                        value="none"
+                        label="-- Không kế thừa (Bắt đầu với 0 quyền) --"
+                        className="text-xs text-muted-foreground font-normal cursor-pointer"
+                      >
                         -- Không kế thừa (Bắt đầu với 0 quyền) --
                       </SelectItem>
                       {roles.map((r) => (
-                        <SelectItem key={r.id} value={r.id} className="text-xs cursor-pointer">
+                        <SelectItem
+                          key={r.id}
+                          value={r.id}
+                          label={`${r.name} (${r.code})`}
+                          className="text-xs cursor-pointer"
+                        >
                           <span className="font-medium text-foreground">{r.name}</span>
                           <span className="text-[10px] font-mono text-muted-foreground ml-2">
                             ({r.code})
@@ -272,8 +301,8 @@ export function RoleFormDialog({
                   </Select>
                 )}
               />
-              <p className="text-[11px] text-muted-foreground leading-normal">
-                Tự động sao chép toàn bộ danh mục quyền và phạm vi dữ liệu từ vai trò mẫu sang vai trò mới.
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Tự động sao chép danh sách quyền và phạm vi dữ liệu từ vai trò đã chọn.
               </p>
             </div>
           )}
@@ -281,14 +310,14 @@ export function RoleFormDialog({
           {/* Mô tả */}
           <div className="space-y-1.5">
             <Label htmlFor="description" className="text-xs font-semibold text-foreground">
-              Mô tả trách nhiệm & phạm vi
+              Mô tả vai trò
             </Label>
             <Textarea
               id="description"
-              placeholder="Mô tả tóm tắt trách nhiệm, đối tượng nhân viên và phạm vi quyền hạn của vai trò này..."
+              placeholder="Nhập mô tả tóm tắt nhiệm vụ và phạm vi hoạt động của vai trò này..."
               rows={3}
               disabled={isSubmitting}
-              className="text-xs rounded-lg resize-none p-2.5 border-input bg-background/50 hover:bg-background focus:bg-background transition-colors leading-normal"
+              className="text-xs rounded-lg resize-none p-2.5 border-input bg-background focus-visible:ring-1 focus-visible:ring-ring transition-colors leading-relaxed"
               {...form.register("description")}
             />
             {form.formState.errors.description && (
@@ -298,14 +327,14 @@ export function RoleFormDialog({
             )}
           </div>
 
-          <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-2.5">
+          <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isSubmitting}
               onClick={() => onOpenChange(false)}
-              className="h-8.5 px-4 text-xs font-medium"
+              className="h-9 px-4 text-xs font-medium cursor-pointer"
             >
               Hủy bỏ
             </Button>
@@ -313,13 +342,9 @@ export function RoleFormDialog({
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="h-8.5 px-4 text-xs font-medium gap-1.5 bg-primary hover:bg-primary/90 text-white shadow-xs"
+              className="h-9 px-4 text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm cursor-pointer"
             >
-              {isSubmitting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
+              {isSubmitting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
               <span>{isEditing ? "Lưu thay đổi" : "Khởi tạo vai trò"}</span>
             </Button>
           </DialogFooter>
