@@ -341,7 +341,7 @@ export const navigationConfig: NavGroup[] = [
         resource: "ROLE",
         children: [
           { title: "Người dùng tài khoản", href: "/admin/users", permission: PERMISSIONS.USER.VIEW },
-          { title: "Vai trò & Phân quyền", href: "/admin/roles", permission: PERMISSIONS.ROLE.VIEW },
+          { title: "Vai trò & Phân quyền", href: "/roles", permission: PERMISSIONS.ROLE.VIEW },
           { title: "Định nghĩa quy trình duyệt", href: "/admin/workflow-definitions", permission: PERMISSIONS.ROLE.MANAGE },
           { title: "Cấu hình hệ thống", href: "/admin/system-configs", permission: PERMISSIONS.ROLE.MANAGE },
           { title: "Lịch nghỉ lễ", href: "/admin/holidays" },

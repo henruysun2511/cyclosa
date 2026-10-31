@@ -64,7 +64,7 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 18 | `GET` | `/api/v1/roles` | Lấy danh sách vai trò có phân trang, bộ lọc và tìm kiếm | x | x | Màn hình /admin/roles |
+| 18 | `GET` | `/api/v1/roles` | Lấy danh sách vai trò có phân trang, bộ lọc và tìm kiếm | x | x | Màn hình /roles |
 | 19 | `POST` | `/api/v1/roles` | Tạo mới một vai trò tùy chỉnh | x | x | Modal tạo vai trò |
 | 20 | `GET` | `/api/v1/roles/{roleId}` | Xem chi tiết vai trò, số lượng user và danh sách quyền | x | x | Chi tiết vai trò |
 | 21 | `PUT` | `/api/v1/roles/{roleId}` | Cập nhật thông tin tên và mô tả vai trò tùy chỉnh | x | x | Modal sửa vai trò |
