@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, Suspense } from "react";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { RouteGuard } from "@/features/authorization/components/route-guard";
 import {
@@ -210,13 +209,10 @@ function RolesPageContent() {
   return (
     <div className="space-y-6 pb-12">
       {/* ── 1. Page Header ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-2">
+      <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Vai trò & Phân quyền Hệ thống
         </h1>
-        <Badge variant="outline" className="text-xs font-mono">
-          RBAC MATRIX
-        </Badge>
       </div>
 
       {/* ── 2. Two-Column Master-Detail Layout ────────────────────────── */}
@@ -245,8 +241,6 @@ function RolesPageContent() {
           onToggleGroup={handleToggleGroup}
           onSelectAll={handleSelectAll}
           onSaveMatrix={handleSaveMatrix}
-          onEditRole={handleOpenEdit}
-          onDeleteRole={setDeletingRole}
           isSaving={isSaving}
           isLoadingRolePerms={isLoadingRolePerms}
         />

@@ -8,13 +8,18 @@ import {
   CheckSquare,
   Square,
   Loader2,
-  Edit3,
-  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { PermissionGuard } from "@/features/authorization/components/permission-guard";
 import {
   PERMISSIONS,
@@ -43,8 +48,6 @@ export interface RolePermissionChecklistProps {
   onToggleGroup: (groupResources: { key: string }[], nextVal: boolean) => void;
   onSelectAll: (selectAll: boolean) => void;
   onSaveMatrix: () => void;
-  onEditRole?: (role: RoleResponse) => void;
-  onDeleteRole?: (role: RoleResponse) => void;
   isSaving?: boolean;
   isLoadingRolePerms?: boolean;
 }
@@ -59,8 +62,6 @@ export function RolePermissionChecklist({
   onToggleGroup,
   onSelectAll,
   onSaveMatrix,
-  onEditRole,
-  onDeleteRole,
   isSaving = false,
   isLoadingRolePerms = false,
 }: RolePermissionChecklistProps) {
@@ -100,32 +101,6 @@ export function RolePermissionChecklist({
                 >
                   Đã cấp: {totalGrantedOverall} / {totalPermissionsOverall} quyền
                 </Badge>
-                <div className="flex items-center gap-1.5 ml-2">
-                  {onEditRole && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
-                      onClick={() => onEditRole(selectedRole)}
-                      title="Sửa tên & mô tả vai trò"
-                    >
-                      <Edit3 className="h-3 w-3" />
-                      <span>Sửa vai trò</span>
-                    </Button>
-                  )}
-                  {onDeleteRole && !selectedRole.isSystemRole && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2.5 text-xs gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => onDeleteRole(selectedRole)}
-                      title="Xóa vai trò"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      <span>Xóa vai trò</span>
-                    </Button>
-                  )}
-                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {selectedRole.description || "Cấu hình quyền hạn và phạm vi dữ liệu cho vai trò này."}
@@ -318,20 +293,26 @@ export function RolePermissionChecklist({
 
                                   {/* Selector DataScope cho quyền Xem khi được tích chọn */}
                                   {isViewAction && state.granted && (
-                                    <select
+                                    <Select
                                       value={state.dataScope}
-                                      onChange={(e) =>
-                                        onScopeChange(perm.code, e.target.value as DataScope)
+                                      onValueChange={(val) =>
+                                        onScopeChange(perm.code, val as DataScope)
                                       }
-                                      className="h-5 px-1 text-[10px] font-mono rounded border border-border bg-background text-foreground focus:border-primary focus:outline-none shadow-2xs"
-                                      title="Chọn phạm vi dữ liệu"
                                     >
-                                      {Object.values(DATA_SCOPE).map((scope) => (
-                                        <option key={scope} value={scope}>
-                                          {DATA_SCOPE_LABELS[scope]}
-                                        </option>
-                                      ))}
-                                    </select>
+                                      <SelectTrigger
+                                        size="sm"
+                                        className="h-5.5 px-2 text-[11px] font-medium border-border/80 bg-muted/40 hover:bg-muted/70 transition-colors shadow-2xs"
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent align="start" className="text-xs min-w-36">
+                                        {Object.values(DATA_SCOPE).map((scope) => (
+                                          <SelectItem key={scope} value={scope} className="text-xs">
+                                            {DATA_SCOPE_LABELS[scope]}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   )}
                                 </div>
 
