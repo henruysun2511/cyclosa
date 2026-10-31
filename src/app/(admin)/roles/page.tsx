@@ -252,7 +252,7 @@ function RolesPageContent() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         roles={roles}
-        defaultCloneRoleId={selectedRole?.id}
+        defaultCloneRoleId="none"
         onSuccess={(roleId) => {
           refetchRoles();
           if (roleId) setRoleId(roleId);

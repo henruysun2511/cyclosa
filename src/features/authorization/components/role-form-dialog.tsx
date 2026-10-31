@@ -118,7 +118,12 @@ export function RoleFormDialog({
         if (res.success && res.data) {
           const newRoleId = res.data.id;
 
-          // Nếu có chọn sao chép quyền từ vai trò mẫu
+          // Đóng dialog và hiển thị toast ngay lập tức để trải nghiệm mượt mà, phản hồi tức thì
+          onOpenChange(false);
+          toast.success(`Đã tạo mới vai trò "${values.name}" thành công.`);
+          onSuccess?.(newRoleId);
+
+          // Nếu có chọn sao chép quyền từ vai trò mẫu, thực hiện tiếp dưới nền
           if (values.cloneFromRoleId && values.cloneFromRoleId !== "none") {
             try {
               const permsRes = await triggerGetPermissions(values.cloneFromRoleId).unwrap();
@@ -131,15 +136,13 @@ export function RoleFormDialog({
                   roleId: newRoleId,
                   body: { permissions: payload },
                 }).unwrap();
+                toast.success(`Đã sao chép ${payload.length} quyền sang vai trò "${values.name}".`);
+                onSuccess?.(newRoleId);
               }
             } catch {
-              // Bỏ qua lỗi clone quyền nếu có để không chặn quá trình tạo vai trò
+              toast.error("Không thể tự động sao chép danh sách quyền từ vai trò mẫu.");
             }
           }
-
-          toast.success(`Đã tạo mới vai trò "${values.name}" thành công.`);
-          onOpenChange(false);
-          onSuccess?.(newRoleId);
         }
       }
     } catch (err: unknown) {
