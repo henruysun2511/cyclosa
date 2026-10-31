@@ -22,8 +22,11 @@ import {
   RoleListSidebar,
   RolePermissionChecklist,
   RoleCreateDialog,
+  RoleFormDialog,
+  RoleDeleteDialog,
   type PermissionScopeItem,
   type RoleCreateDialogValues,
+  type RoleResponse,
 } from "@/features/authorization";
 
 function RolesPageContent() {
@@ -42,8 +45,10 @@ function RolesPageContent() {
 
   // Sync active role with URL param
   useEffect(() => {
-    if (roles.length > 0 && !roleId) {
-      setRoleId(roles[0].id);
+    if (roles.length > 0) {
+      if (!roleId || !roles.some((r) => r.id === roleId)) {
+        setRoleId(roles[0].id);
+      }
     }
   }, [roles, roleId, setRoleId]);
 
@@ -65,6 +70,8 @@ function RolesPageContent() {
   const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
 
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<RoleResponse | null>(null);
+  const [deletingRole, setDeletingRole] = useState<RoleResponse | null>(null);
 
   // ── 4. Local Matrix Permission State ───────────────────────────────────────
   const [permissionState, setPermissionState] = useState<
@@ -295,6 +302,8 @@ function RolesPageContent() {
           searchRole={search}
           onSearchChange={setSearch}
           onOpenCreateModal={() => setCreateRoleModalOpen(true)}
+          onEditRole={setEditingRole}
+          onDeleteRole={setDeletingRole}
           isLoading={isLoadingRoles}
         />
 
@@ -309,12 +318,14 @@ function RolesPageContent() {
           onToggleGroup={handleToggleGroup}
           onSelectAll={handleSelectAll}
           onSaveMatrix={handleSaveMatrix}
+          onEditRole={setEditingRole}
+          onDeleteRole={setDeletingRole}
           isSaving={isSaving}
           isLoadingRolePerms={isLoadingRolePerms}
         />
       </div>
 
-      {/* ── 3. Dialog Thêm Vai Trò Mới ───────────────────────────────── */}
+      {/* ── 3. Dialogs Tạo, Sửa, Xóa Vai Trò ─────────────────────────── */}
       <RoleCreateDialog
         open={createRoleModalOpen}
         onOpenChange={setCreateRoleModalOpen}
@@ -322,6 +333,18 @@ function RolesPageContent() {
         defaultCloneRoleId={selectedRole?.id}
         onSubmit={handleCreateRole}
         isSubmitting={isCreating}
+      />
+
+      <RoleFormDialog
+        role={editingRole}
+        open={Boolean(editingRole)}
+        onOpenChange={(open) => !open && setEditingRole(null)}
+      />
+
+      <RoleDeleteDialog
+        role={deletingRole}
+        open={Boolean(deletingRole)}
+        onOpenChange={(open) => !open && setDeletingRole(null)}
       />
     </div>
   );

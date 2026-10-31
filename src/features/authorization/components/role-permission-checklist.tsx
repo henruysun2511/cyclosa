@@ -8,6 +8,8 @@ import {
   CheckSquare,
   Square,
   Loader2,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,8 @@ export interface RolePermissionChecklistProps {
   onToggleGroup: (groupResources: { key: string }[], nextVal: boolean) => void;
   onSelectAll: (selectAll: boolean) => void;
   onSaveMatrix: () => void;
+  onEditRole?: (role: RoleResponse) => void;
+  onDeleteRole?: (role: RoleResponse) => void;
   isSaving?: boolean;
   isLoadingRolePerms?: boolean;
 }
@@ -55,6 +59,8 @@ export function RolePermissionChecklist({
   onToggleGroup,
   onSelectAll,
   onSaveMatrix,
+  onEditRole,
+  onDeleteRole,
   isSaving = false,
   isLoadingRolePerms = false,
 }: RolePermissionChecklistProps) {
@@ -94,6 +100,34 @@ export function RolePermissionChecklist({
                 >
                   Đã cấp: {totalGrantedOverall} / {totalPermissionsOverall} quyền
                 </Badge>
+                {!selectedRole.isSystemRole && (
+                  <div className="flex items-center gap-0.5 ml-1">
+                    {onEditRole && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={() => onEditRole(selectedRole)}
+                        title="Sửa tên & mô tả vai trò"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                        <span className="sr-only">Sửa vai trò</span>
+                      </Button>
+                    )}
+                    {onDeleteRole && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => onDeleteRole(selectedRole)}
+                        title="Xóa vai trò"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        <span className="sr-only">Xóa vai trò</span>
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {selectedRole.description || "Cấu hình quyền hạn và phạm vi dữ liệu cho vai trò này."}

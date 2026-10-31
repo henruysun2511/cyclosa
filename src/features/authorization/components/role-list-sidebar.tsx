@@ -8,11 +8,20 @@ import {
   Search,
   Plus,
   Check,
+  MoreVertical,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { PermissionGuard } from "@/features/authorization/components/permission-guard";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import { cn } from "@/lib/utils";
@@ -25,6 +34,8 @@ export interface RoleListSidebarProps {
   searchRole: string;
   onSearchChange: (val: string) => void;
   onOpenCreateModal: () => void;
+  onEditRole?: (role: RoleResponse) => void;
+  onDeleteRole?: (role: RoleResponse) => void;
   isLoading?: boolean;
 }
 
@@ -35,6 +46,8 @@ export function RoleListSidebar({
   searchRole,
   onSearchChange,
   onOpenCreateModal,
+  onEditRole,
+  onDeleteRole,
   isLoading = false,
 }: RoleListSidebarProps) {
   const filteredRoles = useMemo(() => {
@@ -123,11 +136,53 @@ export function RoleListSidebar({
                       </div>
                     </div>
 
-                    {isSelected && (
-                      <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5 shrink-0">
-                        Đang chọn <Check className="h-3 w-3 inline" />
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isSelected && (
+                        <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
+                          Đang chọn <Check className="h-3 w-3 inline" />
+                        </span>
+                      )}
+
+                      {!role.isSystemRole && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                              <span className="sr-only">Tùy chọn</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-36 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {onEditRole && (
+                              <DropdownMenuItem
+                                onClick={() => onEditRole(role)}
+                                className="gap-2 text-xs cursor-pointer"
+                              >
+                                <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span>Sửa vai trò</span>
+                              </DropdownMenuItem>
+                            )}
+                            {onDeleteRole && (
+                              <DropdownMenuItem
+                                onClick={() => onDeleteRole(role)}
+                                className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                <span>Xóa vai trò</span>
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </div>
 
                   {role.description ? (
