@@ -3,9 +3,7 @@ import type { ApiResponse, PageData } from "@/types/api.types";
 import { ROLE_ENDPOINTS } from "../constants/role.constants";
 import type {
   RoleResponse,
-  RoleDetailResponse,
   RolePermissionResponse,
-  PermissionResponse,
   GroupedPermissionsResponse,
   RoleFilterParams,
   CreateRoleRequest,
@@ -30,13 +28,7 @@ export const roleApi = baseApi.injectEndpoints({
           : [{ type: "Role", id: "LIST" }],
     }),
 
-    // 2. Lấy chi tiết vai trò kèm số lượng user và danh sách quyền
-    getRoleById: builder.query<ApiResponse<RoleDetailResponse>, string>({
-      query: (roleId) => ROLE_ENDPOINTS.ROLE_DETAIL(roleId),
-      providesTags: (_result, _error, roleId) => [{ type: "Role", id: roleId }],
-    }),
-
-    // 3. Tạo mới vai trò tùy chỉnh
+    // 2. Tạo mới vai trò tùy chỉnh
     createRole: builder.mutation<ApiResponse<RoleResponse>, CreateRoleRequest>({
       query: (body) => ({
         url: ROLE_ENDPOINTS.ROLES,
@@ -94,29 +86,21 @@ export const roleApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // 8. Lấy 36 quyền gom theo 12 phân hệ tài nguyên
+    // 7. Lấy 36 quyền gom theo 12 phân hệ tài nguyên
     getGroupedPermissions: builder.query<ApiResponse<GroupedPermissionsResponse>, void>({
       query: () => ROLE_ENDPOINTS.PERMISSIONS_GROUPED,
       providesTags: [{ type: "Permission", id: "GROUPED" }],
-    }),
-
-    // 9. Lấy danh sách toàn bộ quyền phẳng
-    getAllPermissions: builder.query<ApiResponse<PermissionResponse[]>, void>({
-      query: () => ROLE_ENDPOINTS.PERMISSIONS,
-      providesTags: [{ type: "Permission", id: "LIST" }],
     }),
   }),
 });
 
 export const {
   useGetRolesQuery,
-  useGetRoleByIdQuery,
   useCreateRoleMutation,
   useUpdateRoleMutation,
   useDeleteRoleMutation,
   useGetRolePermissionsQuery,
   useAssignRolePermissionsMutation,
   useGetGroupedPermissionsQuery,
-  useGetAllPermissionsQuery,
 } = roleApi;
 

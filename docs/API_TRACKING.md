@@ -12,11 +12,11 @@
 | :--- | :---: | :---: | :---: | :---: |
 | **1. Xác thực (Authentication)** | 9 | 9/9 (100%) | 8/9 (89%) | Sẵn sàng hoạt động |
 | **2. Quản lý Tài khoản (User Management)** | 6 | 6/6 (100%) | 0/6 (0%) | Chờ tích hợp FE |
-| **3. Quyền chức năng (Permissions)** | 2 | 2/2 (100%) | 2/2 (100%) | Hoàn tất tích hợp |
-| **4. Quản lý Vai trò (Roles)** | 8 | 8/8 (100%) | 7/8 (88%) | Màn hình /admin/roles |
+| **3. Quyền chức năng (Permissions)** | 2 | 2/2 (100%) | 1/2 (50%) | Hoàn tất tích hợp |
+| **4. Quản lý Vai trò (Roles)** | 8 | 8/8 (100%) | 6/8 (75%) | Màn hình /roles |
 | **5. Gán Vai trò & Quyền Hiệu lực (User Roles)** | 4 | 4/4 (100%) | 0/4 (0%) | Chờ tích hợp FE |
 | **6. Quản lý Sản phẩm mẫu (Products)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất 100% |
-| **TỔNG CỘNG** | **34** | **34/34 (100%)** | **22/34 (65%)** | Đang phát triển |
+| **TỔNG CỘNG** | **34** | **34/34 (100%)** | **20/34 (59%)** | Đang phát triển |
 
 ---
 
@@ -55,7 +55,7 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 16 | `GET` | `/api/v1/permissions` | Lấy toàn bộ danh mục 36 quyền chức năng hệ thống | x | x | Tích hợp trong role-api |
+| 16 | `GET` | `/api/v1/permissions` | Lấy toàn bộ danh mục 36 quyền chức năng hệ thống | x |   | UI dùng grouped (STT 17), không gọi API này |
 | 17 | `GET` | `/api/v1/permissions/grouped` | Lấy danh mục quyền được gom nhóm theo phân hệ (Resource) | x | x | Tích hợp trong Ma trận quyền |
 
 ---
@@ -64,14 +64,14 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 18 | `GET` | `/api/v1/roles` | Lấy danh sách vai trò có phân trang, bộ lọc và tìm kiếm | x | x | Màn hình /roles |
+| 18 | `GET` | `/api/v1/roles` | Lấy danh sách vai trò có phân trang, bộ lọc và tìm kiếm | x | x | Màn hình /roles (cột trái) |
 | 19 | `POST` | `/api/v1/roles` | Tạo mới một vai trò tùy chỉnh | x | x | Modal tạo vai trò |
-| 20 | `GET` | `/api/v1/roles/{roleId}` | Xem chi tiết vai trò, số lượng user và danh sách quyền | x | x | Chi tiết vai trò |
+| 20 | `GET` | `/api/v1/roles/{roleId}` | Xem chi tiết vai trò, số lượng user và danh sách quyền | x |   | UI Master-Detail dùng STT 18 & 23 |
 | 21 | `PUT` | `/api/v1/roles/{roleId}` | Cập nhật thông tin tên và mô tả vai trò tùy chỉnh | x | x | Modal sửa vai trò |
 | 22 | `DELETE`| `/api/v1/roles/{roleId}` | Xóa mềm vai trò tùy chỉnh (nếu chưa có user nắm giữ) | x | x | Dialog xác nhận xóa an toàn |
-| 23 | `GET` | `/api/v1/roles/{roleId}/permissions` | Lấy ma trận quyền chức năng và phạm vi dữ liệu (DataScope) | x | x | Modal Ma trận quyền |
+| 23 | `GET` | `/api/v1/roles/{roleId}/permissions` | Lấy ma trận quyền chức năng và phạm vi dữ liệu (DataScope) | x | x | Ma trận quyền vai trò (cột phải) |
 | 24 | `PUT` | `/api/v1/roles/{roleId}/permissions` | Thiết lập phân quyền và phạm vi dữ liệu cho vai trò | x | x | Lưu ma trận quyền & DataScope |
-| 25 | `PUT` | `/api/v1/roles/{roleId}/document-type-permissions` | Cấu hình quyền thao tác loại tài liệu số cho vai trò | x |  |  |
+| 25 | `PUT` | `/api/v1/roles/{roleId}/document-type-permissions` | Cấu hình quyền thao tác loại tài liệu số cho vai trò | x |   |  |
 
 ---
 
