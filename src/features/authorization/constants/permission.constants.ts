@@ -91,24 +91,26 @@ export const PERMISSIONS = {
 } as const;
 
 /**
- * 2. Danh mục 4 Cấp độ Phạm vi Dữ liệu (Data Scope)
+ * 2. Danh mục 5 Cấp độ Phạm vi Dữ liệu (Data Scope)
  */
 export const DATA_SCOPE = {
   ALL: "ALL",               // Toàn hệ thống
   COMPANY: "COMPANY",       // Trong phạm vi công ty/pháp nhân
   DEPARTMENT: "DEPARTMENT", // Trong phạm vi phòng ban trực thuộc
+  TEAM: "TEAM",             // Trong phạm vi đội nhóm
   OWN: "OWN",               // Chỉ dữ liệu của chính mình
 } as const;
 
 export type DataScope = typeof DATA_SCOPE[keyof typeof DATA_SCOPE];
 
 /**
- * Trọng số thứ bậc của phạm vi dữ liệu: ALL > COMPANY > DEPARTMENT > OWN
+ * Trọng số thứ bậc của phạm vi dữ liệu: ALL > COMPANY > DEPARTMENT > TEAM > OWN
  */
 export const DATA_SCOPE_LEVEL: Record<DataScope, number> = {
-  [DATA_SCOPE.ALL]: 4,
-  [DATA_SCOPE.COMPANY]: 3,
-  [DATA_SCOPE.DEPARTMENT]: 2,
+  [DATA_SCOPE.ALL]: 5,
+  [DATA_SCOPE.COMPANY]: 4,
+  [DATA_SCOPE.DEPARTMENT]: 3,
+  [DATA_SCOPE.TEAM]: 2,
   [DATA_SCOPE.OWN]: 1,
 };
 
@@ -157,6 +159,7 @@ export const DATA_SCOPE_LABELS: Record<DataScope, string> = {
   [DATA_SCOPE.ALL]: "Toàn hệ thống",
   [DATA_SCOPE.COMPANY]: "Toàn công ty",
   [DATA_SCOPE.DEPARTMENT]: "Phòng ban",
+  [DATA_SCOPE.TEAM]: "Đội nhóm",
   [DATA_SCOPE.OWN]: "Cá nhân",
 };
 
