@@ -119,3 +119,4 @@ export const {
   useGetGroupedPermissionsQuery,
   useGetAllPermissionsQuery,
 } = roleApi;
+

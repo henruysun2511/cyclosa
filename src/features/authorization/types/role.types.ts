@@ -104,3 +104,4 @@ export interface PermissionScopeItem {
 export interface AssignRolePermissionsRequest {
   permissions: PermissionScopeItem[];
 }
+

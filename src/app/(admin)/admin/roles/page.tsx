@@ -3,11 +3,11 @@
 import React, { useState, useMemo } from "react";
 import { useDebounce } from "use-debounce";
 import { Button } from "@/components/ui/button";
-import { ShieldPlus, ShieldCheck, Shield } from "lucide-react";
-import { RouteGuard } from "@/features/authorization/components/route-guard";
-import { PermissionGuard } from "@/features/authorization/components/permission-guard";
-import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
+import { ShieldPlus, Shield } from "lucide-react";
 import {
+  RouteGuard,
+  PermissionGuard,
+  PERMISSIONS,
   useGetRolesQuery,
   RoleKpiCards,
   RoleFilters,
@@ -18,7 +18,7 @@ import {
   ROLE_FILTER_TABS,
   type RoleFilterTab,
   type RoleResponse,
-} from "@/features/roles";
+} from "@/features/authorization";
 
 export default function RolesManagementPage() {
   // ── 1. Filter & Pagination State ───────────────────────────────────────────

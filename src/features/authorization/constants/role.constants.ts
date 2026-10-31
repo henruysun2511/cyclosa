@@ -70,3 +70,4 @@ export const RESOURCE_METADATA: Record<
     description: "Theo dõi lịch sử truy vết thao tác và tuân thủ dữ liệu",
   },
 };
+
