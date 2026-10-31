@@ -207,16 +207,16 @@ function RolesPageContent() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 lg:space-y-5 pb-6">
       {/* ── 1. Page Header ─────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+      <div className="shrink-0">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           Vai trò & Phân quyền Hệ thống
         </h1>
       </div>
 
       {/* ── 2. Two-Column Master-Detail Layout ────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start lg:h-[calc(100vh-190px)] lg:min-h-[580px]">
         {/* Cột trái: Danh sách Vai trò */}
         <RoleListSidebar
           roles={roles}

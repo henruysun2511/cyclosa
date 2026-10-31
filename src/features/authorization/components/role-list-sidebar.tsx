@@ -60,9 +60,9 @@ export function RoleListSidebar({
   }, [roles, searchRole]);
 
   return (
-    <div className="lg:col-span-4 xl:col-span-4 space-y-4">
-      <Card className="border-border bg-card shadow-xs">
-        <CardHeader className="p-4 border-b border-border space-y-3">
+    <div className="lg:col-span-4 xl:col-span-4 lg:h-full lg:flex lg:flex-col space-y-4">
+      <Card className="border-border bg-card shadow-xs lg:h-full lg:flex lg:flex-col overflow-hidden">
+        <CardHeader className="p-4 border-b border-border space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-primary" />
@@ -85,7 +85,7 @@ export function RoleListSidebar({
           </div>
         </CardHeader>
 
-        <CardContent className="p-2 space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto">
+        <CardContent className="p-2 space-y-1.5 flex-1 min-h-0 overflow-y-auto">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, idx) => (
               <div key={idx} className="p-3 rounded-lg border border-border space-y-2">
@@ -210,11 +210,11 @@ export function RoleListSidebar({
         </CardContent>
 
         <PermissionGuard permission={PERMISSIONS.ROLE.MANAGE} fallback={null}>
-          <div className="p-3 border-t border-border bg-muted/20">
+          <div className="p-3 border-t border-border bg-muted/20 shrink-0">
             <Button
               variant="outline"
               size="sm"
-              className="w-full h-8 text-xs border-dashed"
+              className="w-full h-8 text-xs border-dashed cursor-pointer"
               onClick={onOpenCreateModal}
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />

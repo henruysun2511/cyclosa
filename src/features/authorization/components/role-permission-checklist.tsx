@@ -82,9 +82,9 @@ export function RolePermissionChecklist({
   }
 
   return (
-    <div className="lg:col-span-8 xl:col-span-8 space-y-5">
+    <div className="lg:col-span-8 xl:col-span-8 lg:h-full lg:overflow-y-auto pr-1 space-y-5">
       {/* ── 1. Header Role Summary & Action Bar ─────────────────────── */}
-      <Card className="border-border bg-card shadow-xs">
+      <Card className="border-border bg-card shadow-xs sticky top-0 z-10 backdrop-blur-xs bg-card/95">
         <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
