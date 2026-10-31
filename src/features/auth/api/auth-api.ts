@@ -1,25 +1,94 @@
-import { baseApi } from "@/lib/base-api-rtk";
+import { baseApi } from "@/store/base-api-rtk";
 import type { ApiResponse } from "@/types/api.types";
-import type { LoginInput } from "../schemas/auth.schema";
-import type { LoginResponse } from "../types/auth.types";
+import { AUTH_ENDPOINTS } from "../constants/auth.constants";
+import type {
+  LoginRequest,
+  RefreshTokenRequest,
+  AuthTokenResponse,
+  UserProfileResponse,
+  ActivateAccountRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ChangePasswordRequest,
+} from "../types/auth.types";
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    login: builder.mutation<LoginResponse, LoginInput>({
+    login: builder.mutation<ApiResponse<AuthTokenResponse>, LoginRequest>({
       query: (credentials) => ({
-        url: "/auth/login",
+        url: AUTH_ENDPOINTS.LOGIN,
         method: "POST",
         body: credentials,
       }),
-      transformResponse: (response: ApiResponse<LoginResponse>) =>
-        response.data,
+      invalidatesTags: ["Auth"],
     }),
 
-    logout: builder.mutation<void, void>({
-      query: () => ({ url: "/auth/logout", method: "POST" }),
+    getMe: builder.query<ApiResponse<UserProfileResponse>, void>({
+      query: () => AUTH_ENDPOINTS.ME,
+      providesTags: ["Auth", "User"],
+    }),
+
+    refreshToken: builder.mutation<ApiResponse<AuthTokenResponse>, RefreshTokenRequest>({
+      query: (body) => ({
+        url: AUTH_ENDPOINTS.REFRESH,
+        method: "POST",
+        body,
+      }),
+    }),
+
+    logout: builder.mutation<ApiResponse<void>, void>({
+      query: () => ({
+        url: AUTH_ENDPOINTS.LOGOUT,
+        method: "POST",
+      }),
+      invalidatesTags: ["Auth", "User"],
+    }),
+
+    activateAccount: builder.mutation<ApiResponse<AuthTokenResponse>, ActivateAccountRequest>({
+      query: (body) => ({
+        url: AUTH_ENDPOINTS.ACTIVATE,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Auth", "User"],
+    }),
+
+    forgotPassword: builder.mutation<ApiResponse<void>, ForgotPasswordRequest>({
+      query: (body) => ({
+        url: AUTH_ENDPOINTS.FORGOT_PASSWORD,
+        method: "POST",
+        body,
+      }),
+    }),
+
+    resetPassword: builder.mutation<ApiResponse<void>, ResetPasswordRequest>({
+      query: (body) => ({
+        url: AUTH_ENDPOINTS.RESET_PASSWORD,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Auth"],
+    }),
+
+    changePassword: builder.mutation<ApiResponse<void>, ChangePasswordRequest>({
+      query: (body) => ({
+        url: AUTH_ENDPOINTS.CHANGE_PASSWORD,
+        method: "PUT",
+        body,
+      }),
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useLoginMutation, useLogoutMutation } = authApi;
+export const {
+  useLoginMutation,
+  useGetMeQuery,
+  useLazyGetMeQuery,
+  useRefreshTokenMutation,
+  useLogoutMutation,
+  useActivateAccountMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useChangePasswordMutation,
+} = authApi;

@@ -29,25 +29,17 @@ import {
   History,
   GitFork,
   Film,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpiderIcon } from "@/components/shared";
+import { navigationConfig, type NavGroup, type NavItem } from "@/config/navigation";
+import { usePermission } from "@/features/authorization";
 
 export interface AdminSidebarProps {
   collapsed?: boolean;
   activeItem?: string;
   onSelectItem?: (item: string) => void;
-}
-
-interface NavGroup {
-  label: string;
-  items: {
-    title: string;
-    href: string;
-    icon: React.ElementType;
-    badge?: string;
-    children?: { title: string; href: string; badge?: string }[];
-  }[];
 }
 
 export function AdminSidebar({
@@ -75,299 +67,41 @@ export function AdminSidebar({
     }));
   };
 
-  const navGroups: NavGroup[] = [
-    {
-      label: "TỔNG QUAN & VIỆC CẦN LÀM",
-      items: [
-        {
-          title: "Trang chủ",
-          href: "/dashboard",
-          icon: LayoutDashboard,
-        },
-        {
-          title: "Quy trình & Phê duyệt",
-          href: "/workflows",
-          icon: GitFork,
-          badge: "24",
-          children: [
-            { title: "Hộp thư chờ tôi duyệt", href: "/workflows/pending" },
-            { title: "Yêu cầu tôi đã gửi", href: "/workflows/submitted" },
-            { title: "Tra cứu hồ sơ quy trình", href: "/workflows" },
-            { title: "Định nghĩa 24 quy trình", href: "/admin/workflow-definitions" },
-            { title: "Thiết kế luồng duyệt", href: "/admin/workflow-definitions/new" },
-          ],
-        },
-        {
-          title: "Thông báo",
-          href: "/notifications",
-          icon: Bell,
-        },
-        {
-          title: "Trợ lý AI",
-          href: "/ai/chat",
-          icon: Sparkles,
-          badge: "AI",
-        },
-        {
-          title: "Minh họa Hoạt hình",
-          href: "/animation",
-          icon: Film,
-          badge: "NEW",
-        },
-      ],
-    },
-    {
-      label: "CÁ NHÂN (ESS)",
-      items: [
-        {
-          title: "Không gian của tôi",
-          href: "/me/profile",
-          icon: User,
-          children: [
-            { title: "Hồ sơ của tôi", href: "/me/profile" },
-            { title: "Khuôn mặt Face ID", href: "/me/face-enrollment" },
-            { title: "Chấm công trực tuyến", href: "/me/attendance/check-in" },
-            { title: "Lịch sử chấm công", href: "/me/attendance" },
-            { title: "Đơn nghỉ phép", href: "/me/leave" },
-            { title: "Phiếu lương điện tử", href: "/me/payslips" },
-            { title: "Đánh giá hiệu suất", href: "/me/performance" },
-            { title: "Lộ trình nghề nghiệp", href: "/me/career" },
-            { title: "Hợp đồng của tôi", href: "/me/contracts" },
-            { title: "Văn bản chờ tôi ký", href: "/me/signing" },
-            { title: "Đặt bàn & Phòng họp", href: "/me/workplace" },
-            { title: "Tài sản đang giữ", href: "/me/assets" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "QUẢN TRỊ NHÂN SỰ",
-      items: [
-        {
-          title: "Tổ chức & Phòng ban",
-          href: "/organization/departments",
-          icon: Building2,
-          children: [
-            { title: "Sơ đồ tổ chức", href: "/organization/departments" },
-            { title: "Danh sách công ty", href: "/organization/companies" },
-            { title: "Vùng miền & Chi nhánh", href: "/organization/regions-branches" },
-            { title: "Chức danh & Cấp bậc", href: "/organization/job-titles" },
-            { title: "Trung tâm chi phí", href: "/organization/cost-centers" },
-            { title: "Mô phỏng tái cơ cấu", href: "/org-simulations" },
-          ],
-        },
-        {
-          title: "Hồ sơ nhân viên",
-          href: "/employees",
-          icon: Users,
-          children: [
-            { title: "Danh sách nhân viên", href: "/employees" },
-            { title: "Tiếp nhận nhân sự mới", href: "/employees/new" },
-            { title: "Điều chuyển nhân sự", href: "/transfers" },
-          ],
-        },
-        {
-          title: "Tuyển dụng & Thu hút",
-          href: "/recruitment/openings",
-          icon: UserCheck,
-          children: [
-            { title: "Đề xuất tuyển dụng", href: "/recruitment/requests" },
-            { title: "Vị trí tuyển dụng", href: "/recruitment/openings" },
-            { title: "ATS Pipeline tuyển dụng", href: "/recruitment/pipeline", badge: "ATS" },
-            { title: "Bóc tách & Đánh giá CV", href: "/recruitment/cv-parser", badge: "AI" },
-            { title: "Danh sách ứng viên", href: "/recruitment/candidates" },
-            { title: "Hồ sơ ứng tuyển", href: "/recruitment/applications" },
-            { title: "Lịch phỏng vấn", href: "/recruitment/interviews" },
-            { title: "Thư mời nhận việc", href: "/recruitment/offers" },
-            { title: "Ngân hàng tài năng", href: "/recruitment/talent-pool" },
-            { title: "Cơ hội nội bộ", href: "/marketplace" },
-          ],
-        },
-        {
-          title: "Hội nhập & Thôi việc",
-          href: "/onboarding/plans",
-          icon: LogOut,
-          children: [
-            { title: "Kế hoạch hội nhập", href: "/onboarding/plans" },
-            { title: "Mẫu kế hoạch hội nhập", href: "/onboarding/templates" },
-            { title: "Đơn xin thôi việc", href: "/offboarding/resignations" },
-            { title: "Quy trình thôi việc", href: "/offboarding" },
-            { title: "Phỏng vấn nghỉ việc", href: "/offboarding/exit-interviews" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "HỒ SƠ, HỢP ĐỒNG & PHÁP CHẾ",
-      items: [
-        {
-          title: "Số hóa hồ sơ",
-          href: "/records/documents",
-          icon: FolderKanban,
-          children: [
-            { title: "Kho tài liệu tập trung", href: "/records/documents" },
-            { title: "Tải lên & Quét OCR", href: "/records/upload" },
-            { title: "Hồ sơ sắp hết hạn", href: "/records/expiring" },
-            { title: "Hàng đợi OCR bóc tách", href: "/documents/ocr-queue" },
-            { title: "Đối soát hồ sơ OCR", href: "/documents/ocr-verify" },
-            { title: "Chính sách lưu trữ", href: "/records/config/retention-policies" },
-          ],
-        },
-        {
-          title: "Hợp đồng lao động",
-          href: "/contracts",
-          icon: FileText,
-          children: [
-            { title: "Danh sách hợp đồng", href: "/contracts" },
-            { title: "Hợp đồng sắp hết hạn", href: "/contracts/expiring" },
-            { title: "Mẫu hợp đồng chuẩn", href: "/contract-templates" },
-            { title: "Văn bản chờ ký số", href: "/me/signing" },
-          ],
-        },
-        {
-          title: "Pháp chế & Tuân thủ",
-          href: "/compliance/dashboard",
-          icon: ShieldAlert,
-          children: [
-            { title: "Dashboard tuân thủ", href: "/compliance/dashboard" },
-            { title: "Văn bản pháp luật", href: "/compliance/legal-documents" },
-            { title: "Quy tắc kiểm tra", href: "/compliance/rules" },
-            { title: "Cảnh báo vi phạm", href: "/compliance/alerts" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "CÔNG, PHÉP & BẢNG LƯƠNG",
-      items: [
-        {
-          title: "Chấm công & Ca",
-          href: "/attendance/overview",
-          icon: Clock,
-          children: [
-            { title: "Tổng quan chấm công", href: "/attendance/overview" },
-            { title: "Nhật ký vào ra chi tiết", href: "/attendance/logs" },
-            { title: "Phân ca làm việc", href: "/attendance/shift-assignments" },
-            { title: "Đơn giải trình công", href: "/attendance/requests" },
-            { title: "Bảng tổng hợp công", href: "/attendance/timesheets" },
-          ],
-        },
-        {
-          title: "Nghỉ phép",
-          href: "/leave/requests",
-          icon: CalendarDays,
-          children: [
-            { title: "Danh sách đơn nghỉ phép", href: "/leave/requests" },
-            { title: "Quản lý quỹ phép", href: "/leave/balances" },
-            { title: "Lịch nghỉ toàn công ty", href: "/leave/calendar" },
-          ],
-        },
-        {
-          title: "Tiền lương & Đãi ngộ",
-          href: "/payroll/dashboard",
-          icon: DollarSign,
-          children: [
-            { title: "Dashboard chi phí lương", href: "/payroll/dashboard" },
-            { title: "Kỳ tính lương", href: "/payroll/periods" },
-            { title: "Thành phần thu nhập/khấu trừ", href: "/payroll/components" },
-            { title: "Quản lý tạm ứng", href: "/payroll/advances" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "HIỆU SUẤT & PHÁT TRIỂN",
-      items: [
-        {
-          title: "Hiệu suất & KPI",
-          href: "/performance/cycles",
-          icon: Award,
-          children: [
-            { title: "Chu kỳ đánh giá", href: "/performance/cycles" },
-            { title: "Phiếu đánh giá nhân viên", href: "/performance/reviews" },
-            { title: "Hiệu chuẩn kết quả (Bell Curve)", href: "/performance/calibration" },
-          ],
-        },
-        {
-          title: "Phát triển & Kế nhiệm",
-          href: "/career/skills-matrix",
-          icon: TrendingUp,
-          children: [
-            { title: "Ma trận kỹ năng", href: "/career/skills-matrix" },
-            { title: "Lộ trình thăng tiến", href: "/career/paths" },
-            { title: "Kế hoạch kế nhiệm (9-Box)", href: "/career/succession/9-box" },
-          ],
-        },
-        {
-          title: "Khen thưởng & Kỷ luật",
-          href: "/rewards",
-          icon: Award,
-          children: [
-            { title: "Khen thưởng vinh danh", href: "/rewards" },
-            { title: "Kỷ luật lao động", href: "/discipline" },
-            { title: "Giải quyết khiếu nại", href: "/complaints" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "VĂN PHÒNG & TÀI SẢN",
-      items: [
-        {
-          title: "Smart Workplace",
-          href: "/workplace/dashboard",
-          icon: MapPin,
-          children: [
-            { title: "Sơ đồ chỗ ngồi 2D", href: "/workplace/map", badge: "2D" },
-            { title: "Đặt bàn linh hoạt", href: "/workplace/desk-booking" },
-            { title: "Bàn làm việc của tôi", href: "/workplace" },
-            { title: "Quản lý sơ đồ tầng", href: "/workplace/admin/floors" },
-            { title: "Trình sửa bản đồ", href: "/workplace/admin/floors/fl_03/editor" },
-            { title: "Quản lý phòng họp", href: "/workplace/admin/room-bookings" },
-            { title: "Sự cố cơ sở vật chất", href: "/workplace/admin/issues" },
-          ],
-        },
-        {
-          title: "Tài sản doanh nghiệp",
-          href: "/assets",
-          icon: Building,
-          children: [
-            { title: "Danh sách tài sản", href: "/assets" },
-            { title: "Loại tài sản", href: "/assets/categories" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "HỆ THỐNG & BẢO MẬT",
-      items: [
-        {
-          title: "Quản trị hệ thống",
-          href: "/admin/users",
-          icon: Settings,
-          children: [
-            { title: "Người dùng tài khoản", href: "/admin/users" },
-            { title: "Vai trò & Phân quyền", href: "/admin/roles" },
-            { title: "Định nghĩa quy trình duyệt", href: "/admin/workflow-definitions" },
-            { title: "Cấu hình hệ thống", href: "/admin/system-configs" },
-            { title: "Lịch nghỉ lễ", href: "/admin/holidays" },
-            { title: "Danh mục kỹ năng", href: "/admin/skills" },
-            { title: "Gửi thông báo toàn công ty", href: "/admin/broadcast" },
-          ],
-        },
-        {
-          title: "Nhật ký kiểm toán",
-          href: "/audit-logs",
-          icon: History,
-        },
-        {
-          title: "Quản lý Công ty",
-          href: "/companies",
-          icon: ShieldCheck,
-        },
-      ],
-    },
-  ];
+  const { can, canAnyInResource, isSuperAdmin } = usePermission();
+
+  // Lọc đệ quy cây Menu Sidebar theo quyền hạn của người dùng
+  const filteredNavGroups = React.useMemo(() => {
+    if (isSuperAdmin) return navigationConfig;
+
+    return navigationConfig
+      .map((group) => {
+        const filteredItems = group.items
+          .map((item) => {
+            // Nếu có menu con (Submenu), tiến hành lọc menu con
+            if (item.children && item.children.length > 0) {
+              const validChildren = item.children.filter((child) => {
+                if (!child.permission) return true;
+                return can(child.permission);
+              });
+
+              // Nếu tất cả menu con đều bị ẩn -> Ẩn luôn menu cha
+              if (validChildren.length === 0) return null;
+
+              return { ...item, children: validChildren };
+            }
+
+            // Menu không có con: Kiểm tra quyền cụ thể hoặc quyền theo phân hệ
+            if (item.permission && !can(item.permission)) return null;
+            if (item.resource && !canAnyInResource(item.resource)) return null;
+
+            return item;
+          })
+          .filter(Boolean) as NavItem[];
+
+        return { ...group, items: filteredItems };
+      })
+      .filter((group) => group.items.length > 0);
+  }, [can, canAnyInResource, isSuperAdmin]);
 
   return (
     <aside
@@ -392,7 +126,7 @@ export function AdminSidebar({
 
       {/* ── Navigation Menu Scrollable ────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 scrollbar-thin">
-        {navGroups.map((group, groupIdx) => (
+        {filteredNavGroups.map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-1">
             {!collapsed && (
               <div className="px-3 pt-2 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none">

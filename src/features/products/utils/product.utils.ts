@@ -1,9 +1,6 @@
 import { formatCurrency, formatDate } from "@/lib/utils";
-import {
-  PRODUCT_CATEGORY_LABELS,
-  PRODUCT_STATUS_LABELS,
-} from "../constants/product.constants";
 import type { Product, ProductTableRow } from "../types/product.types";
+import { PRODUCT_STATUS_LABELS } from "../constants/product.constants";
 
 export function toProductTableRow(product: Product): ProductTableRow {
   return {
@@ -14,15 +11,5 @@ export function toProductTableRow(product: Product): ProductTableRow {
 }
 
 export function getProductStatusLabel(status: Product["status"]): string {
-  return PRODUCT_STATUS_LABELS[status];
-}
-
-export function getProductCategoryLabel(
-  category: Product["category"]
-): string {
-  return PRODUCT_CATEGORY_LABELS[category];
-}
-
-export function isLowStock(stock: number, threshold = 10): boolean {
-  return stock <= threshold;
+  return PRODUCT_STATUS_LABELS[status] ?? status;
 }

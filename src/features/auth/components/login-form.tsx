@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -10,7 +10,7 @@ import {
   EyeOff,
   Loader2,
   Lock,
-  Mail,
+  User as UserIcon,
   ShieldCheck,
 } from "lucide-react";
 
@@ -28,62 +28,89 @@ import {
 
 import { useLoginMutation } from "../api/auth-api";
 import { loginSchema, type LoginInput } from "../schemas/auth.schema";
+import {
+  AUTH_STORAGE_KEYS,
+  AUTH_ROUTES,
+} from "../constants/auth.constants";
 import { setCredentials } from "@/store/slices/auth.slice";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") || AUTH_ROUTES.DEFAULT_AFTER_LOGIN;
+
   const dispatch = useAppDispatch();
+  const { isAuthenticated, isInitialized } = useAppSelector(
+    (state) => state.auth
+  );
+
   const [login, { isLoading }] = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
       rememberMe: false,
     },
   });
 
+  // Tự động chuyển hướng nếu người dùng đã có phiên đăng nhập hợp lệ
   useEffect(() => {
-    const savedAccount = localStorage.getItem("cyclosa_remember_account");
+    if (isInitialized && isAuthenticated) {
+      router.replace(returnUrl);
+    }
+  }, [isInitialized, isAuthenticated, router, returnUrl]);
 
+  useEffect(() => {
+    const savedAccount = localStorage.getItem(AUTH_STORAGE_KEYS.REMEMBER_ACCOUNT);
     if (savedAccount) {
-      form.setValue("email", savedAccount);
+      form.setValue("username", savedAccount);
       form.setValue("rememberMe", true);
     }
   }, [form]);
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      const result = await login({
-        email: data.email,
+      const response = await login({
+        username: data.username.trim(),
         password: data.password,
       }).unwrap();
 
       if (data.rememberMe) {
-        localStorage.setItem("cyclosa_remember_account", data.email);
+        localStorage.setItem(AUTH_STORAGE_KEYS.REMEMBER_ACCOUNT, data.username.trim());
       } else {
-        localStorage.removeItem("cyclosa_remember_account");
+        localStorage.removeItem(AUTH_STORAGE_KEYS.REMEMBER_ACCOUNT);
       }
 
-      dispatch(setCredentials(result));
+      if (response.success && response.data) {
+        dispatch(setCredentials(response.data));
 
-      toast.success("Đăng nhập thành công!");
-      router.push("/products");
-    } catch {
+        toast.success("Đăng nhập thành công!", {
+          description: `Chào mừng ${data.username} trở lại hệ thống CYCLOSA.`,
+        });
+
+        router.replace(returnUrl);
+      } else {
+        toast.error("Đăng nhập không thành công", {
+          description: response.message || "Vui lòng kiểm tra lại thông tin.",
+        });
+      }
+    } catch (err: unknown) {
+      const errorObj = err as { data?: { message?: string } };
       toast.error("Đăng nhập thất bại", {
         description:
-          "Email/tên đăng nhập hoặc mật khẩu không chính xác.",
+          errorObj?.data?.message ||
+          "Tên đăng nhập hoặc mật khẩu không chính xác. Vui lòng thử lại.",
       });
     }
   };
 
   return (
     <div className="mx-auto w-full max-w-md space-y-7">
-
       {/* Mobile Brand */}
       <div className="flex items-center justify-center gap-2.5 md:hidden">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-bold text-white shadow-sm">
@@ -104,32 +131,31 @@ export function LoginForm() {
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
           Chào mừng trở lại
         </h1>
+        <p className="text-sm text-muted-foreground">
+          Đăng nhập vào hệ thống quản trị CYCLOSA HRM bằng tên đăng nhập của bạn.
+        </p>
       </div>
 
       {/* Form */}
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-5"
-        >
-
-          {/* Email */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          {/* Username */}
           <FormField
             control={form.control}
-            name="email"
+            name="username"
             render={({ field }) => (
               <FormItem className="space-y-2">
                 <FormLabel className="text-sm font-medium text-foreground">
-                  Email / Tên đăng nhập
+                  Tên đăng nhập
                 </FormLabel>
 
                 <FormControl>
                   <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <UserIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
                     <Input
                       type="text"
-                      placeholder="name@company.com"
+                      placeholder="admin"
                       autoComplete="username"
                       className="h-11 rounded-lg pl-10 pr-3 text-sm transition-shadow focus-visible:ring-2 focus-visible:ring-primary/20"
                       {...field}
@@ -154,7 +180,7 @@ export function LoginForm() {
                   </FormLabel>
 
                   <Link
-                    href="/auth/forgot-password"
+                    href={AUTH_ROUTES.FORGOT_PASSWORD}
                     className="text-xs font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
                   >
                     Quên mật khẩu?
@@ -176,15 +202,9 @@ export function LoginForm() {
                     <button
                       type="button"
                       tabIndex={-1}
-                      onClick={() =>
-                        setShowPassword((prev) => !prev)
-                      }
+                      onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      aria-label={
-                        showPassword
-                          ? "Ẩn mật khẩu"
-                          : "Hiện mật khẩu"
-                      }
+                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -214,7 +234,7 @@ export function LoginForm() {
                 />
 
                 <span className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                  Ghi nhớ đăng nhập
+                  Ghi nhớ tài khoản trên thiết bị này
                 </span>
               </label>
             )}
@@ -226,34 +246,14 @@ export function LoginForm() {
             className="h-11 w-full rounded-lg font-semibold shadow-sm transition-all hover:shadow-md"
             disabled={isLoading}
           >
-            {isLoading && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-
-            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Đang xác thực..." : "Đăng nhập hệ thống"}
           </Button>
 
-          {/* Register */}
-          <div className="relative py-1">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-
-            <div className="relative flex justify-center">
-              <span className="bg-card px-3 text-xs text-muted-foreground">
-                hoặc
-              </span>
-            </div>
-          </div>
-
-          <div className="text-center text-sm text-muted-foreground">
-            Chưa có tài khoản?{" "}
-            <Link
-              href="/auth/register"
-              className="font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
-            >
-              Tạo tài khoản
-            </Link>
+          {/* Security badge footer */}
+          <div className="pt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span>Bảo mật 2 lớp & Xác thực phiên tự động</span>
           </div>
         </form>
       </Form>

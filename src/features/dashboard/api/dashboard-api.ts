@@ -1,4 +1,4 @@
-import { baseApi } from "@/lib/base-api-rtk";
+import { baseApi } from "@/store/base-api-rtk";
 import type { ApiResponse } from "@/types/api.types";
 import type {
   DashboardOverviewResponse,

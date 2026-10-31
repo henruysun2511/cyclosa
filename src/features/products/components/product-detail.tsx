@@ -1,106 +1,127 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
-import { Pencil, Package } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductStatusBadge } from "./product-status-badge";
-import { getProductCategoryLabel, isLowStock } from "../utils/product.utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Product } from "../types/product.types";
 
 interface ProductDetailProps {
   product: Product;
+  onDelete?: () => void;
 }
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({ product, onDelete }: ProductDetailProps) {
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      {/* Left: Image */}
-      <Card className="lg:col-span-1">
-        <CardContent className="p-6">
-          {product.imageUrl ? (
-            <div className="relative aspect-square overflow-hidden rounded-lg">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="flex aspect-square items-center justify-center rounded-lg bg-muted">
-              <Package className="h-24 w-24 text-muted-foreground" />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      {/* ── Top Bar ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button variant="ghost" size="sm" asChild className="self-start">
+          <Link href="/products">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Quay lại danh sách
+          </Link>
+        </Button>
 
-      {/* Right: Details */}
-      <Card className="lg:col-span-2">
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl">{product.name}</CardTitle>
-            <div className="flex items-center gap-2">
-              <ProductStatusBadge status={product.status} />
-              <span className="text-sm text-muted-foreground">
-                {getProductCategoryLabel(product.category)}
-              </span>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <Button variant="outline" asChild>
             <Link href={`/products/${product.id}/edit`}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </Link>
           </Button>
+          <Button variant="destructive" onClick={onDelete}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Xóa sản phẩm
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Detail Card ─────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="border-b bg-muted/20">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="font-mono text-xs font-semibold text-primary uppercase">
+                SKU: {product.sku}
+              </span>
+              <CardTitle className="text-2xl font-bold mt-1">
+                {product.name}
+              </CardTitle>
+            </div>
+            <ProductStatusBadge status={product.status} />
+          </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <p className="text-muted-foreground">{product.description}</p>
-
-          <Separator />
-
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <CardContent className="pt-6">
+          <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Giá</dt>
-              <dd className="mt-1 text-lg font-semibold">
+              <dt className="text-sm font-medium text-muted-foreground">
+                Danh mục
+              </dt>
+              <dd className="mt-1 text-base font-semibold text-foreground">
+                {product.category}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">
+                Đơn giá niêm yết
+              </dt>
+              <dd className="mt-1 text-xl font-bold text-primary">
                 {formatCurrency(product.price)}
               </dd>
             </div>
+
             <div>
               <dt className="text-sm font-medium text-muted-foreground">
-                Tồn kho
+                Số lượng tồn kho
               </dt>
               <dd
-                className={`mt-1 text-lg font-semibold ${
-                  isLowStock(product.stock) ? "text-destructive" : ""
+                className={`mt-1 text-base font-bold ${
+                  product.stockQuantity === 0
+                    ? "text-destructive"
+                    : product.stockQuantity <= 10
+                    ? "text-amber-600"
+                    : "text-foreground"
                 }`}
               >
-                {product.stock}
-                {isLowStock(product.stock) && (
-                  <span className="ml-2 text-sm font-normal">(Sắp hết)</span>
-                )}
+                {product.stockQuantity.toLocaleString("vi-VN")} đơn vị
               </dd>
             </div>
+
             <div>
               <dt className="text-sm font-medium text-muted-foreground">
-                Ngày tạo
+                Thời điểm khởi tạo
               </dt>
-              <dd className="mt-1">{formatDate(product.createdAt)}</dd>
+              <dd className="mt-1 text-sm text-foreground">
+                {formatDate(product.createdAt)}
+              </dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Cập nhật lần cuối
-              </dt>
-              <dd className="mt-1">{formatDate(product.updatedAt)}</dd>
-            </div>
+
+            {product.updatedAt && (
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground">
+                  Cập nhật gần nhất
+                </dt>
+                <dd className="mt-1 text-sm text-foreground">
+                  {formatDate(product.updatedAt)}
+                </dd>
+              </div>
+            )}
           </dl>
+
+          {/* ── Mô tả chi tiết ───────────────────────────────────────── */}
+          <div className="mt-8 border-t pt-6">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Mô tả chi tiết sản phẩm
+            </h4>
+            <div className="prose prose-sm max-w-none text-foreground whitespace-pre-line bg-muted/30 p-4 rounded-md">
+              {product.description || "Chưa có mô tả chi tiết cho sản phẩm này."}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

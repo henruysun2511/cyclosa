@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   LayoutGrid,
@@ -14,8 +15,16 @@ import {
   Bell,
   PanelLeftClose,
   PanelLeft,
+  LogOut,
+  User,
+  Shield,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { logout } from "@/store/slices/auth.slice";
+import { useLogoutMutation } from "@/features/auth/api/auth-api";
+import { ChangePasswordDialog } from "@/features/auth/components/change-password-dialog";
 
 export interface AdminHeaderProps {
   sidebarOpen: boolean;
@@ -26,8 +35,16 @@ export function AdminHeader({
   sidebarOpen,
   onToggleSidebar,
 }: AdminHeaderProps) {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const authUser = useAppSelector((state) => state.auth.user);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const [triggerLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -40,6 +57,21 @@ export function AdminHeader({
         setIsFullscreen(false);
         toast.info("Đã thoát chế độ toàn màn hình");
       }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await triggerLogout().unwrap();
+    } catch {
+      // Ignored
+    } finally {
+      dispatch(logout());
+      toast.success("Đăng xuất thành công", {
+        description: "Hẹn gặp lại bạn trong phiên làm việc tiếp theo.",
+      });
+      setUserMenuOpen(false);
+      router.push("/login");
     }
   };
 
@@ -68,13 +100,11 @@ export function AdminHeader({
           </div>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Tìm kiếm nhanh (nhân viên, chức danh, báo cáo)..."
             className="input-search"
           />
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-            <span className="badge-shortcut">
-              CTRL + /
-            </span>
+            <span className="badge-shortcut">CTRL + /</span>
           </div>
         </div>
 
@@ -82,8 +112,8 @@ export function AdminHeader({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            title="Applications Grid"
-            onClick={() => toast.info("Ứng dụng nhanh")}
+            title="Ứng dụng nhanh"
+            onClick={() => toast.info("Tính năng đang phát triển")}
             className="btn-icon-ghost"
           >
             <LayoutGrid className="h-4 w-4" />
@@ -138,7 +168,6 @@ export function AdminHeader({
 
         {/* Utility Icon Cluster */}
         <div className="flex items-center gap-1 border-l border-border pl-2 sm:pl-3">
-          {/* Maximize screen */}
           <button
             type="button"
             onClick={toggleFullscreen}
@@ -152,7 +181,6 @@ export function AdminHeader({
             )}
           </button>
 
-          {/* Grid layout */}
           <button
             type="button"
             title="Lưới ứng dụng"
@@ -162,18 +190,16 @@ export function AdminHeader({
             <Grid3X3 className="h-4 w-4" />
           </button>
 
-          {/* Messages with dot */}
           <button
             type="button"
             title="Tin nhắn"
-            onClick={() => toast.info("Bạn có 3 tin nhắn chưa đọc")}
+            onClick={() => toast.info("Bạn có 0 tin nhắn mới")}
             className="btn-icon-ghost relative"
           >
             <MessageSquare className="h-4 w-4" />
             <span className="header-dot bg-primary" />
           </button>
 
-          {/* Emails */}
           <button
             type="button"
             title="Hộp thư"
@@ -183,35 +209,109 @@ export function AdminHeader({
             <Mail className="h-4 w-4" />
           </button>
 
-          {/* Notifications bell with dot */}
           <button
             type="button"
             title="Thông báo"
-            onClick={() => toast.info("Bạn có 5 thông báo mới")}
+            onClick={() => toast.info("Không có thông báo mới")}
             className="btn-icon-ghost relative"
           >
             <Bell className="h-4 w-4" />
-            <span className="header-dot bg-primary" />
           </button>
         </div>
 
-        {/* User avatar */}
-        <div className="flex items-center gap-2 pl-1">
-          <div className="relative cursor-pointer">
-            <div className="header-avatar-circle overflow-hidden">
-              <img
-                src="/avatars/emp_1.jpg"
-                alt="User Avatar"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
-              />
+        {/* User avatar & Account Dropdown */}
+        <div className="relative pl-1">
+          {isAuthenticated && authUser ? (
+            <div>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 rounded-full p-0.5 transition-shadow hover:ring-2 hover:ring-primary/20"
+                aria-label="Menu tài khoản"
+              >
+                <div className="relative">
+                  <div className="header-avatar-circle flex items-center justify-center bg-primary/10 text-primary font-semibold text-xs overflow-hidden">
+                    {authUser.email.substring(0, 2).toUpperCase()}
+                  </div>
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <div className="filter-dropdown-menu right-0 w-64 p-2 z-50 shadow-xl border rounded-xl bg-card">
+                  {/* User info header */}
+                  <div className="border-b border-border px-3 py-2.5">
+                    <p className="text-sm font-semibold truncate text-foreground">
+                      {authUser.email}
+                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <Shield className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {authUser.roles && authUser.roles.length > 0
+                          ? authUser.roles.join(", ")
+                          : "Thành viên"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        toast.info("Trang hồ sơ cá nhân đang phát triển");
+                      }}
+                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md flex items-center"
+                    >
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>Hồ sơ cá nhân</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setChangePasswordOpen(true);
+                      }}
+                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md flex items-center"
+                    >
+                      <KeyRound className="h-4 w-4 text-muted-foreground" />
+                      <span>Đổi mật khẩu</span>
+                    </button>
+                  </div>
+
+                  <div className="border-t border-border pt-1">
+                    <button
+                      type="button"
+                      disabled={isLoggingOut}
+                      onClick={handleLogout}
+                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md flex items-center font-medium"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>{isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-          </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
+              className="text-xs font-semibold text-primary hover:underline px-2 py-1"
+            >
+              Đăng nhập
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+      />
     </header>
   );
 }

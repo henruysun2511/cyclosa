@@ -1,6 +1,7 @@
 "use client";
 
 import { StoreProvider } from "@/store/provider";
+import { AuthInitializer } from "@/features/auth/components/auth-initializer";
 import { Toaster } from "@/components/ui/sonner";
 
 interface ProvidersProps {
@@ -10,8 +11,10 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <StoreProvider>
-      {children}
-      <Toaster />
+      <AuthInitializer>
+        {children}
+        <Toaster />
+      </AuthInitializer>
     </StoreProvider>
   );
 }

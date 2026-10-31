@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { baseApi } from "@/lib/base-api-rtk";
+import { baseApi } from "@/store/base-api-rtk";
 import { uiSlice } from "./slices/ui.slice";
 import { authSlice } from "./slices/auth.slice";
 

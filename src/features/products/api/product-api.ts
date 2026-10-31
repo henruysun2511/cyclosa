@@ -1,9 +1,6 @@
-import { baseApi } from "@/lib/base-api-rtk";
+import { baseApi } from "@/store/base-api-rtk";
 import { buildQueryString } from "@/lib/utils";
-import type {
-  ApiResponse,
-  PaginatedResponse,
-} from "@/types/api.types";
+import type { ApiResponse, PageData } from "@/types/api.types";
 import type {
   Product,
   CreateProductInput,
@@ -13,24 +10,23 @@ import type {
 
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // ── GET /products (list + filter + pagination) ───────────────────────
-    getProducts: builder.query<
-      PaginatedResponse<Product>,
-      Partial<ProductFilterParams>
-    >({
+    // ── GET /products (danh sách + lọc + phân trang) ─────────────────────
+    getProducts: builder.query<PageData<Product>, Partial<ProductFilterParams>>({
       query: (params = {}) => ({
         url: `/products?${buildQueryString(params)}`,
         method: "GET",
       }),
+      transformResponse: (response: ApiResponse<PageData<Product>>) =>
+        response.data,
       providesTags: (result) =>
         result
           ? [
-              ...result.data.map(({ id }) => ({
-                type: "Product" as const,
-                id,
-              })),
-              { type: "Product", id: "LIST" },
-            ]
+            ...result.items.map(({ id }) => ({
+              type: "Product" as const,
+              id,
+            })),
+            { type: "Product", id: "LIST" },
+          ]
           : [{ type: "Product", id: "LIST" }],
     }),
 
@@ -55,14 +51,14 @@ export const productApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: "Product", id: "LIST" }],
     }),
 
-    // ── PATCH /products/:id ──────────────────────────────────────────────
+    // ── PUT /products/:id ────────────────────────────────────────────────
     updateProduct: builder.mutation<
       Product,
       { id: string; body: UpdateProductInput }
     >({
       query: ({ id, body }) => ({
         url: `/products/${id}`,
-        method: "PATCH",
+        method: "PUT",
         body,
       }),
       transformResponse: (response: ApiResponse<Product>) => response.data,

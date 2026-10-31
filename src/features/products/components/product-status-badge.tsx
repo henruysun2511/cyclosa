@@ -11,8 +11,8 @@ interface ProductStatusBadgeProps {
 
 export function ProductStatusBadge({ status }: ProductStatusBadgeProps) {
   return (
-    <Badge variant={PRODUCT_STATUS_VARIANTS[status]}>
-      {PRODUCT_STATUS_LABELS[status]}
+    <Badge variant={PRODUCT_STATUS_VARIANTS[status] ?? "default"}>
+      {PRODUCT_STATUS_LABELS[status] ?? status}
     </Badge>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,108 +32,127 @@ import {
   createProductSchema,
   updateProductSchema,
 } from "../schemas/product.schema";
+import {
+  useCreateProductMutation,
+  useUpdateProductMutation,
+} from "../api/product-api";
 import type {
-  CreateProductInput,
   Product,
+  CreateProductInput,
   UpdateProductInput,
 } from "../types/product.types";
 
-// ── Discriminated union for create vs edit mode ───────────────────────────
-type ProductFormProps =
-  | {
-      mode: "create";
-      onSubmit: (data: CreateProductInput) => Promise<void>;
-      isLoading: boolean;
-      defaultValues?: undefined;
-    }
-  | {
-      mode: "edit";
-      defaultValues: Partial<Product>;
-      onSubmit: (data: UpdateProductInput) => Promise<void>;
-      isLoading: boolean;
-    };
+export interface ProductFormProps {
+  mode: "create" | "edit";
+  initialData?: Product;
+  defaultValues?: Partial<CreateProductInput>;
+  onSubmit?: (data: CreateProductInput) => Promise<void>;
+  isLoading?: boolean;
+}
 
-export function ProductForm(props: ProductFormProps) {
-  const { mode, onSubmit, isLoading } = props;
-  const isEdit = mode === "edit";
+export function ProductForm({
+  mode,
+  initialData,
+  defaultValues,
+  onSubmit: externalOnSubmit,
+  isLoading: externalLoading,
+}: ProductFormProps) {
+  const router = useRouter();
+  const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+  const isSubmitting = externalLoading || isCreating || isUpdating;
 
-  const form = useForm<CreateProductInput | UpdateProductInput>({
-    resolver: zodResolver(isEdit ? updateProductSchema : createProductSchema),
-    defaultValues: isEdit
-      ? {
-          name: props.defaultValues.name ?? "",
-          description: props.defaultValues.description ?? "",
-          price: props.defaultValues.price,
-          stock: props.defaultValues.stock,
-          status: props.defaultValues.status,
-          category: props.defaultValues.category,
-          imageUrl: props.defaultValues.imageUrl ?? "",
-        }
-      : {
-          name: "",
-          description: "",
-          price: undefined,
-          stock: undefined,
-          status: "draft",
-          category: undefined,
-          imageUrl: "",
-        },
+  const defaultFormValues: CreateProductInput = {
+    sku: initialData?.sku ?? defaultValues?.sku ?? "",
+    name: initialData?.name ?? defaultValues?.name ?? "",
+    category:
+      initialData?.category ??
+      defaultValues?.category ??
+      PRODUCT_CATEGORY_OPTIONS[0].value,
+    price: initialData?.price ?? defaultValues?.price ?? 0,
+    stockQuantity:
+      initialData?.stockQuantity ?? defaultValues?.stockQuantity ?? 0,
+    status: initialData?.status ?? defaultValues?.status ?? "ACTIVE",
+    description: initialData?.description ?? defaultValues?.description ?? "",
+  };
+
+  const form = useForm<CreateProductInput>({
+    resolver: zodResolver(createProductSchema),
+    defaultValues: defaultFormValues,
   });
+
+  const handleSubmit = async (data: CreateProductInput) => {
+    if (externalOnSubmit) {
+      await externalOnSubmit(data);
+      return;
+    }
+
+    try {
+      if (mode === "create") {
+        const created = await createProduct(data).unwrap();
+        toast.success(`Sản phẩm "${created.name}" đã được tạo thành công.`);
+        router.push("/products");
+      } else if (initialData) {
+        const updated = await updateProduct({
+          id: initialData.id,
+          body: data,
+        }).unwrap();
+        toast.success(`Cập nhật sản phẩm "${updated.name}" thành công.`);
+        router.push(`/products/${initialData.id}`);
+      }
+    } catch (err: unknown) {
+      const errorMsg =
+        (err as { data?: { message?: string } })?.data?.message ??
+        "Đã có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.";
+      toast.error(errorMsg);
+    }
+  };
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit as never)}
-        className="space-y-6"
-      >
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Name */}
+          {/* ── Mã SKU ─────────────────────────────────────────────────── */}
+          <FormField
+            control={form.control}
+            name="sku"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Mã SKU <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="VD: LAPTOP-DELL-5520"
+                    disabled={mode === "edit" || isSubmitting}
+                    className="font-mono"
+                  />
+                </FormControl>
+                <FormDescription>
+                  {mode === "edit"
+                    ? "Mã định danh duy nhất (không được phép sửa)"
+                    : "Chỉ gồm chữ cái, số, gạch ngang và gạch dưới"}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* ── Tên sản phẩm ───────────────────────────────────────────── */}
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem className="md:col-span-2">
-                <FormLabel>Tên sản phẩm *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nhập tên sản phẩm..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Description */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="md:col-span-2">
-                <FormLabel>Mô tả *</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Nhập mô tả sản phẩm..."
-                    rows={4}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Price */}
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
               <FormItem>
-                <FormLabel>Giá (VND) *</FormLabel>
+                <FormLabel>
+                  Tên sản phẩm <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    placeholder="0"
                     {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    placeholder="VD: Laptop Dell Latitude 5520 Core i7"
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -138,36 +160,19 @@ export function ProductForm(props: ProductFormProps) {
             )}
           />
 
-          {/* Stock */}
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tồn kho *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Category */}
+          {/* ── Danh mục sản phẩm ───────────────────────────────────────── */}
           <FormField
             control={form.control}
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Danh mục *</FormLabel>
+                <FormLabel>
+                  Danh mục <span className="text-destructive">*</span>
+                </FormLabel>
                 <Select
+                  value={field.value}
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  disabled={isSubmitting}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -175,9 +180,9 @@ export function ProductForm(props: ProductFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {PRODUCT_CATEGORY_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                    {PRODUCT_CATEGORY_OPTIONS.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -187,16 +192,19 @@ export function ProductForm(props: ProductFormProps) {
             )}
           />
 
-          {/* Status */}
+          {/* ── Trạng thái sản phẩm ─────────────────────────────────────── */}
           <FormField
             control={form.control}
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Trạng thái *</FormLabel>
+                <FormLabel>
+                  Trạng thái <span className="text-destructive">*</span>
+                </FormLabel>
                 <Select
+                  value={field.value}
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  disabled={isSubmitting}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -204,9 +212,9 @@ export function ProductForm(props: ProductFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {PRODUCT_STATUS_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                    {PRODUCT_STATUS_OPTIONS.map((st) => (
+                      <SelectItem key={st.value} value={st.value}>
+                        {st.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -216,18 +224,49 @@ export function ProductForm(props: ProductFormProps) {
             )}
           />
 
-          {/* Image URL */}
+          {/* ── Đơn giá ────────────────────────────────────────────────── */}
           <FormField
             control={form.control}
-            name="imageUrl"
+            name="price"
             render={({ field }) => (
-              <FormItem className="md:col-span-2">
-                <FormLabel>URL Hình ảnh</FormLabel>
+              <FormItem>
+                <FormLabel>
+                  Đơn giá (VNĐ) <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="https://example.com/image.jpg"
-                    {...field}
-                    value={field.value ?? ""}
+                    type="number"
+                    min="0"
+                    step="1000"
+                    placeholder="0"
+                    disabled={isSubmitting}
+                    value={field.value}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* ── Số lượng tồn kho ───────────────────────────────────────── */}
+          <FormField
+            control={form.control}
+            name="stockQuantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Số lượng tồn kho <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    disabled={isSubmitting}
+                    value={field.value}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -236,13 +275,40 @@ export function ProductForm(props: ProductFormProps) {
           />
         </div>
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
-            Đặt lại
+        {/* ── Mô tả chi tiết ───────────────────────────────────────────── */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mô tả chi tiết</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  value={field.value ?? ""}
+                  rows={4}
+                  placeholder="Thông số kỹ thuật, cấu hình, xuất xứ sản phẩm..."
+                  disabled={isSubmitting}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* ── Actions ──────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
+            Hủy bỏ
           </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEdit ? "Cập nhật" : "Tạo sản phẩm"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {mode === "create" ? "Tạo sản phẩm" : "Lưu thay đổi"}
           </Button>
         </div>
       </form>
