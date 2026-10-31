@@ -14,7 +14,7 @@ import {
   Square,
   RotateCcw,
   Loader2,
-  AlertCircle,
+  Minus,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,104 +43,139 @@ import {
   useGetRolePermissionsQuery,
   useAssignRolePermissionsMutation,
   useCreateRoleMutation,
-  type RoleResponse,
   type PermissionScopeItem,
   type PermissionResponse,
 } from "@/features/authorization";
 
-// ── Resource Metadata & Category Mapping (Matching static-ui) ─────────────────
-interface ResourceMeta {
-  code: string;
-  resourceName: string;
-  category: string;
+// ── Checkbox Helper matching User Screenshot (Check, Minus, Empty) ────────────
+function HierarchicalCheckbox({
+  checked,
+  indeterminate,
+  onChange,
+  className,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange();
+      }}
+      className={cn(
+        "h-4 w-4 rounded flex items-center justify-center transition-colors shrink-0 outline-none",
+        checked || indeterminate
+          ? "bg-primary text-primary-foreground border border-primary shadow-2xs"
+          : "border border-input bg-background hover:border-primary/50",
+        className
+      )}
+    >
+      {indeterminate ? (
+        <Minus className="h-3 w-3 stroke-[3]" />
+      ) : checked ? (
+        <Check className="h-3 w-3 stroke-[3]" />
+      ) : null}
+    </button>
+  );
 }
 
-const RESOURCE_META_MAP: Record<string, ResourceMeta> = {
-  ORG: {
-    code: "ORG_STRUCTURE",
-    resourceName: "Sơ đồ tổ chức & Phòng ban",
-    category: "Cơ cấu & Tổ chức",
+// ── 6 Nhóm Phân Hệ Lớn (Level 1: Groups) & Tài nguyên con (Level 2) ──────────
+const PERMISSION_GROUPS = [
+  {
+    key: "HR_GROUP",
+    title: "HỒ SƠ & NHÂN SỰ",
+    resources: [
+      { key: "EMPLOYEE", name: "Hồ sơ nhân viên & Lý lịch" },
+      { key: "CONTRACT", name: "Hợp đồng lao động & Ký số" },
+    ],
   },
-  EMPLOYEE: {
-    code: "HR_EMPLOYEE",
-    resourceName: "Hồ sơ nhân viên & Lý lịch",
-    category: "Hồ sơ & Nhân sự",
+  {
+    key: "TIME_GROUP",
+    title: "CHẤM CÔNG & NGHỈ PHÉP",
+    resources: [
+      { key: "ATTENDANCE", name: "Chấm công & Ca làm việc" },
+      { key: "LEAVE", name: "Đơn xin nghỉ phép & Phê duyệt" },
+    ],
   },
-  CONTRACT: {
-    code: "HR_CONTRACT",
-    resourceName: "Hợp đồng lao động & Phụ lục",
-    category: "Hồ sơ & Nhân sự",
+  {
+    key: "PAYROLL_GROUP",
+    title: "TIỀN LƯƠNG & ĐÃI NGỘ",
+    resources: [
+      { key: "PAYROLL", name: "Bảng tính lương & Phiếu lương" },
+    ],
   },
-  ATTENDANCE: {
-    code: "TIME_ATTENDANCE",
-    resourceName: "Bảng chấm công & Ca kíp",
-    category: "Chấm công & Ca kíp",
+  {
+    key: "ORG_GROUP",
+    title: "CƠ CẤU & TỔ CHỨC",
+    resources: [
+      { key: "ORG", name: "Sơ đồ tổ chức & Phòng ban" },
+    ],
   },
-  LEAVE: {
-    code: "TIME_LEAVE",
-    resourceName: "Đơn xin nghỉ phép & Tăng ca",
-    category: "Chấm công & Ca kíp",
+  {
+    key: "TALENT_GROUP",
+    title: "TUYỂN DỤNG & HIỆU SUẤT",
+    resources: [
+      { key: "RECRUITMENT", name: "Kế hoạch & Tuyển dụng" },
+      { key: "PERFORMANCE", name: "Đánh giá hiệu suất & KPI" },
+    ],
   },
-  PAYROLL: {
-    code: "PAYROLL_SHEET",
-    resourceName: "Bảng tính lương & Thu nhập",
-    category: "Tiền lương & Đãi ngộ",
+  {
+    key: "SYSTEM_GROUP",
+    title: "HỆ THỐNG & BẢO MẬT",
+    resources: [
+      { key: "ROLE", name: "Quản lý vai trò & Ma trận phân quyền" },
+      { key: "USER", name: "Tài khoản người dùng" },
+      { key: "WORKPLACE", name: "Không gian số & Tài sản" },
+      { key: "AUDIT", name: "Nhật ký kiểm toán & Tuân thủ" },
+    ],
   },
-  RECRUITMENT: {
-    code: "REC_PIPELINE",
-    resourceName: "Tuyển dụng & Ứng viên",
-    category: "Tuyển dụng & Đào tạo",
-  },
-  PERFORMANCE: {
-    code: "KPI_EVALUATION",
-    resourceName: "Đánh giá Hiệu suất & KPI",
-    category: "Đánh giá & Hiệu suất",
-  },
-  ROLE: {
-    code: "ROLE_MANAGEMENT",
-    resourceName: "Quản trị Vai trò & Phân quyền",
-    category: "Hệ thống & Cấu hình",
-  },
-  USER: {
-    code: "USER_ACCOUNTS",
-    resourceName: "Quản trị Tài khoản Người dùng",
-    category: "Hệ thống & Cấu hình",
-  },
-  WORKPLACE: {
-    code: "WORKPLACE_ASSETS",
-    resourceName: "Không gian làm việc & Tài sản",
-    category: "Hệ thống & Cấu hình",
-  },
-  AUDIT: {
-    code: "AUDIT_LOGS",
-    resourceName: "Nhật ký Kiểm toán & Tuân thủ",
-    category: "Hệ thống & Cấu hình",
-  },
-};
+];
 
-// ── Resource Matrix Row Interface ─────────────────────────────────────────────
-interface ResourceRowState {
-  resourceKey: string;
-  resourceName: string;
-  code: string;
-  category: string;
-  viewPerm?: PermissionResponse;
-  createPerm?: PermissionResponse;
-  editPerm?: PermissionResponse;
-  deletePerm?: PermissionResponse;
-  approvePerm?: PermissionResponse;
-  exportPerm?: PermissionResponse;
-  view: boolean;
-  viewScope: DataScope;
-  create: boolean;
-  edit: boolean;
-  delete: boolean;
-  approve: boolean;
-  export: boolean;
+// Helper sinh tiêu đề tự nhiên giống hình (Xem..., Tạo..., Sửa..., Xóa...)
+function getPermissionTitle(perm: PermissionResponse, resourceName: string): string {
+  const action = perm.action.toUpperCase();
+  const rawName = resourceName.toLowerCase().replace("quản lý ", "").replace("quản trị ", "");
+  switch (action) {
+    case "VIEW":
+      return `Xem ${rawName}`;
+    case "CREATE":
+    case "APPLY":
+      return `Tạo ${rawName}`;
+    case "UPDATE":
+    case "EDIT":
+    case "PROCESS":
+      return `Sửa ${rawName}`;
+    case "DELETE":
+      return `Xóa ${rawName}`;
+    case "APPROVE":
+      return `Phê duyệt ${rawName}`;
+    case "SIGN":
+      return `Ký duyệt ${rawName}`;
+    case "CHECKIN":
+      return `Điểm danh trực tuyến`;
+    case "EVALUATE":
+      return `Đánh giá ${rawName}`;
+    case "ACTIVATE":
+      return `Kích hoạt / Khóa tài khoản`;
+    case "ASSIGN":
+      return `Phân bổ vai trò`;
+    case "SIMULATE":
+      return `Mô phỏng cơ cấu tổ chức`;
+    case "VIEW_SALARY":
+      return `Xem chi tiết phiếu lương`;
+    case "MANAGE":
+      return `Quản lý ${rawName}`;
+    default:
+      return `${perm.action} ${rawName}`;
+  }
 }
 
 export default function AdminRolesPage() {
-  // ── 1. Query Roles list from Backend ───────────────────────────────────────
+  // ── 1. Load Roles from Backend ─────────────────────────────────────────────
   const { data: rolesData, isLoading: isLoadingRoles, refetch: refetchRoles } = useGetRolesQuery({
     size: 100,
     sortBy: "createdAt",
@@ -162,7 +197,7 @@ export default function AdminRolesPage() {
     return roles.find((r) => r.id === selectedRoleId) || roles[0];
   }, [roles, selectedRoleId]);
 
-  // ── 2. Query Permissions Meta & Selected Role Permissions ───────────────────
+  // ── 2. Load Permissions & Role Assignments ─────────────────────────────────
   const { data: groupedData, isLoading: isLoadingGrouped } = useGetGroupedPermissionsQuery();
   const {
     data: rolePermsData,
@@ -175,213 +210,115 @@ export default function AdminRolesPage() {
   const [assignRolePermissions, { isLoading: isSaving }] = useAssignRolePermissionsMutation();
   const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
 
-  // ── 3. Filters State ───────────────────────────────────────────────────────
+  // ── 3. Filters & Modal State ───────────────────────────────────────────────
   const [searchRole, setSearchRole] = useState("");
-  const [searchResource, setSearchResource] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Create Role Dialog State
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleCode, setNewRoleCode] = useState("");
   const [newRoleDesc, setNewRoleDesc] = useState("");
   const [cloneFromRoleId, setCloneFromRoleId] = useState("");
 
-  // ── 4. Build Dynamic Matrix State from Backend Grouped Permissions ──────────
-  const [matrixRows, setMatrixRows] = useState<ResourceRowState[]>([]);
+  // ── 4. Local Matrix Permission State: Map<PermissionCode, { granted, dataScope, permId }> ──
+  const [permissionState, setPermissionState] = useState<
+    Record<string, { granted: boolean; dataScope: DataScope; permissionId: string }>
+  >({});
 
   useEffect(() => {
     if (!groupedData?.data) return;
 
-    const grouped = groupedData.data;
     const assignedMap = new Map<string, DataScope>();
-
     if (rolePermsData?.data) {
       rolePermsData.data.forEach((p) => {
         assignedMap.set(p.permissionCode, p.dataScope);
       });
     }
 
-    const rows: ResourceRowState[] = Object.entries(grouped).map(([resourceKey, perms]) => {
-      const meta = RESOURCE_META_MAP[resourceKey] || {
-        code: resourceKey,
-        resourceName: `Phân hệ ${resourceKey}`,
-        category: "Khác",
-      };
+    const nextState: Record<string, { granted: boolean; dataScope: DataScope; permissionId: string }> = {};
 
-      const viewPerm = perms.find((p) => p.action.toUpperCase() === "VIEW");
-      const createPerm = perms.find(
-        (p) =>
-          p.action.toUpperCase() === "CREATE" ||
-          p.action.toUpperCase() === "APPLY" ||
-          p.action.toUpperCase() === "CHECKIN"
-      );
-      const editPerm = perms.find(
-        (p) =>
-          p.action.toUpperCase() === "UPDATE" ||
-          p.action.toUpperCase() === "PROCESS" ||
-          p.action.toUpperCase() === "EDIT"
-      );
-      const deletePerm = perms.find((p) => p.action.toUpperCase() === "DELETE");
-      const approvePerm = perms.find(
-        (p) =>
-          p.action.toUpperCase() === "APPROVE" ||
-          p.action.toUpperCase() === "SIGN" ||
-          p.action.toUpperCase() === "EVALUATE" ||
-          p.action.toUpperCase() === "ACTIVATE"
-      );
-      const exportPerm = perms.find(
-        (p) =>
-          p.action.toUpperCase() === "MANAGE" ||
-          p.action.toUpperCase() === "ASSIGN" ||
-          p.action.toUpperCase() === "SIMULATE" ||
-          p.action.toUpperCase() === "VIEW_SALARY"
-      );
-
-      const hasView = viewPerm ? assignedMap.has(viewPerm.code) : false;
-      const viewScope = viewPerm ? (assignedMap.get(viewPerm.code) || DATA_SCOPE.COMPANY) : DATA_SCOPE.COMPANY;
-
-      return {
-        resourceKey,
-        resourceName: meta.resourceName,
-        code: meta.code,
-        category: meta.category,
-        viewPerm,
-        createPerm,
-        editPerm,
-        deletePerm,
-        approvePerm,
-        exportPerm,
-        view: hasView,
-        viewScope,
-        create: createPerm ? assignedMap.has(createPerm.code) : false,
-        edit: editPerm ? assignedMap.has(editPerm.code) : false,
-        delete: deletePerm ? assignedMap.has(deletePerm.code) : false,
-        approve: approvePerm ? assignedMap.has(approvePerm.code) : false,
-        export: exportPerm ? assignedMap.has(exportPerm.code) : false,
-      };
+    Object.values(groupedData.data).forEach((perms) => {
+      perms.forEach((perm) => {
+        const isAssigned = assignedMap.has(perm.code);
+        const scope = assignedMap.get(perm.code) || DATA_SCOPE.COMPANY;
+        nextState[perm.code] = {
+          granted: isAssigned,
+          dataScope: scope,
+          permissionId: perm.id,
+        };
+      });
     });
 
-    setMatrixRows(rows);
+    setPermissionState(nextState);
   }, [groupedData, rolePermsData, selectedRoleId]);
 
-  // ── 5. Categories List ─────────────────────────────────────────────────────
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    matrixRows.forEach((r) => set.add(r.category));
-    return Array.from(set);
-  }, [matrixRows]);
-
-  // ── 6. Filtered Lists ──────────────────────────────────────────────────────
-  const filteredRoles = useMemo(() => {
-    return roles.filter(
-      (r) =>
-        r.name.toLowerCase().includes(searchRole.toLowerCase()) ||
-        r.code.toLowerCase().includes(searchRole.toLowerCase()) ||
-        (r.description && r.description.toLowerCase().includes(searchRole.toLowerCase()))
-    );
-  }, [roles, searchRole]);
-
-  const filteredPermissions = useMemo(() => {
-    return matrixRows.filter((p) => {
-      const matchText =
-        p.resourceName.toLowerCase().includes(searchResource.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchResource.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchResource.toLowerCase());
-      const matchCategory = selectedCategory === "ALL" || p.category === selectedCategory;
-      return matchText && matchCategory;
+  // ── 5. Permission Toggle Handlers ──────────────────────────────────────────
+  const handleTogglePermission = (code: string) => {
+    setPermissionState((prev) => {
+      const item = prev[code];
+      if (!item) return prev;
+      return {
+        ...prev,
+        [code]: {
+          ...item,
+          granted: !item.granted,
+        },
+      };
     });
-  }, [matrixRows, searchResource, selectedCategory]);
-
-  // ── 7. Matrix Interactions Handlers ─────────────────────────────────────────
-  const handleToggleAction = (
-    resourceKey: string,
-    action: "view" | "create" | "edit" | "delete" | "approve" | "export"
-  ) => {
-    setMatrixRows((prev) =>
-      prev.map((row) => {
-        if (row.resourceKey !== resourceKey) return row;
-        return {
-          ...row,
-          [action]: !row[action],
-        };
-      })
-    );
   };
 
-  const handleScopeChange = (resourceKey: string, scope: DataScope) => {
-    setMatrixRows((prev) =>
-      prev.map((row) => {
-        if (row.resourceKey !== resourceKey) return row;
-        return {
-          ...row,
-          viewScope: scope,
-          view: true,
-        };
-      })
-    );
+  const handleScopeChange = (code: string, scope: DataScope) => {
+    setPermissionState((prev) => {
+      const item = prev[code];
+      if (!item) return prev;
+      return {
+        ...prev,
+        [code]: {
+          ...item,
+          dataScope: scope,
+        },
+      };
+    });
   };
 
-  const handleToggleColumn = (action: "view" | "create" | "edit" | "delete" | "approve" | "export") => {
-    const targetRows = filteredPermissions.filter((r) => r[`${action}Perm`]);
-    if (targetRows.length === 0) return;
-
-    const allChecked = targetRows.every((r) => r[action]);
-    const nextVal = !allChecked;
-
-    const targetKeys = new Set(targetRows.map((r) => r.resourceKey));
-
-    setMatrixRows((prev) =>
-      prev.map((row) => {
-        if (!targetKeys.has(row.resourceKey)) return row;
-        return {
-          ...row,
-          [action]: nextVal,
-        };
-      })
-    );
-    toast.success(nextVal ? `Đã bật cột [${action.toUpperCase()}]` : `Đã tắt cột [${action.toUpperCase()}]`);
+  const handleToggleResource = (resourceKey: string, nextVal: boolean) => {
+    if (!groupedData?.data) return;
+    const perms = groupedData.data[resourceKey] || [];
+    setPermissionState((prev) => {
+      const next = { ...prev };
+      perms.forEach((p) => {
+        if (next[p.code]) {
+          next[p.code] = { ...next[p.code], granted: nextVal };
+        }
+      });
+      return next;
+    });
   };
 
-  const handleToggleRow = (resourceKey: string) => {
-    const row = matrixRows.find((r) => r.resourceKey === resourceKey);
-    if (!row) return;
-
-    const availableActions: ("view" | "create" | "edit" | "delete" | "approve" | "export")[] = [];
-    if (row.viewPerm) availableActions.push("view");
-    if (row.createPerm) availableActions.push("create");
-    if (row.editPerm) availableActions.push("edit");
-    if (row.deletePerm) availableActions.push("delete");
-    if (row.approvePerm) availableActions.push("approve");
-    if (row.exportPerm) availableActions.push("export");
-
-    const allActive = availableActions.every((act) => row[act]);
-    const nextVal = !allActive;
-
-    setMatrixRows((prev) =>
-      prev.map((r) => {
-        if (r.resourceKey !== resourceKey) return r;
-        const updated = { ...r };
-        availableActions.forEach((act) => {
-          updated[act] = nextVal;
+  const handleToggleGroup = (groupResources: { key: string }[], nextVal: boolean) => {
+    if (!groupedData?.data) return;
+    setPermissionState((prev) => {
+      const next = { ...prev };
+      groupResources.forEach((res) => {
+        const perms = groupedData.data[res.key] || [];
+        perms.forEach((p) => {
+          if (next[p.code]) {
+            next[p.code] = { ...next[p.code], granted: nextVal };
+          }
         });
-        return updated;
-      })
-    );
+      });
+      return next;
+    });
   };
 
   const handleSelectAll = (selectAll: boolean) => {
-    setMatrixRows((prev) =>
-      prev.map((row) => ({
-        ...row,
-        view: row.viewPerm ? selectAll : false,
-        create: row.createPerm ? selectAll : false,
-        edit: row.editPerm ? selectAll : false,
-        delete: row.deletePerm ? selectAll : false,
-        approve: row.approvePerm ? selectAll : false,
-        export: row.exportPerm ? selectAll : false,
-      }))
-    );
+    setPermissionState((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((code) => {
+        next[code] = { ...next[code], granted: selectAll };
+      });
+      return next;
+    });
     toast.success(selectAll ? "Đã chọn toàn bộ quyền hạn" : "Đã bỏ chọn toàn bộ quyền hạn");
   };
 
@@ -390,60 +327,26 @@ export default function AdminRolesPage() {
     toast.info("Đã khôi phục ma trận phân quyền từ máy chủ.");
   };
 
-  // ── 8. Save Matrix to Backend ──────────────────────────────────────────────
+  // ── 6. Save Matrix to Backend ──────────────────────────────────────────────
   const handleSaveMatrix = async () => {
     if (!selectedRole) return;
 
-    const permissionsPayload: PermissionScopeItem[] = [];
-
-    matrixRows.forEach((row) => {
-      if (row.view && row.viewPerm) {
-        permissionsPayload.push({
-          permissionId: row.viewPerm.id,
-          dataScope: row.viewScope,
-        });
-      }
-      if (row.create && row.createPerm) {
-        permissionsPayload.push({
-          permissionId: row.createPerm.id,
-          dataScope: DATA_SCOPE.COMPANY,
-        });
-      }
-      if (row.edit && row.editPerm) {
-        permissionsPayload.push({
-          permissionId: row.editPerm.id,
-          dataScope: DATA_SCOPE.COMPANY,
-        });
-      }
-      if (row.delete && row.deletePerm) {
-        permissionsPayload.push({
-          permissionId: row.deletePerm.id,
-          dataScope: DATA_SCOPE.COMPANY,
-        });
-      }
-      if (row.approve && row.approvePerm) {
-        permissionsPayload.push({
-          permissionId: row.approvePerm.id,
-          dataScope: DATA_SCOPE.COMPANY,
-        });
-      }
-      if (row.export && row.exportPerm) {
-        permissionsPayload.push({
-          permissionId: row.exportPerm.id,
-          dataScope: DATA_SCOPE.COMPANY,
-        });
-      }
-    });
+    const payload: PermissionScopeItem[] = Object.values(permissionState)
+      .filter((p) => p.granted)
+      .map((p) => ({
+        permissionId: p.permissionId,
+        dataScope: p.dataScope,
+      }));
 
     try {
       const res = await assignRolePermissions({
         roleId: selectedRole.id,
-        body: { permissions: permissionsPayload },
+        body: { permissions: payload },
       }).unwrap();
 
       if (res.success) {
         toast.success(
-          `Đã lưu cấu hình ma trận phân quyền cho vai trò [${selectedRole.name}] thành công! (${permissionsPayload.length} quyền)`
+          `Đã lưu cấu hình ma trận phân quyền cho vai trò [${selectedRole.name}] thành công! (${payload.length} quyền)`
         );
         refetchRolePerms();
       }
@@ -453,7 +356,7 @@ export default function AdminRolesPage() {
     }
   };
 
-  // ── 9. Create New Role ─────────────────────────────────────────────────────
+  // ── 7. Create New Role ─────────────────────────────────────────────────────
   const handleCreateRole = async () => {
     if (!newRoleName.trim() || !newRoleCode.trim()) {
       toast.error("Vui lòng nhập tên và mã vai trò");
@@ -470,34 +373,19 @@ export default function AdminRolesPage() {
       if (createdRes.success && createdRes.data) {
         const newRoleId = createdRes.data.id;
 
-        // If clone selected, copy permissions from template role
+        // If cloning, copy permissions
         if (cloneFromRoleId && cloneFromRoleId !== "none") {
-          const currentPayload: PermissionScopeItem[] = [];
-          matrixRows.forEach((row) => {
-            if (row.view && row.viewPerm) {
-              currentPayload.push({ permissionId: row.viewPerm.id, dataScope: row.viewScope });
-            }
-            if (row.create && row.createPerm) {
-              currentPayload.push({ permissionId: row.createPerm.id, dataScope: DATA_SCOPE.COMPANY });
-            }
-            if (row.edit && row.editPerm) {
-              currentPayload.push({ permissionId: row.editPerm.id, dataScope: DATA_SCOPE.COMPANY });
-            }
-            if (row.delete && row.deletePerm) {
-              currentPayload.push({ permissionId: row.deletePerm.id, dataScope: DATA_SCOPE.COMPANY });
-            }
-            if (row.approve && row.approvePerm) {
-              currentPayload.push({ permissionId: row.approvePerm.id, dataScope: DATA_SCOPE.COMPANY });
-            }
-            if (row.export && row.exportPerm) {
-              currentPayload.push({ permissionId: row.exportPerm.id, dataScope: DATA_SCOPE.COMPANY });
-            }
-          });
+          const payload: PermissionScopeItem[] = Object.values(permissionState)
+            .filter((p) => p.granted)
+            .map((p) => ({
+              permissionId: p.permissionId,
+              dataScope: p.dataScope,
+            }));
 
-          if (currentPayload.length > 0) {
+          if (payload.length > 0) {
             await assignRolePermissions({
               roleId: newRoleId,
-              body: { permissions: currentPayload },
+              body: { permissions: payload },
             }).unwrap();
           }
         }
@@ -516,19 +404,37 @@ export default function AdminRolesPage() {
     }
   };
 
+  // ── 8. Filter Roles list ───────────────────────────────────────────────────
+  const filteredRoles = useMemo(() => {
+    return roles.filter(
+      (r) =>
+        r.name.toLowerCase().includes(searchRole.toLowerCase()) ||
+        r.code.toLowerCase().includes(searchRole.toLowerCase()) ||
+        (r.description && r.description.toLowerCase().includes(searchRole.toLowerCase()))
+    );
+  }, [roles, searchRole]);
+
+  // Overall Count
+  const totalGrantedOverall = useMemo(() => {
+    return Object.values(permissionState).filter((p) => p.granted).length;
+  }, [permissionState]);
+
+  const totalPermissionsOverall = Object.keys(permissionState).length || 36;
+
   const isLoading = isLoadingRoles || isLoadingGrouped;
 
   return (
     <RouteGuard permission={PERMISSIONS.ROLE.VIEW}>
       <div className="space-y-6 pb-12">
-        {/* ── 1. Page Header & Breadcrumb (Exact static-ui style) ──────── */}
+        {/* ── 1. Header (Clean, No Breadcrumbs) ────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                Vai trò & Phân quyền Hệ thống
-              </h1>
-            </div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Vai trò & Phân quyền Hệ thống
+            </h1>
+            <Badge variant="outline" className="text-xs font-mono">
+              RBAC MATRIX
+            </Badge>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -561,7 +467,7 @@ export default function AdminRolesPage() {
           </div>
         </div>
 
-        {/* ── 2. Two-Column Layout (Left: Roles List, Right: Permission Matrix) ── */}
+        {/* ── 2. Two-Column Layout ─────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* ── 2.1. CỘT TRÁI: DANH SÁCH VAI TRÒ (4 Cols) ────────────────── */}
           <div className="lg:col-span-4 xl:col-span-4 space-y-4">
@@ -577,7 +483,6 @@ export default function AdminRolesPage() {
                   </Badge>
                 </div>
 
-                {/* Search Roles */}
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
@@ -615,7 +520,6 @@ export default function AdminRolesPage() {
                             : "border-border bg-card hover:bg-muted/50 hover:border-border/80"
                         )}
                       >
-                        {/* Top Row: Icon + Name + Badge */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div
@@ -659,16 +563,14 @@ export default function AdminRolesPage() {
                           </span>
                         </div>
 
-                        {/* Middle: Short Description */}
                         <p className="text-[11px] text-muted-foreground line-clamp-1 leading-normal">
                           {role.description || "Chưa có mô tả chi tiết"}
                         </p>
 
-                        {/* Bottom: Indicator */}
                         <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/50">
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            <span>ID: {role.code}</span>
+                            <span>Mã: {role.code}</span>
                           </span>
                           {isSelected && (
                             <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
@@ -679,12 +581,6 @@ export default function AdminRolesPage() {
                       </div>
                     );
                   })
-                )}
-
-                {filteredRoles.length === 0 && !isLoading && (
-                  <div className="text-center py-8 text-xs text-muted-foreground">
-                    Không tìm thấy vai trò phù hợp
-                  </div>
                 )}
               </CardContent>
 
@@ -707,358 +603,272 @@ export default function AdminRolesPage() {
             </Card>
           </div>
 
-          {/* ── 2.2. CỘT PHẢI: MA TRẬN PHÂN QUYỀN TƯƠNG ỨNG (8 Cols) ──────── */}
-          <div className="lg:col-span-8 xl:col-span-8 space-y-4">
+          {/* ── 2.2. CỘT PHẢI: HIỂN THỊ DẠNG DANH MỤC THẺ GIỐNG HÌNH (8 Cols) ── */}
+          <div className="lg:col-span-8 xl:col-span-8 space-y-5">
             {selectedRole ? (
-              <Card className="border-border bg-card shadow-xs">
-                <CardHeader className="p-4 sm:p-5 border-b border-border">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
-                          <ShieldCheck className="h-4.5 w-4.5" />
+              <>
+                {/* Header Role Summary & Action Bar */}
+                <Card className="border-border bg-card shadow-xs">
+                  <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-9 w-9 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-base font-bold text-foreground">
+                            {selectedRole.name}
+                          </h2>
+                          <Badge variant="outline" className="font-mono text-[11px]">
+                            {selectedRole.code}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="bg-primary/10 text-primary border-primary/20 text-[11px] font-medium"
+                          >
+                            Đã cấp: {totalGrantedOverall} / {totalPermissionsOverall} quyền
+                          </Badge>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h2 className="text-base font-bold text-foreground">
-                              {selectedRole.name}
-                            </h2>
-                            <Badge variant="outline" className="font-mono text-[11px]">
-                              {selectedRole.code}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {selectedRole.description || "Ma trận quyền hạn phân quyền chức năng cho vai trò này."}
-                          </p>
-                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {selectedRole.description || "Cấu hình quyền hạn và phạm vi dữ liệu cho vai trò này."}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs"
+                        className="h-8 text-xs"
                         onClick={() => handleSelectAll(true)}
                       >
-                        <CheckSquare className="h-3 w-3 mr-1 text-primary" />
+                        <CheckSquare className="h-3.5 w-3.5 mr-1 text-primary" />
                         <span>Chọn tất cả</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs"
+                        className="h-8 text-xs"
                         onClick={() => handleSelectAll(false)}
                       >
-                        <Square className="h-3 w-3 mr-1 text-muted-foreground" />
+                        <Square className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
                         <span>Bỏ tất cả</span>
                       </Button>
                     </div>
                   </div>
 
-                  {/* Filter Row: Category Tabs + Search input */}
-                  <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border mt-3">
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <Button
-                        size="sm"
-                        variant={selectedCategory === "ALL" ? "default" : "outline"}
-                        className={cn(
-                          "h-7 text-xs px-2.5",
-                          selectedCategory === "ALL" && "bg-primary text-white hover:bg-primary/90"
-                        )}
-                        onClick={() => setSelectedCategory("ALL")}
-                      >
-                        Tất cả ({matrixRows.length})
-                      </Button>
-                      {categories.map((cat) => {
-                        const count = matrixRows.filter((p) => p.category === cat).length;
-                        const isCurrent = selectedCategory === cat;
-                        return (
-                          <Button
-                            key={cat}
-                            size="sm"
-                            variant={isCurrent ? "default" : "outline"}
-                            className={cn(
-                              "h-7 text-xs px-2.5",
-                              isCurrent && "bg-primary text-white hover:bg-primary/90"
-                            )}
-                            onClick={() => setSelectedCategory(cat)}
-                          >
-                            {cat} ({count})
-                          </Button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="relative w-full sm:w-56 shrink-0">
+                  {/* Filter search box for permissions */}
+                  <div className="px-5 pb-4 pt-1">
+                    <div className="relative max-w-sm">
                       <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                       <Input
                         type="text"
-                        placeholder="Lọc tài nguyên, mã..."
-                        value={searchResource}
-                        onChange={(e) => setSearchResource(e.target.value)}
+                        placeholder="Tìm kiếm quyền chức năng, mô tả..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-8 pl-8 text-xs"
                       />
                     </div>
                   </div>
-                </CardHeader>
+                </Card>
 
-                {/* Permission Matrix Table */}
-                <CardContent className="p-0 overflow-x-auto">
-                  {isLoadingRolePerms ? (
-                    <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-xs">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      <span>Đang tải ma trận phân quyền...</span>
-                    </div>
-                  ) : (
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/40">
-                          <th className="py-2.5 px-4 font-semibold text-foreground w-[30%]">
-                            Chức năng / Nghiệp vụ
-                          </th>
-                          <th className="py-2.5 px-3 text-center font-semibold text-foreground">
-                            <div
-                              onClick={() => handleToggleColumn("view")}
-                              className="cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1"
-                              title="Nhấp để bật/tắt toàn bộ cột Xem"
-                            >
-                              <span>Xem (View)</span>
-                            </div>
-                          </th>
-                          <th className="py-2.5 px-3 text-center font-semibold text-foreground">
-                            <div
-                              onClick={() => handleToggleColumn("create")}
-                              className="cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1"
-                              title="Nhấp để bật/tắt toàn bộ cột Tạo mới"
-                            >
-                              <span>Tạo mới</span>
-                            </div>
-                          </th>
-                          <th className="py-2.5 px-3 text-center font-semibold text-foreground">
-                            <div
-                              onClick={() => handleToggleColumn("edit")}
-                              className="cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1"
-                              title="Nhấp để bật/tắt toàn bộ cột Sửa"
-                            >
-                              <span>Sửa</span>
-                            </div>
-                          </th>
-                          <th className="py-2.5 px-3 text-center font-semibold text-foreground">
-                            <div
-                              onClick={() => handleToggleColumn("delete")}
-                              className="cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1"
-                              title="Nhấp để bật/tắt toàn bộ cột Xóa"
-                            >
-                              <span>Xóa</span>
-                            </div>
-                          </th>
-                          <th className="py-2.5 px-3 text-center font-semibold text-foreground">
-                            <div
-                              onClick={() => handleToggleColumn("approve")}
-                              className="cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1"
-                              title="Nhấp để bật/tắt toàn bộ cột Phê duyệt"
-                            >
-                              <span>Phê duyệt</span>
-                            </div>
-                          </th>
-                          <th className="py-2.5 px-3 text-center font-semibold text-foreground">
-                            <div
-                              onClick={() => handleToggleColumn("export")}
-                              className="cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1"
-                              title="Nhấp để bật/tắt toàn bộ cột Quản lý nâng cao"
-                            >
-                              <span>Quản trị/Xử lý</span>
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {filteredPermissions.map((row) => {
-                          const anyChecked =
-                            row.view || row.create || row.edit || row.delete || row.approve || row.export;
-                          return (
-                            <tr
-                              key={row.resourceKey}
-                              className={cn(
-                                "hover:bg-muted/50 transition-colors",
-                                anyChecked ? "bg-card" : "bg-muted/10 opacity-70"
-                              )}
-                            >
-                              {/* Resource Column */}
-                              <td className="py-3 px-4">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="space-y-0.5">
-                                    <div className="font-semibold text-foreground text-xs leading-snug">
-                                      {row.resourceName}
-                                    </div>
-                                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                      <span>Tài nguyên:</span>
-                                      <code className="px-1.5 py-0.5 rounded bg-muted/80 font-mono text-[10px] text-primary font-medium border border-border/60">
-                                        {row.resourceKey.toLowerCase()}
-                                      </code>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-primary"
-                                    onClick={() => handleToggleRow(row.resourceKey)}
-                                    title="Bật/Tắt tất cả quyền cho mục này"
-                                  >
-                                    Cả dòng
-                                  </Button>
+                {/* ── DANH SÁCH THẺ PHÂN HỆ GIỐNG HỆT HÌNH ────────────────── */}
+                {isLoadingRolePerms ? (
+                  <div className="p-12 text-center text-muted-foreground border rounded-xl bg-card flex items-center justify-center gap-2 text-xs">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span>Đang tải ma trận phân quyền...</span>
+                  </div>
+                ) : (
+                  PERMISSION_GROUPS.map((group) => {
+                    // Lọc permissions của cả group
+                    const allPermsInGroup = group.resources.flatMap((res) => {
+                      return groupedData?.data?.[res.key] || [];
+                    });
+
+                    if (allPermsInGroup.length === 0) return null;
+
+                    const groupGrantedCount = allPermsInGroup.filter(
+                      (p) => permissionState[p.code]?.granted
+                    ).length;
+                    const groupTotalCount = allPermsInGroup.length;
+                    const groupAllChecked = groupGrantedCount === groupTotalCount && groupTotalCount > 0;
+                    const groupIndeterminate = groupGrantedCount > 0 && groupGrantedCount < groupTotalCount;
+
+                    // Search filter matching
+                    const isGroupVisible = allPermsInGroup.some((p) => {
+                      if (!searchQuery.trim()) return true;
+                      const q = searchQuery.toLowerCase();
+                      return (
+                        p.code.toLowerCase().includes(q) ||
+                        p.description.toLowerCase().includes(q) ||
+                        group.title.toLowerCase().includes(q)
+                      );
+                    });
+
+                    if (!isGroupVisible) return null;
+
+                    return (
+                      <div
+                        key={group.key}
+                        className="rounded-xl border border-border bg-card shadow-xs overflow-hidden transition-all"
+                      >
+                        {/* Header Cấp 1 (Giống hình: [-] SỐ HÓA      10 / 31 quyền được gán) */}
+                        <div className="p-4 bg-muted/25 border-b border-border flex items-center justify-between select-none">
+                          <div className="flex items-center gap-3">
+                            <HierarchicalCheckbox
+                              checked={groupAllChecked}
+                              indeterminate={groupIndeterminate}
+                              onChange={() => handleToggleGroup(group.resources, !groupAllChecked)}
+                            />
+                            <span className="font-bold text-sm tracking-wide text-foreground">
+                              {group.title}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {groupGrantedCount} / {groupTotalCount} quyền được gán
+                          </span>
+                        </div>
+
+                        {/* Nội dung Cấp 2 (Từng tài nguyên: [-] Quản lý dự án, [ ] Kế hoạch dự án...) */}
+                        <div className="p-5 space-y-6">
+                          {group.resources.map((res, resIdx) => {
+                            const resPerms = groupedData?.data?.[res.key] || [];
+                            if (resPerms.length === 0) return null;
+
+                            const resGrantedCount = resPerms.filter(
+                              (p) => permissionState[p.code]?.granted
+                            ).length;
+                            const resTotalCount = resPerms.length;
+                            const resAllChecked = resGrantedCount === resTotalCount && resTotalCount > 0;
+                            const resIndeterminate = resGrantedCount > 0 && resGrantedCount < resTotalCount;
+
+                            // Search filter on resource level
+                            const filteredResPerms = resPerms.filter((p) => {
+                              if (!searchQuery.trim()) return true;
+                              const q = searchQuery.toLowerCase();
+                              return (
+                                p.code.toLowerCase().includes(q) ||
+                                p.description.toLowerCase().includes(q) ||
+                                res.name.toLowerCase().includes(q)
+                              );
+                            });
+
+                            if (filteredResPerms.length === 0) return null;
+
+                            return (
+                              <div key={res.key}>
+                                {/* Tiêu đề Tài nguyên Cấp 2 */}
+                                <div className="flex items-center gap-3 mb-3.5 select-none">
+                                  <HierarchicalCheckbox
+                                    checked={resAllChecked}
+                                    indeterminate={resIndeterminate}
+                                    onChange={() => handleToggleResource(res.key, !resAllChecked)}
+                                  />
+                                  <span className="font-semibold text-sm text-foreground">
+                                    {res.name}
+                                  </span>
                                 </div>
-                              </td>
 
-                              {/* 1. View Checkbox + Scope Selector */}
-                              <td className="py-3 px-3 text-center">
-                                {row.viewPerm ? (
-                                  <div className="flex flex-col items-center justify-center gap-1">
-                                    <input
-                                      type="checkbox"
-                                      checked={row.view}
-                                      onChange={() => handleToggleAction(row.resourceKey, "view")}
-                                      style={{ accentColor: "#DC2626" }}
-                                      className="h-4 w-4 rounded border-input text-primary accent-[#DC2626] focus:ring-1 focus:ring-primary cursor-pointer transition-transform hover:scale-105"
-                                    />
-                                    {row.view && (
-                                      <select
-                                        value={row.viewScope}
-                                        onChange={(e) => handleScopeChange(row.resourceKey, e.target.value as DataScope)}
-                                        className="h-5 px-1 text-[10px] font-mono rounded border border-border bg-background text-foreground focus:border-primary focus:outline-none"
+                                {/* Lưới 2 cột các quyền con Cấp 3 (Giống hình) */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pl-7">
+                                  {filteredResPerms.map((perm) => {
+                                    const state = permissionState[perm.code] || {
+                                      granted: false,
+                                      dataScope: DATA_SCOPE.COMPANY,
+                                    };
+                                    const isViewAction = perm.action.toUpperCase() === "VIEW";
+
+                                    return (
+                                      <div
+                                        key={perm.id}
+                                        className={cn(
+                                          "flex items-start gap-3 p-2 rounded-lg transition-colors",
+                                          state.granted ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/40"
+                                        )}
                                       >
-                                        {Object.values(DATA_SCOPE).map((scope) => (
-                                          <option key={scope} value={scope}>
-                                            {DATA_SCOPE_LABELS[scope]}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-muted-foreground/40 font-mono">—</span>
+                                        <HierarchicalCheckbox
+                                          checked={state.granted}
+                                          onChange={() => handleTogglePermission(perm.code)}
+                                          className="mt-0.5"
+                                        />
+
+                                        <div className="space-y-0.5 flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <span
+                                              onClick={() => handleTogglePermission(perm.code)}
+                                              className={cn(
+                                                "font-medium text-xs sm:text-sm cursor-pointer select-none transition-colors",
+                                                state.granted ? "text-primary font-semibold" : "text-foreground"
+                                              )}
+                                            >
+                                              {getPermissionTitle(perm, res.name)}
+                                            </span>
+
+                                            {/* Selector DataScope cho quyền Xem khi được tích chọn */}
+                                            {isViewAction && state.granted && (
+                                              <select
+                                                value={state.dataScope}
+                                                onChange={(e) =>
+                                                  handleScopeChange(perm.code, e.target.value as DataScope)
+                                                }
+                                                className="h-5 px-1 text-[10px] font-mono rounded border border-border bg-background text-foreground focus:border-primary focus:outline-none shadow-2xs"
+                                                title="Chọn phạm vi dữ liệu"
+                                              >
+                                                {Object.values(DATA_SCOPE).map((scope) => (
+                                                  <option key={scope} value={scope}>
+                                                    {DATA_SCOPE_LABELS[scope]}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            )}
+                                          </div>
+
+                                          <p className="text-xs text-muted-foreground leading-normal">
+                                            {perm.description}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Đường kẻ phân cách giữa các tài nguyên (Giống hình) */}
+                                {resIdx < group.resources.length - 1 && (
+                                  <div className="border-t border-border/60 my-5" />
                                 )}
-                              </td>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
 
-                              {/* 2. Create Checkbox (Red) */}
-                              <td className="py-3 px-3 text-center">
-                                {row.createPerm ? (
-                                  <input
-                                    type="checkbox"
-                                    checked={row.create}
-                                    onChange={() => handleToggleAction(row.resourceKey, "create")}
-                                    style={{ accentColor: "#DC2626" }}
-                                    className="h-4 w-4 rounded border-input text-primary accent-[#DC2626] focus:ring-1 focus:ring-primary cursor-pointer transition-transform hover:scale-105"
-                                  />
-                                ) : (
-                                  <span className="text-muted-foreground/40 font-mono">—</span>
-                                )}
-                              </td>
-
-                              {/* 3. Edit Checkbox (Red) */}
-                              <td className="py-3 px-3 text-center">
-                                {row.editPerm ? (
-                                  <input
-                                    type="checkbox"
-                                    checked={row.edit}
-                                    onChange={() => handleToggleAction(row.resourceKey, "edit")}
-                                    style={{ accentColor: "#DC2626" }}
-                                    className="h-4 w-4 rounded border-input text-primary accent-[#DC2626] focus:ring-1 focus:ring-primary cursor-pointer transition-transform hover:scale-105"
-                                  />
-                                ) : (
-                                  <span className="text-muted-foreground/40 font-mono">—</span>
-                                )}
-                              </td>
-
-                              {/* 4. Delete Checkbox (Red) */}
-                              <td className="py-3 px-3 text-center">
-                                {row.deletePerm ? (
-                                  <input
-                                    type="checkbox"
-                                    checked={row.delete}
-                                    onChange={() => handleToggleAction(row.resourceKey, "delete")}
-                                    style={{ accentColor: "#DC2626" }}
-                                    className="h-4 w-4 rounded border-input text-primary accent-[#DC2626] focus:ring-1 focus:ring-primary cursor-pointer transition-transform hover:scale-105"
-                                  />
-                                ) : (
-                                  <span className="text-muted-foreground/40 font-mono">—</span>
-                                )}
-                              </td>
-
-                              {/* 5. Approve Checkbox (Red) */}
-                              <td className="py-3 px-3 text-center">
-                                {row.approvePerm ? (
-                                  <input
-                                    type="checkbox"
-                                    checked={row.approve}
-                                    onChange={() => handleToggleAction(row.resourceKey, "approve")}
-                                    style={{ accentColor: "#DC2626" }}
-                                    className="h-4 w-4 rounded border-input text-primary accent-[#DC2626] focus:ring-1 focus:ring-primary cursor-pointer transition-transform hover:scale-105"
-                                  />
-                                ) : (
-                                  <span className="text-muted-foreground/40 font-mono">—</span>
-                                )}
-                              </td>
-
-                              {/* 6. Export / Advanced Manage Checkbox (Red) */}
-                              <td className="py-3 px-3 text-center">
-                                {row.exportPerm ? (
-                                  <input
-                                    type="checkbox"
-                                    checked={row.export}
-                                    onChange={() => handleToggleAction(row.resourceKey, "export")}
-                                    style={{ accentColor: "#DC2626" }}
-                                    className="h-4 w-4 rounded border-input text-primary accent-[#DC2626] focus:ring-1 focus:ring-primary cursor-pointer transition-transform hover:scale-105"
-                                  />
-                                ) : (
-                                  <span className="text-muted-foreground/40 font-mono">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-
-                  {filteredPermissions.length === 0 && !isLoadingRolePerms && (
-                    <div className="text-center py-10 text-xs text-muted-foreground">
-                      Không tìm thấy tài nguyên nào phù hợp bộ lọc
-                    </div>
-                  )}
-                </CardContent>
-
-                {/* Footer Summary & Save */}
-                <div className="p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground bg-muted/20">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-                    <span>
-                      Đang hiển thị <strong className="text-foreground">{filteredPermissions.length}</strong> chức năng phân quyền cho vai trò{" "}
-                      <strong className="text-foreground">{selectedRole.name}</strong>
-                    </span>
+                {/* Footer Save Button */}
+                <div className="p-4 border border-border rounded-xl bg-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
+                  <div>
+                    Đang thiết lập ma trận phân quyền cho vai trò:{" "}
+                    <strong className="text-foreground">{selectedRole.name}</strong> (Mã: {selectedRole.code})
                   </div>
 
                   <PermissionGuard permission={PERMISSIONS.ROLE.MANAGE} fallback={null}>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs bg-primary hover:bg-primary/90 text-white font-medium gap-1.5 shadow-xs"
-                        onClick={handleSaveMatrix}
-                        disabled={isSaving}
-                      >
-                        {isSaving ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Save className="h-3.5 w-3.5" />
-                        )}
-                        <span>Lưu cấu hình quyền</span>
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs bg-primary hover:bg-primary/90 text-white font-medium gap-1.5 shadow-xs"
+                      onClick={handleSaveMatrix}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5" />
+                      )}
+                      <span>Lưu cấu hình quyền</span>
+                    </Button>
                   </PermissionGuard>
                 </div>
-              </Card>
+              </>
             ) : (
               <div className="p-12 text-center text-muted-foreground border rounded-xl bg-card">
                 Vui lòng chọn một vai trò từ danh sách bên trái để cấu hình ma trận quyền.
@@ -1067,7 +877,7 @@ export default function AdminRolesPage() {
           </div>
         </div>
 
-        {/* ── 3. Dialog Thêm Vai Trò Mới (Matching static-ui) ─────────────── */}
+        {/* ── 3. Dialog Thêm Vai Trò Mới ───────────────────────────────── */}
         <Dialog open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
