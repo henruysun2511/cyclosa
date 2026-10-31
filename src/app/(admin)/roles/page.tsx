@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import {
-  Home,
   Shield,
   ShieldCheck,
   Lock,
@@ -534,19 +532,6 @@ export default function AdminRolesPage() {
                 RBAC MATRIX
               </Badge>
             </div>
-            <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-              <Link
-                href="/products"
-                className="flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <Home className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Home</span>
-              </Link>
-              <span>/</span>
-              <span className="text-muted-foreground">Hệ thống & Cấu hình</span>
-              <span>/</span>
-              <span className="text-foreground font-medium">Vai trò & Phân quyền</span>
-            </nav>
           </div>
 
           <div className="flex items-center gap-2.5">
