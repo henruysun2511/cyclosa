@@ -5,7 +5,6 @@ import {
   Shield,
   ShieldCheck,
   Lock,
-  Users,
   Search,
   Plus,
   Check,
@@ -98,7 +97,7 @@ export function RoleListSidebar({
                       : "border-border bg-card hover:bg-muted/50 hover:border-border/80"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div
                         className={cn(
@@ -114,48 +113,28 @@ export function RoleListSidebar({
                           <ShieldCheck className="h-3.5 w-3.5" />
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <div
-                          className={cn(
-                            "font-semibold text-xs truncate leading-snug",
-                            isSelected ? "text-primary" : "text-foreground"
-                          )}
-                        >
-                          {role.name}
-                        </div>
-                        <div className="font-mono text-[11px] text-muted-foreground">
-                          {role.code}
-                        </div>
+                      <div
+                        className={cn(
+                          "font-semibold text-xs truncate leading-snug",
+                          isSelected ? "text-primary font-bold" : "text-foreground"
+                        )}
+                      >
+                        {role.name}
                       </div>
                     </div>
 
-                    <span
-                      className={cn(
-                        "px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 border",
-                        role.isSystemRole
-                          ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                      )}
-                    >
-                      {role.isSystemRole ? "Hệ thống" : "Tùy chỉnh"}
-                    </span>
-                  </div>
-
-                  <p className="text-[11px] text-muted-foreground line-clamp-1 leading-normal">
-                    {role.description || "Chưa có mô tả chi tiết"}
-                  </p>
-
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/50">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      <span>Mã: {role.code}</span>
-                    </span>
                     {isSelected && (
-                      <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
+                      <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5 shrink-0">
                         Đang chọn <Check className="h-3 w-3 inline" />
                       </span>
                     )}
                   </div>
+
+                  {role.description ? (
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-normal">
+                      {role.description}
+                    </p>
+                  ) : null}
                 </div>
               );
             })

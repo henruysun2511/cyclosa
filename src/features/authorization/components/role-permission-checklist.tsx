@@ -88,9 +88,6 @@ export function RolePermissionChecklist({
                 <h2 className="text-base font-bold text-foreground">
                   {selectedRole.name}
                 </h2>
-                <Badge variant="outline" className="font-mono text-[11px]">
-                  {selectedRole.code}
-                </Badge>
                 <Badge
                   variant="secondary"
                   className="bg-primary/10 text-primary border-primary/20 text-[11px] font-medium"
@@ -316,7 +313,7 @@ export function RolePermissionChecklist({
       <div className="p-4 border border-border rounded-xl bg-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
         <div>
           Đang thiết lập ma trận phân quyền cho vai trò:{" "}
-          <strong className="text-foreground">{selectedRole.name}</strong> (Mã: {selectedRole.code})
+          <strong className="text-foreground">{selectedRole.name}</strong>
         </div>
 
         <PermissionGuard permission={PERMISSIONS.ROLE.MANAGE} fallback={null}>
