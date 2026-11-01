@@ -5,13 +5,14 @@ import { toast } from "sonner";
 import { Camera, X, Loader2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUploadMediaMutation, useDeleteMediaMutation } from "../api/media-api";
-import { MEDIA_CONFIG } from "../constants/media.constants";
+import { MEDIA_CONFIG, MEDIA_FOLDERS } from "../constants/media.constants";
 import { extractPublicIdFromCloudinaryUrl } from "../utils/media-utils";
 import { Button } from "@/components/ui/button";
 
 export interface AvatarUploaderProps {
   value?: string | null;
   fallbackText?: string;
+  folder?: string;
   onChange: (url: string | null) => void;
   disabled?: boolean;
   className?: string;
@@ -20,6 +21,7 @@ export interface AvatarUploaderProps {
 export function AvatarUploader({
   value,
   fallbackText = "U",
+  folder = MEDIA_FOLDERS.AVATARS,
   onChange,
   disabled = false,
   className,
@@ -76,7 +78,7 @@ export function AvatarUploader({
       // 4. Upload ảnh mới lên Cloudinary
       const res = await uploadMedia({
         file,
-        folder: MEDIA_CONFIG.DEFAULT_AVATAR_FOLDER,
+        folder,
       }).unwrap();
 
       const newSecureUrl = res.data.secureUrl;
@@ -239,3 +241,4 @@ export function AvatarUploader({
     </div>
   );
 }
+

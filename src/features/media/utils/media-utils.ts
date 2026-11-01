@@ -35,3 +35,4 @@ export function extractPublicIdFromCloudinaryUrl(url?: string | null): string | 
     return null;
   }
 }
+

@@ -14,3 +14,4 @@ export interface UploadMediaPayload {
 export interface DeleteMediaPayload {
   publicId: string;
 }
+

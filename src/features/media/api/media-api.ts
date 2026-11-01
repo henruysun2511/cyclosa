@@ -1,6 +1,6 @@
 import { baseApi } from "@/store/base-api-rtk";
 import type { ApiResponse } from "@/types/api.types";
-import { MEDIA_ENDPOINTS } from "../constants/media.constants";
+import { MEDIA_ENDPOINTS, MEDIA_FOLDERS } from "../constants/media.constants";
 import type {
   CloudinaryMediaResponse,
   UploadMediaPayload,
@@ -10,7 +10,7 @@ import type {
 export const mediaApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     uploadMedia: builder.mutation<ApiResponse<CloudinaryMediaResponse>, UploadMediaPayload>({
-      query: ({ file, folder = "cyclosa/avatars" }) => {
+      query: ({ file, folder = MEDIA_FOLDERS.GENERAL }) => {
         const formData = new FormData();
         formData.append("file", file);
         if (folder) {

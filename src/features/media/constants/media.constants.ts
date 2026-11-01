@@ -3,6 +3,19 @@ export const MEDIA_ENDPOINTS = {
   DELETE: "/media",
 } as const;
 
+export const MEDIA_FOLDERS = {
+  GENERAL: "cyclosa/general",
+  AVATARS: "cyclosa/avatars",
+  PRODUCTS: "cyclosa/products",
+  EMPLOYEES: "cyclosa/employees",
+  DOCUMENTS: "cyclosa/documents",
+  CONTRACTS: "cyclosa/contracts",
+  ASSETS: "cyclosa/assets",
+  RECEIPTS: "cyclosa/receipts",
+} as const;
+
+export type MediaFolder = (typeof MEDIA_FOLDERS)[keyof typeof MEDIA_FOLDERS];
+
 export const MEDIA_CONFIG = {
   MAX_FILE_SIZE_BYTES: 5 * 1024 * 1024, // 5MB
   MAX_FILE_SIZE_MB: 5,
@@ -12,5 +25,5 @@ export const MEDIA_CONFIG = {
     "image/webp",
     "image/gif",
   ],
-  DEFAULT_AVATAR_FOLDER: "cyclosa/avatars",
+  DEFAULT_FOLDER: MEDIA_FOLDERS.GENERAL,
 } as const;
