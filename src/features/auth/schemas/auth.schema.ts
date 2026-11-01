@@ -2,10 +2,11 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   username: z
-    .string({ required_error: "Vui lòng nhập tên đăng nhập" })
-    .min(1, "Tên đăng nhập không được để trống")
-    .min(3, "Tên đăng nhập phải có ít nhất 3 ký tự")
-    .max(100, "Tên đăng nhập không được quá 100 ký tự"),
+    .string({ required_error: "Vui lòng nhập tên đăng nhập hoặc email" })
+    .trim()
+    .min(1, "Tên đăng nhập hoặc email không được để trống")
+    .min(3, "Tên đăng nhập hoặc email phải có ít nhất 3 ký tự")
+    .max(100, "Tên đăng nhập hoặc email không được quá 100 ký tự"),
   password: z
     .string({ required_error: "Vui lòng nhập mật khẩu" })
     .min(6, "Mật khẩu phải có ít nhất 6 ký tự")

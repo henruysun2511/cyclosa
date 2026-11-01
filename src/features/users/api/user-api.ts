@@ -3,7 +3,6 @@ import type { ApiResponse, PageData } from "@/types/api.types";
 import { USER_ENDPOINTS } from "../constants/user.constants";
 import type {
   UserResponse,
-  UserDetailResponse,
   UserFilterParams,
   CreateUserPayload,
   UserRoleAssignmentResponse,
@@ -28,14 +27,8 @@ export const userApi = baseApi.injectEndpoints({
           : [{ type: "User", id: "LIST" }],
     }),
 
-    // 2. Lấy thông tin chi tiết người dùng
-    getUserById: builder.query<ApiResponse<UserDetailResponse>, string>({
-      query: (userId) => USER_ENDPOINTS.USER_BY_ID(userId),
-      providesTags: (_result, _error, id) => [{ type: "User", id }],
-    }),
-
-    // 3. Tạo mới tài khoản người dùng
-    createUser: builder.mutation<ApiResponse<UserDetailResponse>, CreateUserPayload>({
+    // 2. Tạo mới tài khoản người dùng
+    createUser: builder.mutation<ApiResponse<UserResponse>, CreateUserPayload>({
       query: (body) => ({
         url: USER_ENDPOINTS.USERS,
         method: "POST",
@@ -128,7 +121,6 @@ export const userApi = baseApi.injectEndpoints({
 
 export const {
   useGetUsersQuery,
-  useGetUserByIdQuery,
   useCreateUserMutation,
   useResendActivationMutation,
   useLockUserMutation,

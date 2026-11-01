@@ -9,18 +9,6 @@ export interface UserResponse {
   createdAt: string;
 }
 
-export interface UserDetailResponse {
-  id: string;
-  username: string;
-  email: string;
-  status: UserStatus;
-  lastLoginAt: string | null;
-  linkedProviders: string[];
-  deleted: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
-
 export interface UserFilterParams {
   keyword?: string;
   status?: UserStatus;

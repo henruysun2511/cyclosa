@@ -132,7 +132,7 @@ export function LoginForm() {
           Chào mừng trở lại
         </h1>
         <p className="text-sm text-muted-foreground">
-          Đăng nhập vào hệ thống quản trị CYCLOSA HRM bằng tên đăng nhập của bạn.
+          Đăng nhập vào hệ thống quản trị CYCLOSA HRM bằng tên đăng nhập hoặc email của bạn.
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export function LoginForm() {
             render={({ field }) => (
               <FormItem className="space-y-2">
                 <FormLabel className="text-sm font-medium text-foreground">
-                  Tên đăng nhập
+                  Tên đăng nhập hoặc Email
                 </FormLabel>
 
                 <FormControl>
@@ -155,7 +155,7 @@ export function LoginForm() {
 
                     <Input
                       type="text"
-                      placeholder="admin"
+                      placeholder="admin hoặc an.nguyen@cyclosa.vn"
                       autoComplete="username"
                       className="h-11 rounded-lg pl-10 pr-3 text-sm transition-shadow focus-visible:ring-2 focus-visible:ring-primary/20"
                       {...field}

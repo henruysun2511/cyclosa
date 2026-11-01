@@ -1,6 +1,5 @@
 export const USER_ENDPOINTS = {
   USERS: "/users",
-  USER_BY_ID: (userId: string) => `/users/${userId}`,
   RESEND_ACTIVATION: (userId: string) => `/users/${userId}/resend-activation`,
   LOCK: (userId: string) => `/users/${userId}/lock`,
   UNLOCK: (userId: string) => `/users/${userId}/unlock`,
