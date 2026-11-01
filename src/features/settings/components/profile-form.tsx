@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -14,11 +14,11 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
-  Image as ImageIcon,
 } from "lucide-react";
 
 import { useGetMeQuery, useUpdateMeMutation } from "@/features/auth/api/auth-api";
 import { updateProfileSchema, type UpdateProfileInput } from "../schemas/settings.schema";
+import { AvatarUploader } from "@/features/media";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +47,6 @@ function formatDate(dateStr?: string | null): string {
 export function ProfileForm() {
   const { data: meResponse, isLoading, isError, refetch } = useGetMeQuery();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMeMutation();
-  const [imageError, setImageError] = useState(false);
 
   const user = meResponse?.data;
 
@@ -55,6 +54,7 @@ export function ProfileForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors, isDirty },
   } = useForm<UpdateProfileInput>({
@@ -65,7 +65,7 @@ export function ProfileForm() {
     },
   });
 
-  const avatarUrlInput = watch("avatarUrl");
+  const avatarUrlValue = watch("avatarUrl");
 
   useEffect(() => {
     if (user) {
@@ -73,14 +73,8 @@ export function ProfileForm() {
         username: user.username || user.email.split("@")[0],
         avatarUrl: user.avatarUrl || "",
       });
-      setImageError(false);
     }
   }, [user, reset]);
-
-  // Reset image error khi đổi URL
-  useEffect(() => {
-    setImageError(false);
-  }, [avatarUrlInput]);
 
   const onSubmit = async (values: UpdateProfileInput) => {
     try {
@@ -111,7 +105,7 @@ export function ProfileForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
-              <Skeleton className="h-16 w-16 rounded-full" />
+              <Skeleton className="h-20 w-20 rounded-2xl" />
               <div className="space-y-2">
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="h-4 w-60" />
@@ -144,42 +138,25 @@ export function ProfileForm() {
     );
   }
 
-  const activeAvatarSrc = !imageError && (avatarUrlInput || user.avatarUrl);
-
   return (
     <div className="space-y-6">
       <Card className="shadow-xs">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {/* Avatar Preview */}
-              <div className="relative h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl uppercase border-2 border-primary/20 shrink-0 overflow-hidden shadow-xs">
-                {activeAvatarSrc ? (
-                  <img
-                    src={activeAvatarSrc}
-                    alt={user.username || user.email}
-                    onError={() => setImageError(true)}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span>{(user.username || user.email).charAt(0)}</span>
-                )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg font-bold text-foreground">
+                  {user.username || user.email.split("@")[0]}
+                </h3>
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Đang hoạt động
+                </Badge>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg font-bold text-foreground">
-                    {user.username || user.email.split("@")[0]}
-                  </h3>
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Đang hoạt động
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5" />
-                  {user.email}
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" />
+                {user.email}
+              </p>
             </div>
 
             {/* Danh sách vai trò */}
@@ -207,6 +184,29 @@ export function ProfileForm() {
 
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Ảnh đại diện qua Cloudinary (Avatar Uploader) */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Ảnh đại diện tài khoản</Label>
+              <AvatarUploader
+                value={avatarUrlValue}
+                fallbackText={user.username || user.email}
+                onChange={(newUrl) => {
+                  setValue("avatarUrl", newUrl || "", {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+              />
+              {errors.avatarUrl && (
+                <p className="text-[11px] text-destructive font-medium">
+                  {errors.avatarUrl.message}
+                </p>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Thông tin đăng nhập & email */}
             <div className="grid gap-5 sm:grid-cols-2">
               {/* Tên đăng nhập */}
               <div className="space-y-2">
@@ -247,29 +247,6 @@ export function ProfileForm() {
                 />
                 <p className="text-[11px] text-muted-foreground">
                   Email định danh hệ thống. Liên hệ Quản trị viên nếu cần thay đổi.
-                </p>
-              </div>
-
-              {/* Đường dẫn ảnh đại diện (Avatar URL) */}
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="avatarUrl" className="text-xs font-semibold flex items-center gap-1.5">
-                  <ImageIcon className="h-3.5 w-3.5 text-primary" />
-                  Đường dẫn ảnh đại diện (Avatar URL)
-                </Label>
-                <Input
-                  id="avatarUrl"
-                  type="url"
-                  placeholder="https://example.com/images/avatar.jpg"
-                  className="h-9 text-xs"
-                  {...register("avatarUrl")}
-                />
-                {errors.avatarUrl && (
-                  <p className="text-[11px] text-destructive font-medium">
-                    {errors.avatarUrl.message}
-                  </p>
-                )}
-                <p className="text-[11px] text-muted-foreground">
-                  Nhập liên kết ảnh trực tiếp (.png, .jpg, .webp). Ảnh xem trước sẽ hiển thị ngay phía trên.
                 </p>
               </div>
             </div>
