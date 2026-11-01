@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, Package, Users } from "lucide-react";
+import { ShieldCheck, Package, Users, Settings } from "lucide-react";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import type {
   PermissionCode,
@@ -35,7 +35,7 @@ export interface NavGroup {
  */
 export const navigationConfig: NavGroup[] = [
   {
-    label: "HỆ THỐNG & BẢO MẬT",
+    label: "HỆ THỐNG & PHÂN QUYỀN",
     items: [
       {
         title: "Tài khoản người dùng",
@@ -50,6 +50,26 @@ export const navigationConfig: NavGroup[] = [
         icon: ShieldCheck,
         permission: PERMISSIONS.ROLE.VIEW,
         resource: "ROLE",
+      },
+    ],
+  },
+  {
+    label: "CÀI ĐẶT TÀI KHOẢN",
+    items: [
+      {
+        title: "Cài đặt tài khoản",
+        href: "/settings/profile",
+        icon: Settings,
+        children: [
+          {
+            title: "Thông tin cá nhân",
+            href: "/settings/profile",
+          },
+          {
+            title: "Bảo mật & Mật khẩu",
+            href: "/settings/security",
+          },
+        ],
       },
     ],
   },

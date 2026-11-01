@@ -6,6 +6,7 @@ import type {
   RefreshTokenRequest,
   AuthTokenResponse,
   UserProfileResponse,
+  UpdateProfileRequest,
   ActivateAccountRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
@@ -26,6 +27,15 @@ export const authApi = baseApi.injectEndpoints({
     getMe: builder.query<ApiResponse<UserProfileResponse>, void>({
       query: () => AUTH_ENDPOINTS.ME,
       providesTags: ["Auth", "User"],
+    }),
+
+    updateMe: builder.mutation<ApiResponse<UserProfileResponse>, UpdateProfileRequest>({
+      query: (body) => ({
+        url: AUTH_ENDPOINTS.ME,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["Auth", "User"],
     }),
 
     refreshToken: builder.mutation<ApiResponse<AuthTokenResponse>, RefreshTokenRequest>({
@@ -85,6 +95,7 @@ export const {
   useLoginMutation,
   useGetMeQuery,
   useLazyGetMeQuery,
+  useUpdateMeMutation,
   useRefreshTokenMutation,
   useLogoutMutation,
   useActivateAccountMutation,

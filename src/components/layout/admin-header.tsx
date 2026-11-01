@@ -24,7 +24,6 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/slices/auth.slice";
 import { useLogoutMutation } from "@/features/auth/api/auth-api";
-import { ChangePasswordDialog } from "@/features/auth/components/change-password-dialog";
 
 export interface AdminHeaderProps {
   sidebarOpen: boolean;
@@ -44,7 +43,6 @@ export function AdminHeader({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -260,9 +258,9 @@ export function AdminHeader({
                       type="button"
                       onClick={() => {
                         setUserMenuOpen(false);
-                        toast.info("Trang hồ sơ cá nhân đang phát triển");
+                        router.push("/settings/profile");
                       }}
-                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md flex items-center"
+                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md flex items-center cursor-pointer"
                     >
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span>Hồ sơ cá nhân</span>
@@ -272,9 +270,9 @@ export function AdminHeader({
                       type="button"
                       onClick={() => {
                         setUserMenuOpen(false);
-                        setChangePasswordOpen(true);
+                        router.push("/settings/security");
                       }}
-                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md flex items-center"
+                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md flex items-center cursor-pointer"
                     >
                       <KeyRound className="h-4 w-4 text-muted-foreground" />
                       <span>Đổi mật khẩu</span>
@@ -286,7 +284,7 @@ export function AdminHeader({
                       type="button"
                       disabled={isLoggingOut}
                       onClick={handleLogout}
-                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md flex items-center font-medium"
+                      className="filter-menu-item w-full gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md flex items-center font-medium cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>{isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
@@ -299,19 +297,13 @@ export function AdminHeader({
             <button
               type="button"
               onClick={() => router.push("/login")}
-              className="text-xs font-semibold text-primary hover:underline px-2 py-1"
+              className="text-xs font-semibold text-primary hover:underline px-2 py-1 cursor-pointer"
             >
               Đăng nhập
             </button>
           )}
         </div>
       </div>
-
-      {/* Change Password Dialog */}
-      <ChangePasswordDialog
-        open={changePasswordOpen}
-        onOpenChange={setChangePasswordOpen}
-      />
     </header>
   );
 }

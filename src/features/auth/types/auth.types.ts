@@ -21,10 +21,16 @@ export type LoginResponse = AuthTokenResponse;
 
 export interface UserProfileResponse {
   id: string;
+  username?: string | null;
   email: string;
   status: "ACTIVE" | "PENDING_ACTIVATION" | "LOCKED" | "DEACTIVATED";
   roles: string[];
   lastLoginAt?: string | null;
+  createdAt?: string | null;
+}
+
+export interface UpdateProfileRequest {
+  username: string;
 }
 
 export interface ActivateAccountRequest {
