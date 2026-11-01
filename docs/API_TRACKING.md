@@ -16,7 +16,8 @@
 | **4. Quản lý Vai trò (Roles)** | 7 | 7/7 (100%) | 6/7 (86%) | Màn hình /roles |
 | **5. Gán Vai trò & Quyền Hiệu lực (User Roles)** | 4 | 4/4 (100%) | 4/4 (100%) | Hoàn tất tích hợp 100% |
 | **6. Quản lý Sản phẩm mẫu (Products)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất tích hợp 100% |
-| **TỔNG CỘNG** | **31** | **31/31 (100%)** | **30/31 (97%)** | Đang phát triển |
+| **7. Quản lý Tệp tin (Cloudinary Media)** | 2 | 2/2 (100%) | 0/2 (0%) | Backend đã sẵn sàng |
+| **TỔNG CỘNG** | **33** | **33/33 (100%)** | **30/33 (91%)** | Đang phát triển |
 
 ---
 
@@ -92,3 +93,12 @@
 | 29 | `POST` | `/api/v1/products` | Thêm mới sản phẩm vào hệ thống | x | x |  |
 | 30 | `PUT` | `/api/v1/products/{id}` | Cập nhật thông tin sản phẩm theo ID | x | x |  |
 | 31 | `DELETE`| `/api/v1/products/{id}` | Xóa mềm sản phẩm theo ID (chuyển deleted = true) | x | x |  |
+
+---
+
+### Module 7: Quản lý Tệp tin & Đa phương tiện (Media - `MediaController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 32 | `POST` | `/api/v1/media/upload` | Tải lên tệp tin hình ảnh lên Cloudinary (MultipartFile, max 5MB) | x |   | Nhận file & folder, trả về secureUrl, publicId |
+| 33 | `DELETE`| `/api/v1/media` | Xóa tệp tin đa phương tiện khỏi Cloudinary bằng publicId | x |   | Hỗ trợ qua QueryParam hoặc JSON Body |
