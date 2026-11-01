@@ -16,6 +16,7 @@ import {
   UserTable,
   UserFormDialog,
   UserRoleAssignmentDialog,
+  UserBulkImportDialog,
   USER_STATUS,
   type UserResponse,
 } from "@/features/users";
@@ -38,7 +39,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { Search, UserPlus, Users, RotateCw, Filter } from "lucide-react";
+import { Search, UserPlus, Users, Filter, FileSpreadsheet } from "lucide-react";
 
 function UsersPageContent() {
   const {
@@ -78,6 +79,7 @@ function UsersPageContent() {
 
   // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [selectedUserForRoles, setSelectedUserForRoles] = useState<UserResponse | null>(null);
   const [userToLock, setUserToLock] = useState<UserResponse | null>(null);
   const [userToUnlock, setUserToUnlock] = useState<UserResponse | null>(null);
@@ -140,16 +142,18 @@ function UsersPageContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="h-9 px-3 text-xs gap-1.5 cursor-pointer"
-            title="Làm mới danh sách"
-          >
-            <RotateCw className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="hidden sm:inline">Làm mới</span>
-          </Button>
+          <PermissionGuard permission={PERMISSIONS.USER.CREATE} fallback={null}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsBulkImportOpen(true)}
+              className="h-9 px-3 text-xs gap-1.5 cursor-pointer"
+              title="Nhập danh sách tài khoản từ Excel/CSV"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <span>Nhập hàng loạt</span>
+            </Button>
+          </PermissionGuard>
 
           <PermissionGuard permission={PERMISSIONS.USER.CREATE} fallback={null}>
             <Button
@@ -299,6 +303,12 @@ function UsersPageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
+      <UserBulkImportDialog
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
+      />
     </div>
   );
 }

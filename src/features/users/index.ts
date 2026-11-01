@@ -10,4 +10,4 @@ export * from "./components/user-status-badge";
 export * from "./components/user-table";
 export * from "./components/user-form-dialog";
 export * from "./components/user-role-assignment-dialog";
-
+export * from "./components/user-bulk-import-dialog";

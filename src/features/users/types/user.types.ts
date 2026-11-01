@@ -26,6 +26,29 @@ export interface CreateUserPayload {
   roleCodes?: string[];
 }
 
+export interface BulkCreateUserItem {
+  username?: string;
+  email: string;
+}
+
+export interface BulkCreateUserPayload {
+  users: BulkCreateUserItem[];
+}
+
+export interface BulkUserErrorItem {
+  email: string;
+  username?: string;
+  reason: string;
+}
+
+export interface BulkCreateUserResponse {
+  totalRequested: number;
+  totalCreated: number;
+  totalSkipped: number;
+  createdUsers: UserResponse[];
+  errors: BulkUserErrorItem[];
+}
+
 export interface UserRoleAssignmentResponse {
   id: string;
   userId: string;

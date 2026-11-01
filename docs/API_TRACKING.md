@@ -11,13 +11,13 @@
 | Phân hệ / Module | Tổng số API | Backend (Đã xong) | Frontend (Đã xong) | Trạng thái |
 | :--- | :---: | :---: | :---: | :---: |
 | **1. Xác thực & Hồ sơ (Auth & Settings)** | 9 | 9/9 (100%) | 9/9 (100%) | Hoàn tất tích hợp 100% |
-| **2. Quản lý Tài khoản (User Management)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất tích hợp 100% |
+| **2. Quản lý Tài khoản (User Management)** | 6 | 6/6 (100%) | 6/6 (100%) | Hoàn tất tích hợp 100% |
 | **3. Quyền chức năng (Permissions)** | 1 | 1/1 (100%) | 1/1 (100%) | Hoàn tất tích hợp 100% |
 | **4. Quản lý Vai trò (Roles)** | 7 | 7/7 (100%) | 6/7 (86%) | Màn hình /roles |
 | **5. Gán Vai trò & Quyền Hiệu lực (User Roles)** | 4 | 4/4 (100%) | 4/4 (100%) | Hoàn tất tích hợp 100% |
 | **6. Quản lý Sản phẩm mẫu (Products)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất tích hợp 100% |
 | **7. Quản lý Tệp tin (Cloudinary Media)** | 2 | 2/2 (100%) | 2/2 (100%) | Hoàn tất tích hợp 100% |
-| **TỔNG CỘNG** | **33** | **33/33 (100%)** | **32/33 (97%)** | Đang phát triển |
+| **TỔNG CỘNG** | **34** | **34/34 (100%)** | **33/34 (97%)** | Đang phát triển |
 
 ---
 
@@ -44,10 +44,11 @@
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
 | 10 | `POST` | `/api/v1/users` | Tạo mới tài khoản nhân viên (ở trạng thái chờ kích hoạt) | x | x | Modal tạo tài khoản người dùng (hỗ trợ nhập username) |
-| 11 | `GET` | `/api/v1/users` | Lấy danh sách tài khoản (lọc trạng thái, từ khóa, phân trang) | x | x | Màn hình /users |
-| 12 | `POST` | `/api/v1/users/{userId}/resend-activation` | Gửi lại email kèm mã kích hoạt tài khoản 48h | x | x | Thao tác trên từng tài khoản |
-| 13 | `POST` | `/api/v1/users/{userId}/lock` | Khóa tài khoản người dùng và hủy phiên đăng nhập | x | x | Dialog xác nhận khóa an toàn |
-| 14 | `POST` | `/api/v1/users/{userId}/unlock` | Mở khóa tài khoản người dùng về trạng thái hoạt động | x | x | Dialog xác nhận mở khóa an toàn |
+| 11 | `POST` | `/api/v1/users/bulk` | Tạo hàng loạt tài khoản nhân viên từ tệp Excel/CSV | x | x | Modal Nhập hàng loạt UserBulkImportDialog |
+| 12 | `GET` | `/api/v1/users` | Lấy danh sách tài khoản (lọc trạng thái, từ khóa, phân trang) | x | x | Màn hình /users |
+| 13 | `POST` | `/api/v1/users/{userId}/resend-activation` | Gửi lại email kèm mã kích hoạt tài khoản 48h | x | x | Thao tác trên từng tài khoản |
+| 14 | `POST` | `/api/v1/users/{userId}/lock` | Khóa tài khoản người dùng và hủy phiên đăng nhập | x | x | Dialog xác nhận khóa an toàn |
+| 15 | `POST` | `/api/v1/users/{userId}/unlock` | Mở khóa tài khoản người dùng về trạng thái hoạt động | x | x | Dialog xác nhận mở khóa an toàn |
 
 ---
 
@@ -55,7 +56,7 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 15 | `GET` | `/api/v1/permissions/grouped` | Lấy danh mục quyền được gom nhóm theo phân hệ (Resource) | x | x | Tích hợp trong Ma trận quyền |
+| 16 | `GET` | `/api/v1/permissions/grouped` | Lấy danh mục quyền được gom nhóm theo phân hệ (Resource) | x | x | Tích hợp trong Ma trận quyền |
 
 ---
 
@@ -63,13 +64,13 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 16 | `GET` | `/api/v1/roles` | Lấy danh sách vai trò có phân trang, bộ lọc và tìm kiếm | x | x | Màn hình /roles (cột trái) |
-| 17 | `POST` | `/api/v1/roles` | Tạo mới một vai trò tùy chỉnh | x | x | Modal tạo vai trò |
-| 18 | `PUT` | `/api/v1/roles/{roleId}` | Cập nhật thông tin tên và mô tả vai trò tùy chỉnh | x | x | Modal sửa vai trò |
-| 19 | `DELETE`| `/api/v1/roles/{roleId}` | Xóa mềm vai trò tùy chỉnh (nếu chưa có user nắm giữ) | x | x | Dialog xác nhận xóa an toàn |
-| 20 | `GET` | `/api/v1/roles/{roleId}/permissions` | Lấy ma trận quyền chức năng và phạm vi dữ liệu (DataScope) | x | x | Ma trận quyền vai trò (cột phải) |
-| 21 | `PUT` | `/api/v1/roles/{roleId}/permissions` | Thiết lập phân quyền và phạm vi dữ liệu cho vai trò | x | x | Lưu ma trận quyền & DataScope |
-| 22 | `PUT` | `/api/v1/roles/{roleId}/document-type-permissions` | Cấu hình quyền thao tác loại tài liệu số cho vai trò | x |   |  |
+| 17 | `GET` | `/api/v1/roles` | Lấy danh sách vai trò có phân trang, bộ lọc và tìm kiếm | x | x | Màn hình /roles (cột trái) |
+| 18 | `POST` | `/api/v1/roles` | Tạo mới một vai trò tùy chỉnh | x | x | Modal tạo vai trò |
+| 19 | `PUT` | `/api/v1/roles/{roleId}` | Cập nhật thông tin tên và mô tả vai trò tùy chỉnh | x | x | Modal sửa vai trò |
+| 20 | `DELETE`| `/api/v1/roles/{roleId}` | Xóa mềm vai trò tùy chỉnh (nếu chưa có user nắm giữ) | x | x | Dialog xác nhận xóa an toàn |
+| 21 | `GET` | `/api/v1/roles/{roleId}/permissions` | Lấy ma trận quyền chức năng và phạm vi dữ liệu (DataScope) | x | x | Ma trận quyền vai trò (cột phải) |
+| 22 | `PUT` | `/api/v1/roles/{roleId}/permissions` | Thiết lập phân quyền và phạm vi dữ liệu cho vai trò | x | x | Lưu ma trận quyền & DataScope |
+| 23 | `PUT` | `/api/v1/roles/{roleId}/document-type-permissions` | Cấu hình quyền thao tác loại tài liệu số cho vai trò | x |   |  |
 
 ---
 
@@ -77,10 +78,10 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 23 | `GET` | `/api/v1/users/{userId}/role-assignments` | Lấy danh sách các vai trò đã được gán cho người dùng | x | x | Modal phân quyền vai trò |
-| 24 | `POST` | `/api/v1/users/{userId}/role-assignments` | Gán vai trò cho người dùng tại một pháp nhân / công ty | x | x | Modal phân quyền vai trò |
-| 25 | `DELETE`| `/api/v1/role-assignments/{assignmentId}` | Thu hồi vai trò đã gán khỏi người dùng | x | x | Nút thu hồi vai trò |
-| 26 | `GET` | `/api/v1/users/{userId}/effective-permissions` | Tra cứu ma trận quyền hiệu lực của user (tính max DataScope) | x | x | Hook getEffectivePermissions |
+| 24 | `GET` | `/api/v1/users/{userId}/role-assignments` | Lấy danh sách các vai trò đã được gán cho người dùng | x | x | Modal phân quyền vai trò |
+| 25 | `POST` | `/api/v1/users/{userId}/role-assignments` | Gán vai trò cho người dùng tại một pháp nhân / công ty | x | x | Modal phân quyền vai trò |
+| 26 | `DELETE`| `/api/v1/role-assignments/{assignmentId}` | Thu hồi vai trò đã gán khỏi người dùng | x | x | Nút thu hồi vai trò |
+| 27 | `GET` | `/api/v1/users/{userId}/effective-permissions` | Tra cứu ma trận quyền hiệu lực của user (tính max DataScope) | x | x | Hook getEffectivePermissions |
 
 ---
 
@@ -88,11 +89,11 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 27 | `GET` | `/api/v1/products` | Lấy danh sách sản phẩm (lọc động đa tiêu chí, phân trang, sort) | x | x |  |
-| 28 | `GET` | `/api/v1/products/{id}` | Lấy chi tiết thông tin sản phẩm theo ID | x | x |  |
-| 29 | `POST` | `/api/v1/products` | Thêm mới sản phẩm vào hệ thống | x | x |  |
-| 30 | `PUT` | `/api/v1/products/{id}` | Cập nhật thông tin sản phẩm theo ID | x | x |  |
-| 31 | `DELETE`| `/api/v1/products/{id}` | Xóa mềm sản phẩm theo ID (chuyển deleted = true) | x | x |  |
+| 28 | `GET` | `/api/v1/products` | Lấy danh sách sản phẩm (lọc động đa tiêu chí, phân trang, sort) | x | x |  |
+| 29 | `GET` | `/api/v1/products/{id}` | Lấy chi tiết thông tin sản phẩm theo ID | x | x |  |
+| 30 | `POST` | `/api/v1/products` | Thêm mới sản phẩm vào hệ thống | x | x |  |
+| 31 | `PUT` | `/api/v1/products/{id}` | Cập nhật thông tin sản phẩm theo ID | x | x |  |
+| 32 | `DELETE`| `/api/v1/products/{id}` | Xóa mềm sản phẩm theo ID (chuyển deleted = true) | x | x |  |
 
 ---
 
@@ -100,5 +101,5 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 32 | `POST` | `/api/v1/media/upload` | Tải lên tệp tin hình ảnh lên Cloudinary (MultipartFile, max 5MB) | x | x | Tích hợp trong AvatarUploader |
-| 33 | `DELETE`| `/api/v1/media` | Xóa tệp tin đa phương tiện khỏi Cloudinary bằng publicId | x | x | Nút [X] xóa ảnh & tự xóa ảnh cũ khi đổi |
+| 33 | `POST` | `/api/v1/media/upload` | Tải lên tệp tin hình ảnh lên Cloudinary (MultipartFile, max 5MB) | x | x | Tích hợp trong AvatarUploader |
+| 34 | `DELETE`| `/api/v1/media` | Xóa tệp tin đa phương tiện khỏi Cloudinary bằng publicId | x | x | Nút [X] xóa ảnh & tự xóa ảnh cũ khi đổi |

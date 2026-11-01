@@ -1,5 +1,6 @@
 export const USER_ENDPOINTS = {
   USERS: "/users",
+  BULK: "/users/bulk",
   RESEND_ACTIVATION: (userId: string) => `/users/${userId}/resend-activation`,
   LOCK: (userId: string) => `/users/${userId}/lock`,
   UNLOCK: (userId: string) => `/users/${userId}/unlock`,
@@ -30,4 +31,3 @@ export const USER_STATUS_BADGE_VARIANTS: Record<
   PENDING_ACTIVATION: "secondary",
   LOCKED: "destructive",
 };
-

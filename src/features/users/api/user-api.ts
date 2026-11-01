@@ -5,6 +5,8 @@ import type {
   UserResponse,
   UserFilterParams,
   CreateUserPayload,
+  BulkCreateUserPayload,
+  BulkCreateUserResponse,
   UserRoleAssignmentResponse,
   AssignUserRolePayload,
   EffectivePermissionResponse,
@@ -31,6 +33,16 @@ export const userApi = baseApi.injectEndpoints({
     createUser: builder.mutation<ApiResponse<UserResponse>, CreateUserPayload>({
       query: (body) => ({
         url: USER_ENDPOINTS.USERS,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "User", id: "LIST" }],
+    }),
+
+    // 3. Tạo hàng loạt tài khoản người dùng từ Excel
+    bulkCreateUsers: builder.mutation<ApiResponse<BulkCreateUserResponse>, BulkCreateUserPayload>({
+      query: (body) => ({
+        url: USER_ENDPOINTS.BULK,
         method: "POST",
         body,
       }),
@@ -69,13 +81,16 @@ export const userApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // 7. Lấy danh sách vai trò đã gán của người dùng
-    getUserRoleAssignments: builder.query<ApiResponse<UserRoleAssignmentResponse[]>, string>({
+    // 7. Lấy danh sách vai trò đã gán của user
+    getUserRoleAssignments: builder.query<
+      ApiResponse<UserRoleAssignmentResponse[]>,
+      string
+    >({
       query: (userId) => USER_ENDPOINTS.ROLE_ASSIGNMENTS(userId),
-      providesTags: (_result, _error, userId) => [{ type: "Role", id: `USER_${userId}` }],
+      providesTags: (_result, _error, userId) => [{ type: "User", id: `ROLES_${userId}` }],
     }),
 
-    // 8. Gán vai trò cho người dùng tại một công ty
+    // 8. Gán vai trò cho user
     assignUserRole: builder.mutation<
       ApiResponse<UserRoleAssignmentResponse>,
       { userId: string; body: AssignUserRolePayload }
@@ -86,8 +101,8 @@ export const userApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: (_result, _error, { userId }) => [
-        { type: "Role", id: `USER_${userId}` },
-        { type: "User", id: "LIST" },
+        { type: "User", id: `ROLES_${userId}` },
+        { type: "User", id: `PERMS_${userId}` },
       ],
     }),
 
@@ -117,11 +132,13 @@ export const userApi = baseApi.injectEndpoints({
       }),
     }),
   }),
+  overrideExisting: false,
 });
 
 export const {
   useGetUsersQuery,
   useCreateUserMutation,
+  useBulkCreateUsersMutation,
   useResendActivationMutation,
   useLockUserMutation,
   useUnlockUserMutation,
@@ -130,4 +147,3 @@ export const {
   useRevokeUserRoleAssignmentMutation,
   useGetEffectivePermissionsQuery,
 } = userApi;
-
