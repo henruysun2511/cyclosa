@@ -1,26 +1,21 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import {
-  UploadCloud,
   FileSpreadsheet,
   Download,
   Plus,
   Trash2,
-  CheckCircle2,
   AlertCircle,
-  AlertTriangle,
   Loader2,
-  Save,
-  FileText,
 } from "lucide-react";
 
 import { useBulkCreateUsersMutation } from "../api/user-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -29,24 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export interface PreviewRow {
   id: string;
@@ -72,20 +49,20 @@ export function UserBulkImportDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [bulkCreateUsers, { isLoading }] = useBulkCreateUsersMutation();
 
-  // Reset dữ liệu khi mở lại dialog
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       setRows([]);
       setFileName(null);
-      setConfirmOpen(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   }, [open]);
 
-  // Thẩm định (validate) danh sách
+  // Thẩm định danh sách dòng
   const validateRows = (currentRows: PreviewRow[]): PreviewRow[] => {
     const emailCount: Record<string, number> = {};
 
@@ -109,7 +86,7 @@ export function UserBulkImportDialog({
       }
 
       if (emailCount[email.toLowerCase()] > 1) {
-        return { ...row, error: "Email bị trùng lặp trong danh sách" };
+        return { ...row, error: "Email bị trùng lặp" };
       }
 
       if (username && !USERNAME_REGEX.test(username)) {
@@ -177,18 +154,12 @@ export function UserBulkImportDialog({
 
         const invalidCount = validated.filter((r) => !!r.error).length;
         if (invalidCount > 0) {
-          toast.warning("Đã tải dữ liệu", {
-            description: `Đọc được ${validated.length} dòng. Có ${invalidCount} dòng cần chỉnh sửa.`,
-          });
+          toast.warning(`Đã đọc ${validated.length} dòng. Có ${invalidCount} dòng cần chỉnh sửa.`);
         } else {
-          toast.success("Tải dữ liệu thành công", {
-            description: `Đã đọc toàn bộ ${validated.length} dòng dữ liệu hợp lệ.`,
-          });
+          toast.success(`Đã đọc thành công ${validated.length} dòng dữ liệu.`);
         }
       } catch {
-        toast.error("Không thể đọc tệp", {
-          description: "Vui lòng kiểm tra định dạng tệp Excel/CSV và thử lại.",
-        });
+        toast.error("Không thể đọc tệp. Vui lòng kiểm tra định dạng tệp Excel/CSV.");
       }
     };
 
@@ -196,15 +167,16 @@ export function UserBulkImportDialog({
     e.target.value = "";
   };
 
-  // Cập nhật ô input trực tiếp trên bảng
   const handleCellChange = (id: string, field: "username" | "email", value: string) => {
-    setRows((prev) => {
-      const updated = prev.map((row) => (row.id === id ? { ...row, [field]: value } : row));
-      return validateRows(updated);
-    });
+    setRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    );
   };
 
-  // Xóa một dòng
+  const handleBlurRow = () => {
+    setRows((prev) => validateRows(prev));
+  };
+
   const handleDeleteRow = (id: string) => {
     setRows((prev) => {
       const updated = prev.filter((row) => row.id !== id);
@@ -212,20 +184,18 @@ export function UserBulkImportDialog({
     });
   };
 
-  // Thêm dòng mới thủ công
   const handleAddRow = () => {
-    setRows((prev) => {
-      const newRow: PreviewRow = {
+    setRows((prev) => [
+      ...prev,
+      {
         id: `row-${Date.now()}-${Math.random()}`,
         username: "",
         email: "",
         error: "Email không được để trống",
-      };
-      return [...prev, newRow];
-    });
+      },
+    ]);
   };
 
-  // Tải file mẫu Excel
   const handleDownloadTemplate = () => {
     const sampleData = [
       { "Tên đăng nhập (username)": "an.nguyen", "Email nhân viên (email)": "an.nguyen@cyclosa.vn" },
@@ -245,7 +215,6 @@ export function UserBulkImportDialog({
   const validRows = rows.filter((r) => !r.error);
   const invalidRows = rows.filter((r) => !!r.error);
 
-  // Tiến hành lưu tài khoản qua API
   const executeSave = async (itemsToSave: PreviewRow[]) => {
     try {
       const payload = {
@@ -259,13 +228,11 @@ export function UserBulkImportDialog({
       const { totalCreated, totalSkipped, errors } = res.data;
 
       if (totalSkipped > 0 && errors && errors.length > 0) {
-        toast.warning("Hoàn tất nhập tài khoản", {
-          description: `Đã tạo ${totalCreated} tài khoản. Bỏ qua ${totalSkipped} dòng (đã tồn tại trong CSDL).`,
-        });
+        toast.warning(
+          `Đã tạo ${totalCreated} tài khoản. Bỏ qua ${totalSkipped} dòng (đã tồn tại trong CSDL).`
+        );
       } else {
-        toast.success("Nhập hàng loạt thành công", {
-          description: `Đã tạo mới ${totalCreated} tài khoản và gửi mã kích hoạt 48h qua email.`,
-        });
+        toast.success(`Đã tạo mới ${totalCreated} tài khoản thành công.`);
       }
 
       onOpenChange(false);
@@ -274,241 +241,177 @@ export function UserBulkImportDialog({
       setFileName(null);
     } catch (err: unknown) {
       const errorObj = err as { data?: { message?: string } };
-      toast.error("Lỗi khi lưu tài khoản", {
-        description: errorObj?.data?.message || "Không thể lưu dữ liệu hàng loạt. Vui lòng thử lại.",
-      });
+      toast.error(errorObj?.data?.message || "Không thể lưu dữ liệu hàng loạt. Vui lòng thử lại.");
     }
   };
 
   const handlePreSave = () => {
-    if (rows.length === 0) {
-      toast.error("Chưa có dữ liệu", {
-        description: "Vui lòng tải lên tệp Excel/CSV hoặc thêm dòng tài khoản.",
-      });
+    const currentValidated = validateRows(rows);
+    setRows(currentValidated);
+
+    const valid = currentValidated.filter((r) => !r.error);
+    const invalid = currentValidated.filter((r) => !!r.error);
+
+    if (currentValidated.length === 0) {
+      toast.error("Vui lòng chọn tệp Excel hoặc thêm dòng tài khoản.");
       return;
     }
 
-    if (validRows.length === 0) {
-      toast.error("Không có dòng hợp lệ", {
-        description: "Toàn bộ các dòng hiện tại đều đang có lỗi. Vui lòng kiểm tra và sửa lại.",
-      });
+    if (valid.length === 0) {
+      toast.error("Không có dòng hợp lệ để lưu. Vui lòng sửa lại các dòng lỗi.");
       return;
     }
 
-    // Nếu còn dòng lỗi, bật Confirm cảnh báo theo đúng yêu cầu
-    if (invalidRows.length > 0) {
-      setConfirmOpen(true);
-    } else {
-      executeSave(validRows);
+    // Nếu còn dòng lỗi, bật confirm theo yêu cầu
+    if (invalid.length > 0) {
+      const confirmed = window.confirm(
+        `Danh sách có ${invalid.length} dòng dữ liệu bị lỗi hoặc thiếu email.\n\nSẽ không lưu những dòng bị lỗi. Bạn có chắc chắn muốn tiếp tục lưu ${valid.length} tài khoản hợp lệ còn lại không?`
+      );
+      if (!confirmed) return;
     }
+
+    executeSave(valid);
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[850px] p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl flex flex-col max-h-[85vh]">
-          {/* Header chuẩn design system codebase */}
-          <DialogHeader className="space-y-3 pb-4 border-b border-border/60">
-            <div className="flex items-center justify-between gap-4 pr-6">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0">
-                  <FileSpreadsheet className="h-5 w-5" />
-                </div>
-                <div>
-                  <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
-                    Nhập tài khoản hàng loạt
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    Tải lên file Excel (.xlsx, .xls, .csv), xem trước và điều chỉnh danh sách trước khi tạo
-                  </DialogDescription>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadTemplate}
-                className="h-8.5 px-3 rounded-lg border-input text-xs font-medium hover:bg-muted/80 gap-1.5 shrink-0 cursor-pointer shadow-xs"
-              >
-                <Download className="h-3.5 w-3.5 text-primary" />
-                <span>Tải file mẫu Excel</span>
-              </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[520px] p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl">
+        <DialogHeader className="space-y-3 pb-4 border-b border-border/60">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0">
+              <FileSpreadsheet className="h-5 w-5" />
             </div>
-          </DialogHeader>
+            <div>
+              <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+                Nhập tài khoản hàng loạt
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                Tải lên tệp Excel/CSV để tạo tài khoản và gửi liên kết kích hoạt 48 giờ
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-          {/* Vùng nội dung Body */}
-          <div className="flex-1 flex flex-col min-h-0 py-4">
-            {rows.length === 0 ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="my-auto border-2 border-dashed border-border/80 hover:border-primary/50 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-muted/15 hover:bg-muted/30 transition-all cursor-pointer text-center group"
+        <div className="space-y-4 pt-4 pb-1">
+          {/* Tải tệp Excel / CSV */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="excel-file" className="text-xs font-semibold text-foreground">
+                Chọn tệp bảng tính <span className="text-destructive">*</span>
+              </Label>
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="text-[11px] text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
               >
-                <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <UploadCloud className="h-6 w-6" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    Nhấp để tải lên hoặc kéo thả tệp Excel vào đây
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Định dạng hỗ trợ: Microsoft Excel (.xlsx, .xls) hoặc CSV (.csv)
-                  </p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col min-h-0 space-y-3">
-                {/* Thanh trạng thái dữ liệu & nút phụ */}
-                <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-foreground bg-muted/40 px-2.5 py-1 rounded-lg border border-border/60">
-                      <FileText className="h-3.5 w-3.5 text-primary" />
-                      <span className="truncate max-w-[200px]">{fileName || "Dữ liệu bảng tính"}</span>
-                    </div>
-                    <Badge variant="outline" className="text-[11px] font-medium rounded-md px-2 py-0.5">
-                      Tổng: {rows.length} dòng
-                    </Badge>
-                    <Badge variant="outline" className="text-[11px] font-medium rounded-md px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                      Hợp lệ: {validRows.length}
-                    </Badge>
-                    {invalidRows.length > 0 && (
-                      <Badge variant="destructive" className="text-[11px] font-medium rounded-md px-2 py-0.5">
-                        Lỗi/Thiếu: {invalidRows.length}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-8 px-2.5 rounded-lg border-input text-xs font-medium hover:bg-muted/80 gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <UploadCloud className="h-3.5 w-3.5" />
-                      <span>Nạp tệp khác</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleAddRow}
-                      className="h-8 px-2.5 rounded-lg text-xs font-medium gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>Thêm dòng</span>
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-
-                {/* Bảng Editable Table có scrollbar */}
-                <div className="flex-1 overflow-auto rounded-xl border border-border bg-card shadow-xs min-h-[220px] max-h-[360px]">
-                  <Table className="text-xs">
-                    <TableHeader className="bg-muted/40 sticky top-0 z-10">
-                      <TableRow className="hover:bg-transparent border-b border-border">
-                        <TableHead className="w-12 text-center text-xs font-semibold text-muted-foreground">
-                          STT
-                        </TableHead>
-                        <TableHead className="w-56 text-xs font-semibold text-muted-foreground">
-                          Tên đăng nhập (Username)
-                        </TableHead>
-                        <TableHead className="min-w-[240px] text-xs font-semibold text-muted-foreground">
-                          Địa chỉ Email <span className="text-destructive">*</span>
-                        </TableHead>
-                        <TableHead className="min-w-[200px] text-xs font-semibold text-muted-foreground">
-                          Trạng thái thẩm định
-                        </TableHead>
-                        <TableHead className="w-12 text-center text-xs font-semibold text-muted-foreground">
-                          Xóa
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rows.map((row, idx) => (
-                        <TableRow
-                          key={row.id}
-                          className={row.error ? "bg-destructive/5 hover:bg-destructive/10" : "hover:bg-muted/30"}
-                        >
-                          <TableCell className="text-center text-muted-foreground font-mono text-[11px]">
-                            {idx + 1}
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={row.username}
-                              onChange={(e) => handleCellChange(row.id, "username", e.target.value)}
-                              placeholder="Tự sinh nếu trống"
-                              className="h-8 text-xs font-mono rounded-lg border-input bg-background focus-visible:ring-1"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={row.email}
-                              onChange={(e) => handleCellChange(row.id, "email", e.target.value)}
-                              placeholder="nhanvien@cyclosa.vn"
-                              className={`h-8 text-xs rounded-lg bg-background focus-visible:ring-1 ${
-                                row.error
-                                  ? "border-destructive focus-visible:ring-destructive text-destructive font-medium"
-                                  : "border-input"
-                              }`}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {row.error ? (
-                              <span className="inline-flex items-center gap-1.5 text-destructive font-medium text-[11px]">
-                                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                                <span>{row.error}</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 font-medium text-[11px]">
-                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                                <span>Hợp lệ</span>
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteRow(row.id)}
-                              className="h-7 w-7 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 transition-colors cursor-pointer"
-                              title="Xóa dòng này"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                <Download className="h-3 w-3" />
+                Tải file mẫu Excel
+              </button>
+            </div>
+            <Input
+              id="excel-file"
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileChange}
+              disabled={isLoading}
+              className="h-9 text-xs rounded-lg border-input bg-background cursor-pointer file:text-xs file:font-medium file:text-foreground file:bg-muted file:border-0 file:rounded file:px-2 file:py-0.5 file:mr-2"
+            />
+            {fileName && (
+              <p className="text-[11px] text-muted-foreground">
+                Tệp đã chọn: <strong className="text-foreground">{fileName}</strong>
+              </p>
             )}
           </div>
 
-          {/* Footer chuẩn codebase */}
-          <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-2.5">
+          {/* Danh sách tài khoản xem trước */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold text-foreground">
+                  Danh sách tài khoản ({rows.length})
+                </Label>
+                {invalidRows.length > 0 && (
+                  <span className="text-[11px] text-destructive font-medium">
+                    ({invalidRows.length} dòng lỗi)
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleAddRow}
+                className="text-[11px] text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="h-3 w-3" />
+                Thêm dòng
+              </button>
+            </div>
+
+            <div className="p-2.5 rounded-lg border border-border bg-muted/20 space-y-2 max-h-56 overflow-y-auto">
+              {rows.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  Chưa có dữ liệu. Vui lòng chọn tệp Excel hoặc bấm "Thêm dòng".
+                </p>
+              ) : (
+                rows.map((row, idx) => (
+                  <div
+                    key={row.id}
+                    className={`p-2 rounded-lg border bg-background space-y-1.5 ${
+                      row.error ? "border-destructive/60" : "border-border"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono text-muted-foreground w-5 text-center shrink-0">
+                        #{idx + 1}
+                      </span>
+                      <Input
+                        value={row.username}
+                        onChange={(e) => handleCellChange(row.id, "username", e.target.value)}
+                        onBlur={handleBlurRow}
+                        placeholder="Username (tự sinh từ email)"
+                        className="h-8 text-xs font-mono rounded-lg border-input bg-background flex-1"
+                      />
+                      <Input
+                        value={row.email}
+                        onChange={(e) => handleCellChange(row.id, "email", e.target.value)}
+                        onBlur={handleBlurRow}
+                        placeholder="Email *"
+                        className={`h-8 text-xs rounded-lg bg-background flex-1 ${
+                          row.error ? "border-destructive text-destructive font-medium" : "border-input"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRow(row.id)}
+                        className="text-muted-foreground hover:text-destructive p-1 rounded cursor-pointer shrink-0"
+                        title="Xóa dòng"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {row.error && (
+                      <p className="text-[11px] text-destructive font-medium pl-7 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        {row.error}
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Có thể chỉnh sửa trực tiếp tên đăng nhập và email trước khi lưu vào hệ thống.
+            </p>
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => onOpenChange(false)}
               disabled={isLoading}
-              className="h-9 px-4 rounded-lg border-input text-xs font-medium hover:bg-muted/80 transition-colors cursor-pointer"
+              onClick={() => onOpenChange(false)}
+              className="h-9 px-4 text-xs font-medium cursor-pointer"
             >
               Hủy bỏ
             </Button>
@@ -517,68 +420,16 @@ export function UserBulkImportDialog({
               size="sm"
               disabled={isLoading || rows.length === 0}
               onClick={handlePreSave}
-              className="h-9 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium gap-2 shadow-xs transition-all cursor-pointer"
+              className="h-9 px-4 text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm cursor-pointer"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Đang xử lý tạo tài khoản...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  <span>
-                    Lưu danh sách ({validRows.length}/{rows.length} tài khoản)
-                  </span>
-                </>
-              )}
+              {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+              <span>
+                Lưu tài khoản ({validRows.length}/{rows.length})
+              </span>
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* AlertDialog xác nhận khi còn dòng bị lỗi chuẩn design system */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent className="sm:max-w-[440px] rounded-2xl border-border bg-card p-6 shadow-2xl">
-          <AlertDialogHeader>
-            <div className="flex items-center gap-3 pb-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20 shrink-0">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div>
-                <AlertDialogTitle className="text-base font-semibold text-foreground">
-                  Xác nhận bỏ qua dòng lỗi
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Hệ thống phát hiện dữ liệu chưa hoàn thiện
-                </AlertDialogDescription>
-              </div>
-            </div>
-          </AlertDialogHeader>
-          <div className="text-xs text-muted-foreground space-y-2.5 py-3">
-            <p>
-              Danh sách hiện có <strong className="text-destructive font-semibold">{invalidRows.length}</strong> dòng bị lỗi hoặc thiếu email.
-            </p>
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
-              ⚠️ <strong>Sẽ không lưu những dòng bị lỗi</strong>. Hệ thống chỉ tiến hành tạo <strong>{validRows.length}</strong> tài khoản hợp lệ.
-            </div>
-          </div>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="h-8.5 text-xs rounded-lg cursor-pointer">
-              Quay lại chỉnh sửa
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmOpen(false);
-                executeSave(validRows);
-              }}
-              className="h-8.5 text-xs rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
-            >
-              Đồng ý, chỉ lưu {validRows.length} tài khoản
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
