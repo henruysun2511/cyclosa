@@ -2,6 +2,7 @@ import type { UserStatus } from "../constants/user.constants";
 
 export interface UserResponse {
   id: string;
+  username: string;
   email: string;
   status: UserStatus;
   lastLoginAt: string | null;
@@ -10,6 +11,7 @@ export interface UserResponse {
 
 export interface UserDetailResponse {
   id: string;
+  username: string;
   email: string;
   status: UserStatus;
   lastLoginAt: string | null;
@@ -29,6 +31,7 @@ export interface UserFilterParams {
 }
 
 export interface CreateUserPayload {
+  username?: string;
   email: string;
   employeeId?: string;
   roleCodes?: string[];

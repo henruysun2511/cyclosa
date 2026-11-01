@@ -116,18 +116,18 @@ export function UserTable({
             ) : (
               users.map((user) => (
                 <TableRow key={user.id} className="hover:bg-muted/25 transition-colors">
-                  {/* Email & Info */}
+                  {/* Username & Email */}
                   <TableCell>
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                        {user.email.charAt(0).toUpperCase()}
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 uppercase">
+                        {(user.username || user.email).charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-xs text-foreground truncate">
-                          {user.email}
+                        <div className="font-semibold text-xs text-foreground truncate flex items-center gap-1.5">
+                          <span>{user.username || user.email.split("@")[0]}</span>
                         </div>
-                        <div className="text-[10px] text-muted-foreground font-mono">
-                          ID: {user.id.slice(0, 8)}...
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          {user.email}
                         </div>
                       </div>
                     </div>

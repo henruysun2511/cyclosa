@@ -1,6 +1,15 @@
 import { z } from "zod";
 
 export const createUserSchema = z.object({
+  username: z
+    .string({ required_error: "Vui lòng nhập tên đăng nhập" })
+    .trim()
+    .min(3, "Tên đăng nhập phải có ít nhất 3 ký tự")
+    .max(50, "Tên đăng nhập không được vượt quá 50 ký tự")
+    .regex(
+      /^[a-zA-Z0-9._-]+$/,
+      "Tên đăng nhập chỉ gồm chữ cái, chữ số, dấu chấm (.), gạch dưới (_) hoặc gạch ngang (-)"
+    ),
   email: z
     .string({ required_error: "Vui lòng nhập địa chỉ email" })
     .trim()

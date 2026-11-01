@@ -172,7 +172,7 @@ function UsersPageContent() {
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Tìm kiếm theo email..."
+              placeholder="Tìm kiếm theo username, email..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               className="h-9 pl-8.5 text-xs rounded-lg border-input bg-background"

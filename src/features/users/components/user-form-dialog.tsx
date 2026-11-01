@@ -31,9 +31,12 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
   const { data: rolesData } = useGetRolesQuery({ size: 100, sortBy: "name", direction: "asc" });
   const roles = rolesData?.data?.items || [];
 
+  const [isUsernameCustomized, setIsUsernameCustomized] = React.useState(false);
+
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
+      username: "",
       email: "",
       roleCodes: [],
     },
@@ -41,7 +44,9 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
 
   useEffect(() => {
     if (open) {
+      setIsUsernameCustomized(false);
       form.reset({
+        username: "",
         email: "",
         roleCodes: [],
       });
@@ -60,16 +65,28 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
     form.setValue("roleCodes", Array.from(current));
   };
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const emailVal = e.target.value;
+    form.setValue("email", emailVal, { shouldValidate: true });
+
+    // Nếu admin chưa từng can thiệp vào ô username, tự động trích xuất username từ email
+    if (!isUsernameCustomized && emailVal.includes("@")) {
+      const suggestedUsername = emailVal.split("@")[0].toLowerCase().replace(/[^a-zA-Z0-9._-]/g, "");
+      form.setValue("username", suggestedUsername, { shouldValidate: true });
+    }
+  };
+
   const onSubmit = async (values: CreateUserFormValues) => {
     try {
       const res = await createUser({
+        username: values.username.trim().toLowerCase(),
         email: values.email.trim().toLowerCase(),
         roleCodes: values.roleCodes && values.roleCodes.length > 0 ? values.roleCodes : undefined,
       }).unwrap();
 
       if (res.success) {
         onOpenChange(false);
-        toast.success(`Đã tạo tài khoản cho "${values.email}" thành công.`, {
+        toast.success(`Đã tạo tài khoản cho "${values.username}" (${values.email}) thành công.`, {
           description: "Mã kích hoạt có hiệu lực trong 48 giờ đã được gửi qua email.",
         });
         onSuccess?.();
@@ -100,6 +117,33 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 pb-1">
+          {/* Tên đăng nhập (Username) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="username" className="text-xs font-semibold text-foreground">
+                Tên đăng nhập (Username) <span className="text-destructive">*</span>
+              </Label>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                Chữ cái, số, ., _, -
+              </span>
+            </div>
+            <Input
+              id="username"
+              type="text"
+              placeholder="VD: nguyen.van.an, nv_001..."
+              disabled={isSubmitting}
+              className="h-9 text-xs rounded-lg border-input bg-background font-mono focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+              {...form.register("username", {
+                onChange: () => setIsUsernameCustomized(true),
+              })}
+            />
+            {form.formState.errors.username && (
+              <p className="text-[11px] text-destructive font-medium">
+                {form.formState.errors.username.message}
+              </p>
+            )}
+          </div>
+
           {/* Email */}
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-xs font-semibold text-foreground">
@@ -111,7 +155,9 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
               placeholder="VD: nguyen.van.an@cyclosa.vn"
               disabled={isSubmitting}
               className="h-9 text-xs rounded-lg border-input bg-background focus-visible:ring-1 focus-visible:ring-ring transition-colors"
-              {...form.register("email")}
+              {...form.register("email", {
+                onChange: handleEmailChange,
+              })}
             />
             {form.formState.errors.email ? (
               <p className="text-[11px] text-destructive font-medium">
@@ -119,7 +165,7 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
               </p>
             ) : (
               <p className="text-[11px] text-muted-foreground leading-normal">
-                Email sẽ được dùng để đăng nhập và nhận thông báo kích hoạt mật khẩu lần đầu.
+                Dùng để nhận liên kết kích hoạt tài khoản trong 48 giờ và đặt mật khẩu lần đầu.
               </p>
             )}
           </div>
