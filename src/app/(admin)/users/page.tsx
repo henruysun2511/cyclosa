@@ -73,7 +73,7 @@ function UsersPageContent() {
   const totalItems = usersData?.data?.pagination?.total || 0;
 
   // Mutations
-  const [resendActivation, { isLoading: isResending }] = useResendActivationMutation();
+  const [resendActivation] = useResendActivationMutation();
   const [lockUser, { isLoading: isLocking }] = useLockUserMutation();
   const [unlockUser, { isLoading: isUnlocking }] = useUnlockUserMutation();
 
@@ -139,15 +139,10 @@ function UsersPageContent() {
           <p className="text-xs text-muted-foreground mt-1">
             Quản lý tài khoản đăng nhập, trạng thái truy cập và phân bổ vai trò cho nhân sự trong toàn hệ thống
           </p>
-          {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
+        </div>
 
         <div className="flex items-center gap-2">
+          {/* Nút nhập hàng loạt tài khoản thay thế cho nút làm mới */}
           <PermissionGuard permission={PERMISSIONS.USER.CREATE} fallback={null}>
             <Button
               variant="outline"
@@ -171,20 +166,8 @@ function UsersPageContent() {
               <span>Tạo tài khoản mới</span>
             </Button>
           </PermissionGuard>
-          {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
-        {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
+        </div>
+      </div>
 
       {/* ── 2. Filter & Search Toolbar ─────────────────────────────── */}
       <div className="p-4 rounded-xl border border-border bg-card shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -199,13 +182,7 @@ function UsersPageContent() {
               onChange={(e) => setKeyword(e.target.value)}
               className="h-9 pl-8.5 text-xs rounded-lg border-input bg-background"
             />
-            {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
+          </div>
 
           {/* Bộ lọc trạng thái (Chuẩn Quy tắc 11.8) */}
           <div className="w-full sm:w-56">
@@ -224,13 +201,7 @@ function UsersPageContent() {
                       return "Tất cả trạng thái";
                     }}
                   </SelectValue>
-                  {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
+                </div>
               </SelectTrigger>
               <SelectContent className="text-xs">
                 <SelectItem value="ALL" label="Tất cả trạng thái" className="text-xs cursor-pointer">
@@ -247,27 +218,9 @@ function UsersPageContent() {
                 </SelectItem>
               </SelectContent>
             </Select>
-            {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
-          {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
-        {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
-      <UserBulkImportDialog
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-        onSuccess={() => refetch()}
-      />
-    </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── 3. Danh sách bảng người dùng ────────────────────────────── */}
       <UserTable
@@ -352,7 +305,7 @@ function UsersPageContent() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── 5. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
+      {/* ── 8. Dialog nhập tài khoản hàng loạt từ Excel ───────────── */}
       <UserBulkImportDialog
         open={isBulkImportOpen}
         onOpenChange={setIsBulkImportOpen}
@@ -377,4 +330,3 @@ export default function UsersPage() {
     </RouteGuard>
   );
 }
-
