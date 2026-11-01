@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
+  Image as ImageIcon,
 } from "lucide-react";
 
 import { useGetMeQuery, useUpdateMeMutation } from "@/features/auth/api/auth-api";
@@ -23,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 function formatDate(dateStr?: string | null): string {
@@ -46,6 +47,7 @@ function formatDate(dateStr?: string | null): string {
 export function ProfileForm() {
   const { data: meResponse, isLoading, isError, refetch } = useGetMeQuery();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMeMutation();
+  const [imageError, setImageError] = useState(false);
 
   const user = meResponse?.data;
 
@@ -53,27 +55,41 @@ export function ProfileForm() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<UpdateProfileInput>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       username: "",
+      avatarUrl: "",
     },
   });
+
+  const avatarUrlInput = watch("avatarUrl");
 
   useEffect(() => {
     if (user) {
       reset({
         username: user.username || user.email.split("@")[0],
+        avatarUrl: user.avatarUrl || "",
       });
+      setImageError(false);
     }
   }, [user, reset]);
 
+  // Reset image error khi đổi URL
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrlInput]);
+
   const onSubmit = async (values: UpdateProfileInput) => {
     try {
-      await updateProfile(values).unwrap();
+      await updateProfile({
+        username: values.username.trim(),
+        avatarUrl: values.avatarUrl?.trim() || null,
+      }).unwrap();
       toast.success("Cập nhật thông tin thành công", {
-        description: "Tên đăng nhập cá nhân đã được lưu vào hệ thống.",
+        description: "Hồ sơ cá nhân và ảnh đại diện đã được lưu vào hệ thống.",
       });
     } catch (err: unknown) {
       const errorObj = err as { data?: { message?: string } };
@@ -128,15 +144,26 @@ export function ProfileForm() {
     );
   }
 
+  const activeAvatarSrc = !imageError && (avatarUrlInput || user.avatarUrl);
+
   return (
     <div className="space-y-6">
-      {/* Thẻ thông tin tài khoản tổng quan */}
       <Card className="shadow-xs">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl uppercase border-2 border-primary/20 shrink-0">
-                {(user.username || user.email).charAt(0)}
+              {/* Avatar Preview */}
+              <div className="relative h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl uppercase border-2 border-primary/20 shrink-0 overflow-hidden shadow-xs">
+                {activeAvatarSrc ? (
+                  <img
+                    src={activeAvatarSrc}
+                    alt={user.username || user.email}
+                    onError={() => setImageError(true)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span>{(user.username || user.email).charAt(0)}</span>
+                )}
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -220,6 +247,29 @@ export function ProfileForm() {
                 />
                 <p className="text-[11px] text-muted-foreground">
                   Email định danh hệ thống. Liên hệ Quản trị viên nếu cần thay đổi.
+                </p>
+              </div>
+
+              {/* Đường dẫn ảnh đại diện (Avatar URL) */}
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="avatarUrl" className="text-xs font-semibold flex items-center gap-1.5">
+                  <ImageIcon className="h-3.5 w-3.5 text-primary" />
+                  Đường dẫn ảnh đại diện (Avatar URL)
+                </Label>
+                <Input
+                  id="avatarUrl"
+                  type="url"
+                  placeholder="https://example.com/images/avatar.jpg"
+                  className="h-9 text-xs"
+                  {...register("avatarUrl")}
+                />
+                {errors.avatarUrl && (
+                  <p className="text-[11px] text-destructive font-medium">
+                    {errors.avatarUrl.message}
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  Nhập liên kết ảnh trực tiếp (.png, .jpg, .webp). Ảnh xem trước sẽ hiển thị ngay phía trên.
                 </p>
               </div>
             </div>

@@ -23,6 +23,7 @@ export interface UserProfileResponse {
   id: string;
   username?: string | null;
   email: string;
+  avatarUrl?: string | null;
   status: "ACTIVE" | "PENDING_ACTIVATION" | "LOCKED" | "DEACTIVATED";
   roles: string[];
   lastLoginAt?: string | null;
@@ -31,6 +32,7 @@ export interface UserProfileResponse {
 
 export interface UpdateProfileRequest {
   username: string;
+  avatarUrl?: string | null;
 }
 
 export interface ActivateAccountRequest {

@@ -119,8 +119,19 @@ export function UserTable({
                   {/* Username & Email */}
                   <TableCell>
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 uppercase">
-                        {(user.username || user.email).charAt(0)}
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 uppercase overflow-hidden border border-border/60">
+                        {user.avatarUrl ? (
+                          <img
+                            src={user.avatarUrl}
+                            alt={user.username || user.email}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          (user.username || user.email).charAt(0)
+                        )}
                       </div>
                       <div className="min-w-0">
                         <div className="font-semibold text-xs text-foreground truncate flex items-center gap-1.5">

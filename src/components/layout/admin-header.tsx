@@ -23,7 +23,7 @@ import {
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/slices/auth.slice";
-import { useLogoutMutation } from "@/features/auth/api/auth-api";
+import { useLogoutMutation, useGetMeQuery } from "@/features/auth/api/auth-api";
 
 export interface AdminHeaderProps {
   sidebarOpen: boolean;
@@ -38,6 +38,8 @@ export function AdminHeader({
   const dispatch = useAppDispatch();
   const authUser = useAppSelector((state) => state.auth.user);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const { data: meResponse } = useGetMeQuery(undefined, { skip: !isAuthenticated });
+  const userProfile = meResponse?.data;
   const [triggerLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -229,7 +231,18 @@ export function AdminHeader({
               >
                 <div className="relative">
                   <div className="header-avatar-circle flex items-center justify-center bg-primary/10 text-primary font-semibold text-xs overflow-hidden">
-                    {authUser.email.substring(0, 2).toUpperCase()}
+                    {userProfile?.avatarUrl ? (
+                      <img
+                        src={userProfile.avatarUrl}
+                        alt={userProfile.username || authUser.email}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      (userProfile?.username || authUser.email).substring(0, 2).toUpperCase()
+                    )}
                   </div>
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                 </div>
@@ -240,12 +253,17 @@ export function AdminHeader({
                   {/* User info header */}
                   <div className="border-b border-border px-3 py-2.5">
                     <p className="text-sm font-semibold truncate text-foreground">
+                      {userProfile?.username || authUser.email}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground truncate">
                       {authUser.email}
                     </p>
                     <div className="mt-1 flex items-center gap-1.5">
                       <Shield className="h-3.5 w-3.5 text-primary" />
                       <span className="text-[11px] font-medium text-muted-foreground">
-                        {authUser.roles && authUser.roles.length > 0
+                        {userProfile?.roles && userProfile.roles.length > 0
+                          ? userProfile.roles.join(", ")
+                          : authUser.roles && authUser.roles.length > 0
                           ? authUser.roles.join(", ")
                           : "Thành viên"}
                       </span>

@@ -4,6 +4,7 @@ export type { UserProfileResponse };
 
 export interface UpdateProfileFormValues {
   username: string;
+  avatarUrl?: string;
 }
 
 export interface ChangePasswordFormValues {

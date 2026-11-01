@@ -10,6 +10,12 @@ export const updateProfileSchema = z.object({
       /^[a-zA-Z0-9_.-]+$/,
       "Tên đăng nhập chỉ chứa chữ cái, chữ số, dấu chấm, dấu gạch ngang và dấu gạch dưới"
     ),
+  avatarUrl: z
+    .string()
+    .max(500, "Đường dẫn ảnh không được vượt quá 500 ký tự")
+    .url("Đường dẫn ảnh đại diện không đúng định dạng URL")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

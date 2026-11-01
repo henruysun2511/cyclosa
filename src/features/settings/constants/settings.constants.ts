@@ -24,3 +24,4 @@ export const SETTINGS_NAV_ITEMS: SettingsNavSubItem[] = [
     icon: ShieldCheck,
   },
 ];
+

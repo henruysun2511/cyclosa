@@ -4,6 +4,7 @@ export interface UserResponse {
   id: string;
   username: string;
   email: string;
+  avatarUrl?: string | null;
   status: UserStatus;
   lastLoginAt: string | null;
   createdAt: string;
@@ -44,4 +45,3 @@ export interface EffectivePermissionResponse {
   permissionCode: string;
   maxDataScope: string;
 }
-
