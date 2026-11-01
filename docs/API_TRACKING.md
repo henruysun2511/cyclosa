@@ -11,12 +11,12 @@
 | Phân hệ / Module | Tổng số API | Backend (Đã xong) | Frontend (Đã xong) | Trạng thái |
 | :--- | :---: | :---: | :---: | :---: |
 | **1. Xác thực (Authentication)** | 9 | 9/9 (100%) | 8/9 (89%) | Sẵn sàng hoạt động |
-| **2. Quản lý Tài khoản (User Management)** | 6 | 6/6 (100%) | 0/6 (0%) | Chờ tích hợp FE |
-| **3. Quyền chức năng (Permissions)** | 1 | 1/1 (100%) | 1/1 (100%) | Hoàn tất tích hợp |
+| **2. Quản lý Tài khoản (User Management)** | 6 | 6/6 (100%) | 6/6 (100%) | Hoàn tất tích hợp 100% |
+| **3. Quyền chức năng (Permissions)** | 1 | 1/1 (100%) | 1/1 (100%) | Hoàn tất tích hợp 100% |
 | **4. Quản lý Vai trò (Roles)** | 7 | 7/7 (100%) | 6/7 (86%) | Màn hình /roles |
-| **5. Gán Vai trò & Quyền Hiệu lực (User Roles)** | 4 | 4/4 (100%) | 0/4 (0%) | Chờ tích hợp FE |
-| **6. Quản lý Sản phẩm mẫu (Products)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất 100% |
-| **TỔNG CỘNG** | **32** | **32/32 (100%)** | **20/32 (63%)** | Đang phát triển |
+| **5. Gán Vai trò & Quyền Hiệu lực (User Roles)** | 4 | 4/4 (100%) | 4/4 (100%) | Hoàn tất tích hợp 100% |
+| **6. Quản lý Sản phẩm mẫu (Products)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất tích hợp 100% |
+| **TỔNG CỘNG** | **32** | **32/32 (100%)** | **30/32 (94%)** | Đang phát triển |
 
 ---
 
@@ -42,12 +42,12 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 10 | `POST` | `/api/v1/users` | Tạo mới tài khoản nhân viên (ở trạng thái chờ kích hoạt) | x |  |  |
-| 11 | `GET` | `/api/v1/users` | Lấy danh sách tài khoản (lọc trạng thái, từ khóa, phân trang) | x |  |  |
-| 12 | `GET` | `/api/v1/users/{userId}` | Xem chi tiết thông tin tài khoản người dùng theo ID | x |  |  |
-| 13 | `POST` | `/api/v1/users/{userId}/resend-activation` | Gửi lại email kèm mã kích hoạt tài khoản 48h | x |  |  |
-| 14 | `POST` | `/api/v1/users/{userId}/lock` | Khóa tài khoản người dùng và hủy phiên đăng nhập | x |  |  |
-| 15 | `POST` | `/api/v1/users/{userId}/unlock` | Mở khóa tài khoản người dùng về trạng thái hoạt động | x |  |  |
+| 10 | `POST` | `/api/v1/users` | Tạo mới tài khoản nhân viên (ở trạng thái chờ kích hoạt) | x | x | Modal tạo tài khoản người dùng |
+| 11 | `GET` | `/api/v1/users` | Lấy danh sách tài khoản (lọc trạng thái, từ khóa, phân trang) | x | x | Màn hình /users |
+| 12 | `GET` | `/api/v1/users/{userId}` | Xem chi tiết thông tin tài khoản người dùng theo ID | x | x | Hook useGetUserByIdQuery |
+| 13 | `POST` | `/api/v1/users/{userId}/resend-activation` | Gửi lại email kèm mã kích hoạt tài khoản 48h | x | x | Thao tác trên từng tài khoản |
+| 14 | `POST` | `/api/v1/users/{userId}/lock` | Khóa tài khoản người dùng và hủy phiên đăng nhập | x | x | Dialog xác nhận khóa an toàn |
+| 15 | `POST` | `/api/v1/users/{userId}/unlock` | Mở khóa tài khoản người dùng về trạng thái hoạt động | x | x | Dialog xác nhận mở khóa an toàn |
 
 ---
 
@@ -77,10 +77,10 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 24 | `GET` | `/api/v1/users/{userId}/role-assignments` | Lấy danh sách các vai trò đã được gán cho người dùng | x |  |  |
-| 25 | `POST` | `/api/v1/users/{userId}/role-assignments` | Gán vai trò cho người dùng tại một pháp nhân / công ty | x |  |  |
-| 26 | `DELETE`| `/api/v1/role-assignments/{assignmentId}` | Thu hồi vai trò đã gán khỏi người dùng | x |  |  |
-| 27 | `GET` | `/api/v1/users/{userId}/effective-permissions` | Tra cứu ma trận quyền hiệu lực của user (tính max DataScope) | x |  |  |
+| 24 | `GET` | `/api/v1/users/{userId}/role-assignments` | Lấy danh sách các vai trò đã được gán cho người dùng | x | x | Modal phân quyền vai trò |
+| 25 | `POST` | `/api/v1/users/{userId}/role-assignments` | Gán vai trò cho người dùng tại một pháp nhân / công ty | x | x | Modal phân quyền vai trò |
+| 26 | `DELETE`| `/api/v1/role-assignments/{assignmentId}` | Thu hồi vai trò đã gán khỏi người dùng | x | x | Nút thu hồi vai trò |
+| 27 | `GET` | `/api/v1/users/{userId}/effective-permissions` | Tra cứu ma trận quyền hiệu lực của user (tính max DataScope) | x | x | Hook getEffectivePermissions |
 
 ---
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, Package } from "lucide-react";
+import { ShieldCheck, Package, Users } from "lucide-react";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import type {
   PermissionCode,
@@ -37,6 +37,13 @@ export const navigationConfig: NavGroup[] = [
   {
     label: "HỆ THỐNG & BẢO MẬT",
     items: [
+      {
+        title: "Tài khoản người dùng",
+        href: "/users",
+        icon: Users,
+        permission: PERMISSIONS.USER.VIEW,
+        resource: "USER",
+      },
       {
         title: "Vai trò & Phân quyền",
         href: "/roles",
