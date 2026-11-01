@@ -309,7 +309,7 @@ export function UserBulkImportDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl">
+        <DialogContent className="sm:max-w-4xl lg:max-w-5xl max-h-[90vh] flex flex-col p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl">
           {/* Header chuẩn giống UserFormDialog */}
           <DialogHeader className="space-y-3 pb-4 border-b border-border/60">
             <div className="flex items-center justify-between gap-4 pr-6">

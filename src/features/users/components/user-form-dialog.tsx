@@ -99,7 +99,7 @@ export function UserFormDialog({ open, onOpenChange, onSuccess }: UserFormDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl">
+      <DialogContent className="sm:max-w-[540px] p-6 gap-0 rounded-2xl border-border bg-card shadow-2xl">
         <DialogHeader className="space-y-3 pb-4 border-b border-border/60">
           <div className="flex items-center gap-3.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0">
