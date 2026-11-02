@@ -6,6 +6,14 @@ export interface ApiResponse<T> {
   timestamp?: string;
 }
 
+export interface BaseFilterParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  keyword?: string;
+  [key: string]: unknown;
+}
+
 export interface PaginationData {
   page: number; // 0-based từ Spring Boot backend
   size: number;

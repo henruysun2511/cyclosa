@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, Package, Users, Settings } from "lucide-react";
+import { ShieldCheck, Package, Users, Settings, Building2, Layers } from "lucide-react";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import type {
   PermissionCode,
@@ -34,6 +34,25 @@ export interface NavGroup {
  * Khi phát triển thêm phân hệ nào sẽ bổ sung menu tương ứng vào đây.
  */
 export const navigationConfig: NavGroup[] = [
+  {
+    label: "CƠ CẤU TỔ CHỨC",
+    items: [
+      {
+        title: "Sơ đồ tổ chức & Phòng ban",
+        href: "/organization",
+        icon: Building2,
+        permission: PERMISSIONS.ORG.VIEW,
+        resource: "ORG",
+      },
+      {
+        title: "Danh mục tổ chức",
+        href: "/organization/catalogs",
+        icon: Layers,
+        permission: PERMISSIONS.ORG.VIEW,
+        resource: "ORG",
+      },
+    ],
+  },
   {
     label: "HỆ THỐNG & PHÂN QUYỀN",
     items: [
