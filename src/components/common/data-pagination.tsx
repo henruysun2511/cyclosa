@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PAGE_SIZE_OPTIONS } from "@/features/products/constants/product.constants";
+import { PAGE_SIZE_OPTIONS } from "@/config/pagination";
 import type { PaginationData, PaginationMeta } from "@/types/api.types";
 
 interface DataPaginationProps {

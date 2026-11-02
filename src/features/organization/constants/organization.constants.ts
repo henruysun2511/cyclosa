@@ -47,9 +47,9 @@ export const COMPANY_STATUS_OPTIONS = [
 ] as const;
 
 /**
- * Tùy chọn phân trang kích thước trang
+ * Tùy chọn phân trang kích thước trang (dùng chung từ config toàn cục)
  */
-export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+export { PAGE_SIZE_OPTIONS } from "@/config/pagination";
 
 /**
  * Cấu hình mặc định cho Chi nhánh và GPS
