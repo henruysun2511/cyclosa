@@ -58,6 +58,11 @@ import { BranchFormDialog } from "@/features/organization/components/dialogs/bra
 import { CostCenterFormDialog } from "@/features/organization/components/dialogs/cost-center-form-dialog";
 import { JobTitleFormDialog } from "@/features/organization/components/dialogs/job-title-form-dialog";
 import { JobLevelFormDialog } from "@/features/organization/components/dialogs/job-level-form-dialog";
+import { useCatalogFilters } from "@/features/organization/hooks/use-catalog-filters";
+import {
+  CATALOG_TABS,
+  type CatalogTab,
+} from "@/features/organization/constants/organization.constants";
 import type {
   Company,
   Region,
@@ -67,11 +72,13 @@ import type {
   JobLevel,
 } from "@/features/organization/types";
 
-const DEFAULT_COMPANY_ID = "00000000-0000-0000-0000-000000000001";
-
 export default function OrganizationCatalogsPage() {
-  const [activeTab, setActiveTab] = useState<"companies" | "branches" | "cost-centers" | "job-matrix">("companies");
-  const [selectedCompanyId, setSelectedCompanyId] = useState(DEFAULT_COMPANY_ID);
+  const {
+    activeTab,
+    companyId: selectedCompanyId,
+    setTab: setActiveTab,
+    setCompanyId: setSelectedCompanyId,
+  } = useCatalogFilters();
 
   // Dialog States
   const [isCompanyOpen, setIsCompanyOpen] = useState(false);

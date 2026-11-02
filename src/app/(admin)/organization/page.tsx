@@ -28,6 +28,11 @@ import {
   useGetDepartmentsQuery,
   useGetCompaniesQuery,
 } from "@/features/organization/api/organization-api";
+import { useOrganizationFilters } from "@/features/organization/hooks/use-organization-filters";
+import {
+  DEFAULT_COMPANY_ID,
+  ORG_VIEW_MODES,
+} from "@/features/organization/constants/organization.constants";
 import { OrgTreeView } from "@/features/organization/components/org-tree/org-tree-view";
 import { OrgTableView } from "@/features/organization/components/org-tree/org-table-view";
 import { DepartmentFormDialog } from "@/features/organization/components/dialogs/department-form-dialog";
@@ -40,14 +45,16 @@ import { PERMISSIONS } from "@/features/authorization/constants/permission.const
 import { env } from "@/config/env";
 import { tokenStorage } from "@/lib/token-storage";
 
-const DEFAULT_COMPANY_ID = "00000000-0000-0000-0000-000000000001";
-
 export default function OrganizationPage() {
-  const [selectedCompanyId, setSelectedCompanyId] = useState(DEFAULT_COMPANY_ID);
-  const [asOfDate, setAsOfDate] = useState("");
-  const [viewMode, setViewMode] = useState<"tree" | "table">("tree");
-  const [keyword, setKeyword] = useState("");
-  const [page, setPage] = useState(0);
+  const { filters, updateFilters, setKeywordDebounced } = useOrganizationFilters();
+  const {
+    companyId: selectedCompanyId,
+    asOfDate,
+    viewMode,
+    keyword,
+    page,
+    size,
+  } = filters;
 
   // Modals state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -243,7 +250,7 @@ export default function OrganizationPage() {
           <div className="w-56">
             <Select
               value={selectedCompanyId}
-              onValueChange={(val) => val && setSelectedCompanyId(val)}
+              onValueChange={(val) => val && updateFilters({ companyId: val })}
             >
               <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="Chọn công ty / pháp nhân" />
@@ -264,7 +271,7 @@ export default function OrganizationPage() {
             <Input
               type="date"
               value={asOfDate}
-              onChange={(e) => setAsOfDate(e.target.value)}
+              onChange={(e) => updateFilters({ asOfDate: e.target.value })}
               className="h-9 text-xs w-36"
               placeholder="Chốt tại ngày"
               title="Xem sơ đồ tổ chức chốt tại mốc ngày chỉ định"
@@ -274,7 +281,7 @@ export default function OrganizationPage() {
                 variant="ghost"
                 size="sm"
                 className="h-9 px-2 text-xs text-muted-foreground"
-                onClick={() => setAsOfDate("")}
+                onClick={() => updateFilters({ asOfDate: "" })}
               >
                 Hôm nay
               </Button>
@@ -282,16 +289,13 @@ export default function OrganizationPage() {
           </div>
 
           {/* Tìm kiếm phòng ban (ở chế độ bảng) */}
-          {viewMode === "table" && (
+          {viewMode === ORG_VIEW_MODES.TABLE && (
             <div className="relative w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Tìm mã hoặc tên đơn vị..."
-                value={keyword}
-                onChange={(e) => {
-                  setKeyword(e.target.value);
-                  setPage(0);
-                }}
+                defaultValue={keyword}
+                onChange={(e) => setKeywordDebounced(e.target.value)}
                 className="pl-8 h-9 text-xs"
               />
             </div>
@@ -302,9 +306,9 @@ export default function OrganizationPage() {
         <div className="flex items-center rounded-md border border-border bg-slate-50 p-0.5 shrink-0">
           <button
             type="button"
-            onClick={() => setViewMode("tree")}
+            onClick={() => updateFilters({ viewMode: ORG_VIEW_MODES.TREE })}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-              viewMode === "tree"
+              viewMode === ORG_VIEW_MODES.TREE
                 ? "bg-white text-primary shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
@@ -314,9 +318,9 @@ export default function OrganizationPage() {
           </button>
           <button
             type="button"
-            onClick={() => setViewMode("table")}
+            onClick={() => updateFilters({ viewMode: ORG_VIEW_MODES.TABLE })}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-              viewMode === "table"
+              viewMode === ORG_VIEW_MODES.TABLE
                 ? "bg-white text-primary shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
