@@ -35,6 +35,8 @@ import { DepartmentMoveDialog } from "@/features/organization/components/dialogs
 import { DepartmentDetailDialog } from "@/features/organization/components/dialogs/department-detail-dialog";
 import { DepartmentDissolveDialog } from "@/features/organization/components/dialogs/department-dissolve-dialog";
 import type { Department, DepartmentNode } from "@/features/organization/types";
+import { PermissionGuard } from "@/features/authorization/components/permission-guard";
+import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import { env } from "@/config/env";
 import { tokenStorage } from "@/lib/token-storage";
 
@@ -179,7 +181,8 @@ export default function OrganizationPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <PermissionGuard permission={PERMISSIONS.ORG.VIEW}>
+      <div className="space-y-6 pb-12">
       {/* ── Page Header ────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -220,14 +223,16 @@ export default function OrganizationPage() {
             <span>{isExporting ? "Đang xuất..." : "Xuất Excel"}</span>
           </Button>
 
-          <Button
-            onClick={handleOpenCreateRoot}
-            size="sm"
-            className="h-9 gap-1.5 text-xs font-medium shadow-2xs"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Thêm phòng ban</span>
-          </Button>
+          <PermissionGuard permission={PERMISSIONS.ORG.MANAGE}>
+            <Button
+              onClick={handleOpenCreateRoot}
+              size="sm"
+              className="h-9 gap-1.5 text-xs font-medium shadow-2xs"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Thêm phòng ban</span>
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -370,13 +375,14 @@ export default function OrganizationPage() {
         onMove={handleOpenMove}
       />
 
-      <DepartmentDissolveDialog
-        open={isDissolveOpen}
-        onOpenChange={setIsDissolveOpen}
-        department={selectedDept}
-        onSuccess={handleRefresh}
-      />
-    </div>
+        <DepartmentDissolveDialog
+          open={isDissolveOpen}
+          onOpenChange={setIsDissolveOpen}
+          department={selectedDept}
+          onSuccess={handleRefresh}
+        />
+      </div>
+    </PermissionGuard>
   );
 }
 

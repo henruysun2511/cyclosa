@@ -36,6 +36,15 @@ import type {
   DepartmentFilterParams,
 } from "../types/organization.types";
 
+// Helper chuẩn hóa 1-based UI page sang 0-based Spring Boot backend page
+function toBackendPaginationParams<T extends { page?: number }>(params: T): Record<string, unknown> {
+  const { page, ...rest } = params;
+  return {
+    ...rest,
+    page: page !== undefined && page > 0 ? page - 1 : 0,
+  };
+}
+
 export const organizationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // ═════════════════════════════════════════════════════════════════════════
@@ -43,7 +52,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getCompanies: builder.query<PageData<Company>, Partial<CompanyFilterParams>>({
       query: (params = {}) => ({
-        url: `/companies?${buildQueryString(params)}`,
+        url: `/companies?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<Company>>) => res.data,
@@ -87,7 +96,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getRegions: builder.query<PageData<Region>, RegionFilterParams>({
       query: (params) => ({
-        url: `/regions?${buildQueryString(params)}`,
+        url: `/regions?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<Region>>) => res.data,
@@ -137,7 +146,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getBranches: builder.query<PageData<Branch>, BranchFilterParams>({
       query: (params) => ({
-        url: `/branches?${buildQueryString(params)}`,
+        url: `/branches?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<Branch>>) => res.data,
@@ -187,7 +196,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getCostCenters: builder.query<PageData<CostCenter>, CostCenterFilterParams>({
       query: (params) => ({
-        url: `/cost-centers?${buildQueryString(params)}`,
+        url: `/cost-centers?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<CostCenter>>) => res.data,
@@ -237,7 +246,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getJobTitles: builder.query<PageData<JobTitle>, JobTitleFilterParams>({
       query: (params) => ({
-        url: `/job-titles?${buildQueryString(params)}`,
+        url: `/job-titles?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<JobTitle>>) => res.data,
@@ -287,7 +296,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getJobLevels: builder.query<PageData<JobLevel>, JobLevelFilterParams>({
       query: (params) => ({
-        url: `/job-levels?${buildQueryString(params)}`,
+        url: `/job-levels?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<JobLevel>>) => res.data,
@@ -337,7 +346,7 @@ export const organizationApi = baseApi.injectEndpoints({
     // ═════════════════════════════════════════════════════════════════════════
     getDepartments: builder.query<PageData<Department>, DepartmentFilterParams>({
       query: (params) => ({
-        url: `/departments?${buildQueryString(params)}`,
+        url: `/departments?${buildQueryString(toBackendPaginationParams(params))}`,
         method: "GET",
       }),
       transformResponse: (res: ApiResponse<PageData<Department>>) => res.data,

@@ -27,6 +27,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { usePermission } from "@/features/authorization/hooks/use-permission";
+import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import type { Department, DepartmentNode } from "../../types/organization.types";
 
 interface OrgTreeViewProps {
@@ -50,6 +52,8 @@ export function OrgTreeView({
   onDissolve,
   className,
 }: OrgTreeViewProps) {
+  const { can } = usePermission();
+  const canManage = can(PERMISSIONS.ORG.MANAGE);
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
@@ -170,18 +174,20 @@ export function OrgTreeView({
             </Badge>
 
             {/* Quick action: Thêm đơn vị con */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-slate-500 hover:text-primary"
-              title="Thêm đơn vị con trực thuộc"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddSubDepartment(node.id);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+            {canManage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-slate-500 hover:text-primary"
+                title="Thêm đơn vị con trực thuộc"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddSubDepartment(node.id);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            )}
 
             {/* Action menu */}
             <DropdownMenu>
@@ -195,17 +201,18 @@ export function OrgTreeView({
                   <Eye className="mr-2 h-4 w-4 text-slate-500" />
                   <span>Xem chi tiết & Lịch sử</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(node)}>
+                <DropdownMenuItem onClick={() => onEdit(node)} disabled={!canManage}>
                   <Pencil className="mr-2 h-4 w-4 text-slate-500" />
                   <span>Chỉnh sửa cơ cấu</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMove(node)}>
+                <DropdownMenuItem onClick={() => onMove(node)} disabled={!canManage}>
                   <ArrowRightLeft className="mr-2 h-4 w-4 text-slate-500" />
                   <span>Điều chuyển vị trí</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => onDissolve(node)}
+                  disabled={!canManage}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4 text-destructive" />

@@ -35,6 +35,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { PermissionGuard } from "@/features/authorization/components/permission-guard";
+import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import {
   useGetCompaniesQuery,
   useDeleteCompanyMutation,
@@ -122,23 +125,52 @@ export default function OrganizationCatalogsPage() {
   const [deleteJobTitle] = useDeleteJobTitleMutation();
   const [deleteJobLevel] = useDeleteJobLevelMutation();
 
-  const handleDelete = async (type: string, id: string, name: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa "${name}"?`)) return;
+  // Dialog xác nhận xóa an toàn theo Chuẩn 9.2
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    type: string;
+    id: string;
+    name: string;
+    isLoading: boolean;
+  }>({
+    open: false,
+    type: "",
+    id: "",
+    name: "",
+    isLoading: false,
+  });
+
+  const handleDelete = (type: string, id: string, name: string) => {
+    setDeleteConfirm({
+      open: true,
+      type,
+      id,
+      name,
+      isLoading: false,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
     try {
+      setDeleteConfirm((prev) => ({ ...prev, isLoading: true }));
+      const { type, id } = deleteConfirm;
       if (type === "company") await deleteCompany(id).unwrap();
       if (type === "region") await deleteRegion(id).unwrap();
       if (type === "branch") await deleteBranch(id).unwrap();
       if (type === "cost-center") await deleteCostCenter(id).unwrap();
       if (type === "job-title") await deleteJobTitle(id).unwrap();
       if (type === "job-level") await deleteJobLevel(id).unwrap();
-      toast.success("Xóa thành công!");
+      toast.success("Xóa bản ghi thành công!");
+      setDeleteConfirm((prev) => ({ ...prev, open: false, isLoading: false }));
     } catch {
-      toast.error("Không thể xóa bản ghi này!");
+      toast.error("Không thể xóa bản ghi này! Vui lòng kiểm tra ràng buộc dữ liệu liên quan.");
+      setDeleteConfirm((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <PermissionGuard permission={PERMISSIONS.ORG.VIEW}>
+      <div className="space-y-6 pb-12">
       {/* ── Page Header ────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -168,7 +200,7 @@ export default function OrganizationCatalogsPage() {
         {/* Company Dropdown (nếu tab không phải là companies) */}
         {activeTab !== "companies" && (
           <div className="w-60">
-            <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+            <Select value={selectedCompanyId} onValueChange={(val) => val && setSelectedCompanyId(val)}>
               <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="Chọn công ty / pháp nhân" />
               </SelectTrigger>
@@ -814,7 +846,21 @@ export default function OrganizationCatalogsPage() {
         jobLevel={selectedJobLevel}
         companyId={selectedCompanyId}
       />
+
+      {/* Confirm Dialog xóa bản ghi chuẩn shadcn */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm((prev) => ({ ...prev, open }))}
+        title="Xác nhận xóa bản ghi"
+        description={`Bạn có chắc chắn muốn xóa "${deleteConfirm.name}"? Dữ liệu sẽ được chuyển vào trạng thái xóa mềm.`}
+        confirmLabel="Xác nhận xóa"
+        cancelLabel="Hủy bỏ"
+        variant="destructive"
+        isLoading={deleteConfirm.isLoading}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
+  </PermissionGuard>
   );
 }
 

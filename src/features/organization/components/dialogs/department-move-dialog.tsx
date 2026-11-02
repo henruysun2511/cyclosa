@@ -146,7 +146,7 @@ export function DepartmentMoveDialog({
             {/* Chọn đơn vị cấp trên mới */}
             <div className="space-y-1.5">
               <Label htmlFor="target-parent">Chuyển sang làm cấp dưới của *</Label>
-              <Select value={targetParentId} onValueChange={setTargetParentId}>
+              <Select value={targetParentId} onValueChange={(val) => setTargetParentId(val || "none")}>
                 <SelectTrigger id="target-parent">
                   <SelectValue placeholder="Chọn vị trí mới trong cây cơ cấu" />
                 </SelectTrigger>

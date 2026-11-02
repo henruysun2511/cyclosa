@@ -27,6 +27,8 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
+import { usePermission } from "@/features/authorization/hooks/use-permission";
+import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import type { Department } from "../../types/organization.types";
 
 interface OrgTableViewProps {
@@ -46,6 +48,9 @@ export function OrgTableView({
   onMove,
   onDissolve,
 }: OrgTableViewProps) {
+  const { can } = usePermission();
+  const canManage = can(PERMISSIONS.ORG.MANAGE);
+
   if (isLoading) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground animate-pulse">
@@ -141,11 +146,11 @@ export function OrgTableView({
                       <Eye className="mr-2 h-4 w-4 text-slate-500" />
                       <span>Xem chi tiết & Lịch sử</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(dept)}>
+                    <DropdownMenuItem onClick={() => onEdit(dept)} disabled={!canManage}>
                       <Pencil className="mr-2 h-4 w-4 text-slate-500" />
                       <span>Chỉnh sửa cơ cấu</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onMove(dept)}>
+                    <DropdownMenuItem onClick={() => onMove(dept)} disabled={!canManage}>
                       <ArrowRightLeft className="mr-2 h-4 w-4 text-slate-500" />
                       <span>Điều chuyển vị trí</span>
                     </DropdownMenuItem>
@@ -153,7 +158,7 @@ export function OrgTableView({
                     <DropdownMenuItem
                       onClick={() => onDissolve(dept)}
                       className="text-destructive focus:text-destructive"
-                      disabled={!dept.isActive}
+                      disabled={!canManage || !dept.isActive}
                     >
                       <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                       <span>Giải thể phòng ban</span>

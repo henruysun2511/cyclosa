@@ -20,6 +20,8 @@ import {
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePermission } from "@/features/authorization/hooks/use-permission";
+import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import {
   useGetDepartmentHistoryQuery,
   useUpdatePermissionInheritanceMutation,
@@ -41,6 +43,9 @@ export function DepartmentDetailDialog({
   onEdit,
   onMove,
 }: DepartmentDetailDialogProps) {
+  const { can } = usePermission();
+  const canManage = can(PERMISSIONS.ORG.MANAGE);
+
   const { data: history = [], isFetching } = useGetDepartmentHistoryQuery(
     department?.id || "",
     { skip: !department || !open }
@@ -122,10 +127,11 @@ export function DepartmentDetailDialog({
               <Switch
                 checked={department.isPermissionInherited}
                 onCheckedChange={handleToggleInheritance}
-                disabled={isUpdatingInheritance}
+                disabled={isUpdatingInheritance || !canManage}
               />
               <span className="text-xs text-muted-foreground">
                 {department.isPermissionInherited ? "Đang bật" : "Đã tắt"}
+                {!canManage && " (Chỉ đọc)"}
               </span>
             </div>
           </div>
