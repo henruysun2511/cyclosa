@@ -59,3 +59,4 @@ export const GPS_CONFIG = {
   MIN_RADIUS_METERS: 10,
   MAX_RADIUS_METERS: 5000,
 } as const;
+
