@@ -17,7 +17,14 @@
 | **5. Gán Vai trò & Quyền Hiệu lực (User Roles)** | 4 | 4/4 (100%) | 4/4 (100%) | Hoàn tất tích hợp 100% |
 | **6. Quản lý Sản phẩm mẫu (Products)** | 5 | 5/5 (100%) | 5/5 (100%) | Hoàn tất tích hợp 100% |
 | **7. Quản lý Tệp tin (Cloudinary Media)** | 2 | 2/2 (100%) | 2/2 (100%) | Hoàn tất tích hợp 100% |
-| **TỔNG CỘNG** | **34** | **34/34 (100%)** | **33/34 (97%)** | Đang phát triển |
+| **8. Quản lý Tổ chức - Công ty & Pháp nhân (Companies)** | 5 | 5/5 (100%) | 0/5 (0%) | Sẵn sàng tích hợp FE |
+| **9. Quản lý Tổ chức - Khu vực & Vùng miền (Regions)** | 7 | 7/7 (100%) | 0/7 (0%) | Sẵn sàng tích hợp FE |
+| **10. Quản lý Tổ chức - Chi nhánh & GPS (Branches)** | 6 | 6/6 (100%) | 0/6 (0%) | Sẵn sàng tích hợp FE |
+| **11. Quản lý Tổ chức - Trung tâm Chi phí (Cost Centers)** | 6 | 6/6 (100%) | 0/6 (0%) | Sẵn sàng tích hợp FE |
+| **12. Quản lý Tổ chức - Chức danh Công việc (Job Titles)** | 6 | 6/6 (100%) | 0/6 (0%) | Sẵn sàng tích hợp FE |
+| **13. Quản lý Tổ chức - Cấp bậc Chức danh (Job Levels)** | 6 | 6/6 (100%) | 0/6 (0%) | Sẵn sàng tích hợp FE |
+| **14. Quản lý Tổ chức - Sơ đồ & Phòng ban (Departments)** | 11 | 11/11 (100%) | 0/11 (0%) | Sẵn sàng tích hợp FE |
+| **TỔNG CỘNG** | **81** | **81/81 (100%)** | **33/81 (41%)** | Đang phát triển |
 
 ---
 
@@ -103,3 +110,99 @@
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
 | 33 | `POST` | `/api/v1/media/upload` | Tải lên tệp tin hình ảnh lên Cloudinary (MultipartFile, max 5MB) | x | x | Tích hợp trong AvatarUploader |
 | 34 | `DELETE`| `/api/v1/media` | Xóa tệp tin đa phương tiện khỏi Cloudinary bằng publicId | x | x | Nút [X] xóa ảnh & tự xóa ảnh cũ khi đổi |
+
+---
+
+### Module 8: Quản lý Tổ chức - Công ty & Pháp nhân (`CompanyController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 35 | `GET` | `/api/v1/companies` | Lấy danh sách công ty có phân trang, bộ lọc trạng thái và tìm kiếm | x |   | Sơ đồ tổ chức & Cấu hình pháp nhân |
+| 36 | `GET` | `/api/v1/companies/{companyId}` | Lấy thông tin chi tiết một công ty theo ID | x |   |  |
+| 37 | `POST` | `/api/v1/companies` | Tạo mới công ty / pháp nhân trong tập đoàn | x |   | Modal tạo công ty |
+| 38 | `PUT` | `/api/v1/companies/{companyId}` | Cập nhật thông tin công ty / pháp nhân | x |   | Modal chỉnh sửa công ty |
+| 39 | `DELETE`| `/api/v1/companies/{companyId}` | Xóa mềm công ty / pháp nhân | x |   | Dialog xác nhận xóa |
+
+---
+
+### Module 9: Quản lý Tổ chức - Khu vực & Vùng miền (`RegionController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 40 | `GET` | `/api/v1/regions` | Lấy danh sách khu vực theo công ty có phân trang và tìm kiếm | x |   | Danh mục phân vùng địa lý |
+| 41 | `GET` | `/api/v1/regions/all` | Lấy toàn bộ danh sách khu vực theo công ty (không phân trang) | x |   | Dropdown chọn khu vực |
+| 42 | `GET` | `/api/v1/regions/{regionId}` | Lấy thông tin chi tiết một khu vực theo ID | x |   |  |
+| 43 | `GET` | `/api/v1/regions/{regionId}/branches` | Lấy danh sách các chi nhánh trực thuộc một khu vực | x |   |  |
+| 44 | `POST` | `/api/v1/regions` | Tạo mới khu vực / vùng miền trực thuộc công ty | x |   | Modal tạo khu vực |
+| 45 | `PUT` | `/api/v1/regions/{regionId}` | Cập nhật thông tin tên khu vực | x |   | Modal sửa khu vực |
+| 46 | `DELETE`| `/api/v1/regions/{regionId}` | Xóa mềm khu vực | x |   | Dialog xác nhận xóa |
+
+---
+
+### Module 10: Quản lý Tổ chức - Chi nhánh & Văn phòng (`BranchController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 47 | `GET` | `/api/v1/branches` | Lấy danh sách chi nhánh theo khu vực có phân trang và bộ lọc | x |   | Quản lý văn phòng làm việc |
+| 48 | `GET` | `/api/v1/branches/by-company` | Lấy toàn bộ chi nhánh theo công ty (cho chọn nhanh / GPS) | x |   | Dropdown & Chấm công GPS |
+| 49 | `GET` | `/api/v1/branches/{branchId}` | Lấy thông tin chi tiết một chi nhánh theo ID | x |   |  |
+| 50 | `POST` | `/api/v1/branches` | Tạo mới chi nhánh / văn phòng kèm tọa độ Lat/Lng và bán kính GPS | x |   | Modal tạo chi nhánh |
+| 51 | `PUT` | `/api/v1/branches/{branchId}` | Cập nhật thông tin chi nhánh / tọa độ GPS và bán kính chấm công | x |   | Modal sửa chi nhánh |
+| 52 | `DELETE`| `/api/v1/branches/{branchId}` | Xóa mềm chi nhánh | x |   | Dialog xác nhận xóa |
+
+---
+
+### Module 11: Quản lý Tổ chức - Trung tâm Chi phí (`CostCenterController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 53 | `GET` | `/api/v1/cost-centers` | Lấy danh sách trung tâm chi phí theo công ty có phân trang | x |   | Quản lý trung tâm chi phí |
+| 54 | `GET` | `/api/v1/cost-centers/all` | Lấy toàn bộ trung tâm chi phí theo công ty (cho dropdown) | x |   | Dropdown gán phòng ban |
+| 55 | `GET` | `/api/v1/cost-centers/{costCenterId}` | Lấy thông tin chi tiết một trung tâm chi phí theo ID | x |   |  |
+| 56 | `POST` | `/api/v1/cost-centers` | Tạo mới trung tâm chi phí | x |   | Modal tạo trung tâm chi phí |
+| 57 | `PUT` | `/api/v1/cost-centers/{costCenterId}` | Cập nhật thông tin trung tâm chi phí | x |   | Modal sửa trung tâm chi phí |
+| 58 | `DELETE`| `/api/v1/cost-centers/{costCenterId}` | Xóa mềm trung tâm chi phí | x |   | Dialog xác nhận xóa |
+
+---
+
+### Module 12: Quản lý Tổ chức - Chức danh Công việc (`JobTitleController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 59 | `GET` | `/api/v1/job-titles` | Lấy danh sách chức danh theo công ty có phân trang | x |   | Quản lý chức danh |
+| 60 | `GET` | `/api/v1/job-titles/all` | Lấy toàn bộ chức danh theo công ty (cho dropdown) | x |   | Dropdown chức danh nhân viên |
+| 61 | `GET` | `/api/v1/job-titles/{jobTitleId}` | Lấy thông tin chi tiết một chức danh theo ID | x |   |  |
+| 62 | `POST` | `/api/v1/job-titles` | Tạo mới chức danh công việc | x |   | Modal tạo chức danh |
+| 63 | `PUT` | `/api/v1/job-titles/{jobTitleId}` | Cập nhật thông tin chức danh công việc | x |   | Modal sửa chức danh |
+| 64 | `DELETE`| `/api/v1/job-titles/{jobTitleId}` | Xóa mềm chức danh công việc | x |   | Dialog xác nhận xóa |
+
+---
+
+### Module 13: Quản lý Tổ chức - Cấp bậc Chức danh (`JobLevelController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 65 | `GET` | `/api/v1/job-levels` | Lấy danh sách cấp bậc theo công ty có phân trang | x |   | Quản lý cấp bậc thẩm quyền |
+| 66 | `GET` | `/api/v1/job-levels/all` | Lấy toàn bộ cấp bậc theo công ty đã sắp xếp rank_order tăng dần | x |   | Dropdown cấp bậc nhân viên |
+| 67 | `GET` | `/api/v1/job-levels/{jobLevelId}` | Lấy thông tin chi tiết một cấp bậc theo ID | x |   |  |
+| 68 | `POST` | `/api/v1/job-levels` | Tạo mới cấp bậc chức danh (kèm thứ tự rank_order) | x |   | Modal tạo cấp bậc |
+| 69 | `PUT` | `/api/v1/job-levels/{jobLevelId}` | Cập nhật tên và thứ tự cấp bậc chức danh | x |   | Modal sửa cấp bậc |
+| 70 | `DELETE`| `/api/v1/job-levels/{jobLevelId}` | Xóa mềm cấp bậc chức danh | x |   | Dialog xác nhận xóa |
+
+---
+
+### Module 14: Quản lý Tổ chức - Sơ đồ & Phòng ban (`DepartmentController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 71 | `GET` | `/api/v1/departments` | Lấy danh sách phòng ban theo công ty có phân trang và tìm kiếm | x |   | Màn hình quản lý phòng ban |
+| 72 | `GET` | `/api/v1/departments/tree` | Lấy cây sơ đồ tổ chức (Org Tree) theo mốc ngày hiệu lực chốt cơ cấu | x |   | Màn hình [25] Sơ đồ tổ chức (lõi) |
+| 73 | `GET` | `/api/v1/departments/export` | Xuất file Excel sơ đồ cơ cấu tổ chức theo ngày hiệu lực chốt | x |   | Xuất báo cáo cấu trúc tổ chức |
+| 74 | `GET` | `/api/v1/departments/{departmentId}` | Lấy thông tin chi tiết phòng ban theo ID và ngày hiệu lực | x |   | Chi tiết đơn vị / Drawer |
+| 75 | `GET` | `/api/v1/departments/{departmentId}/history` | Lấy toàn bộ lịch sử các phiên bản hiệu lực của một phòng ban | x |   | Drawer lịch sử phiên bản |
+| 76 | `GET` | `/api/v1/departments/{departmentId}/move-impact` | Xem trước tác động chuyển nhánh (kiểm tra chu trình & đếm đơn vị con) | x |   | Modal xem trước tác động |
+| 77 | `POST` | `/api/v1/departments` | Tạo mới phòng ban và phiên bản cơ cấu ban đầu | x |   | Modal tạo phòng ban mới |
+| 78 | `PUT` | `/api/v1/departments/{departmentId}` | Cập nhật phòng ban (tạo phiên bản mới theo ngày hiệu lực) | x |   | Modal sửa cơ cấu phòng ban |
+| 79 | `PUT` | `/api/v1/departments/{departmentId}/move` | Điều chuyển vị trí phòng ban trong cây cơ cấu sang phòng ban cha mới | x |   | Kéo thả cây / Modal chuyển vị trí |
+| 80 | `PUT` | `/api/v1/departments/{departmentId}/permission-inheritance` | Bật / tắt cờ kế thừa phân quyền xuống các đơn vị con | x |   | Switch toggle kế thừa quyền |
+| 81 | `DELETE`| `/api/v1/departments/{departmentId}` | Giải thể phòng ban (chỉ khi không còn phòng ban con trực thuộc) | x |   | Dialog xác nhận giải thể |
