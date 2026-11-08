@@ -468,6 +468,7 @@ export default function OrganizationPage() {
                 onEdit={handleOpenEdit}
                 onMove={handleOpenMove}
                 onDissolve={handleOpenDissolve}
+                onViewDetail={handleOpenDetail}
               />
             </div>
 
@@ -479,6 +480,7 @@ export default function OrganizationPage() {
                 onMove={handleOpenMove}
                 onDissolve={handleOpenDissolve}
                 onAddSubDepartment={handleOpenAddSub}
+                onViewDetail={handleOpenDetail}
               />
             </div>
           </div>

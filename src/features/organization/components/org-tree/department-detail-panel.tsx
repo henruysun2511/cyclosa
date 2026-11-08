@@ -13,6 +13,7 @@ import {
   Calendar,
   Lock,
   Unlock,
+  Eye,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface DepartmentDetailPanelProps {
   onMove: (dept: Department | DepartmentNode) => void;
   onDissolve: (dept: Department | DepartmentNode) => void;
   onAddSubDepartment: (parentId: string) => void;
+  onViewDetail?: (dept: Department | DepartmentNode) => void;
   className?: string;
 }
 
@@ -36,6 +38,7 @@ export function DepartmentDetailPanel({
   onMove,
   onDissolve,
   onAddSubDepartment,
+  onViewDetail,
   className,
 }: DepartmentDetailPanelProps) {
   const { can } = usePermission();
@@ -152,6 +155,16 @@ export function DepartmentDetailPanel({
         {/* ── Tác vụ đơn vị (Unit Actions) ─────────────────────────── */}
         <div className="pt-4 border-t border-border space-y-2">
           <p className="font-semibold text-foreground">Tác vụ đơn vị:</p>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start text-xs h-8 text-primary hover:bg-primary/5 border-primary/30"
+            onClick={() => selectedDept && onViewDetail?.(selectedDept)}
+          >
+            <Eye className="h-3.5 w-3.5 mr-2 text-primary" />
+            <span>Xem chi tiết & Lịch sử phiên bản</span>
+          </Button>
 
           {canManage && (
             <Button

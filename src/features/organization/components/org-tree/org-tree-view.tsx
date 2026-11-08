@@ -40,6 +40,7 @@ interface OrgTreeViewProps {
   onEdit: (node: DepartmentNode) => void;
   onMove: (node: DepartmentNode) => void;
   onDissolve: (node: DepartmentNode) => void;
+  onViewDetail?: (node: DepartmentNode) => void;
   className?: string;
 }
 
@@ -52,6 +53,7 @@ export function OrgTreeView({
   onEdit,
   onMove,
   onDissolve,
+  onViewDetail,
   className,
 }: OrgTreeViewProps) {
   const { can } = usePermission();
@@ -220,7 +222,16 @@ export function OrgTreeView({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => onSelectNode(node)}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onViewDetail) {
+                      onViewDetail(node);
+                    } else {
+                      onSelectNode(node);
+                    }
+                  }}
+                >
                   <Eye className="mr-2 h-4 w-4 text-slate-500" />
                   <span>Xem chi tiết & Lịch sử</span>
                 </DropdownMenuItem>
