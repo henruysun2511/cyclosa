@@ -102,7 +102,11 @@ export default function OrganizationCatalogsPage() {
   const [selectedJobLevel, setSelectedJobLevel] = useState<JobLevel | null>(null);
 
   // Queries
-  const { data: companiesData, isLoading: isCompaniesLoading } = useGetCompaniesQuery({ size: 50 });
+  const {
+    data: companiesData,
+    isLoading: isCompaniesLoading,
+    refetch: refetchCompanies,
+  } = useGetCompaniesQuery({ size: 50 });
 
   const fallbackCompany: Company = React.useMemo(
     () => ({
@@ -136,23 +140,43 @@ export default function OrganizationCatalogsPage() {
     }
   }, [companies, selectedCompanyId, setSelectedCompanyId]);
 
-  const { data: regions = [], isLoading: isRegionsLoading } = useGetAllRegionsQuery(selectedCompanyId, {
+  const {
+    data: regions = [],
+    isLoading: isRegionsLoading,
+    refetch: refetchRegions,
+  } = useGetAllRegionsQuery(selectedCompanyId, {
     skip: !selectedCompanyId,
   });
 
-  const { data: branches = [], isLoading: isBranchesLoading } = useGetBranchesByCompanyQuery(selectedCompanyId, {
+  const {
+    data: branches = [],
+    isLoading: isBranchesLoading,
+    refetch: refetchBranches,
+  } = useGetBranchesByCompanyQuery(selectedCompanyId, {
     skip: !selectedCompanyId,
   });
 
-  const { data: costCenters = [], isLoading: isCostCentersLoading } = useGetAllCostCentersQuery(selectedCompanyId, {
+  const {
+    data: costCenters = [],
+    isLoading: isCostCentersLoading,
+    refetch: refetchCostCenters,
+  } = useGetAllCostCentersQuery(selectedCompanyId, {
     skip: !selectedCompanyId,
   });
 
-  const { data: jobTitles = [], isLoading: isJobTitlesLoading } = useGetAllJobTitlesQuery(selectedCompanyId, {
+  const {
+    data: jobTitles = [],
+    isLoading: isJobTitlesLoading,
+    refetch: refetchJobTitles,
+  } = useGetAllJobTitlesQuery(selectedCompanyId, {
     skip: !selectedCompanyId,
   });
 
-  const { data: jobLevels = [], isLoading: isJobLevelsLoading } = useGetAllJobLevelsQuery(selectedCompanyId, {
+  const {
+    data: jobLevels = [],
+    isLoading: isJobLevelsLoading,
+    refetch: refetchJobLevels,
+  } = useGetAllJobLevelsQuery(selectedCompanyId, {
     skip: !selectedCompanyId,
   });
 
@@ -193,12 +217,30 @@ export default function OrganizationCatalogsPage() {
     try {
       setDeleteConfirm((prev) => ({ ...prev, isLoading: true }));
       const { type, id } = deleteConfirm;
-      if (type === "company") await deleteCompany(id).unwrap();
-      if (type === "region") await deleteRegion(id).unwrap();
-      if (type === "branch") await deleteBranch(id).unwrap();
-      if (type === "cost-center") await deleteCostCenter(id).unwrap();
-      if (type === "job-title") await deleteJobTitle(id).unwrap();
-      if (type === "job-level") await deleteJobLevel(id).unwrap();
+      if (type === "company") {
+        await deleteCompany(id).unwrap();
+        refetchCompanies();
+      }
+      if (type === "region") {
+        await deleteRegion(id).unwrap();
+        refetchRegions();
+      }
+      if (type === "branch") {
+        await deleteBranch(id).unwrap();
+        refetchBranches();
+      }
+      if (type === "cost-center") {
+        await deleteCostCenter(id).unwrap();
+        refetchCostCenters();
+      }
+      if (type === "job-title") {
+        await deleteJobTitle(id).unwrap();
+        refetchJobTitles();
+      }
+      if (type === "job-level") {
+        await deleteJobLevel(id).unwrap();
+        refetchJobLevels();
+      }
       toast.success("Xóa bản ghi thành công!");
       setDeleteConfirm((prev) => ({ ...prev, open: false, isLoading: false }));
     } catch {
@@ -870,6 +912,7 @@ export default function OrganizationCatalogsPage() {
         open={isCompanyOpen}
         onOpenChange={setIsCompanyOpen}
         company={selectedCompany}
+        onSuccess={() => refetchCompanies()}
       />
 
       <RegionFormDialog
@@ -877,6 +920,7 @@ export default function OrganizationCatalogsPage() {
         onOpenChange={setIsRegionOpen}
         region={selectedRegion}
         companyId={selectedCompanyId}
+        onSuccess={() => refetchRegions()}
       />
 
       <BranchFormDialog
@@ -884,6 +928,7 @@ export default function OrganizationCatalogsPage() {
         onOpenChange={setIsBranchOpen}
         branch={selectedBranch}
         regionId={branchRegionId}
+        onSuccess={() => refetchBranches()}
       />
 
       <CostCenterFormDialog
@@ -891,6 +936,7 @@ export default function OrganizationCatalogsPage() {
         onOpenChange={setIsCostCenterOpen}
         costCenter={selectedCostCenter}
         companyId={selectedCompanyId}
+        onSuccess={() => refetchCostCenters()}
       />
 
       <JobTitleFormDialog
@@ -898,6 +944,7 @@ export default function OrganizationCatalogsPage() {
         onOpenChange={setIsJobTitleOpen}
         jobTitle={selectedJobTitle}
         companyId={selectedCompanyId}
+        onSuccess={() => refetchJobTitles()}
       />
 
       <JobLevelFormDialog
@@ -905,6 +952,7 @@ export default function OrganizationCatalogsPage() {
         onOpenChange={setIsJobLevelOpen}
         jobLevel={selectedJobLevel}
         companyId={selectedCompanyId}
+        onSuccess={() => refetchJobLevels()}
       />
 
       {/* Confirm Dialog xóa bản ghi chuẩn shadcn */}
