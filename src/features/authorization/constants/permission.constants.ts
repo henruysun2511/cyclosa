@@ -63,6 +63,8 @@ export const PERMISSIONS = {
     VIEW: "contract.view",
     CREATE: "contract.create",
     SIGN: "contract.sign",
+    APPROVE: "contract.approve",
+    TEMPLATE: "contract.template",
   },
 
   // 9. Tuyển dụng & Thu hút nhân tài

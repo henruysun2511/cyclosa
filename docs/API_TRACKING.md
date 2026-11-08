@@ -25,8 +25,8 @@
 | **13. Quản lý Tổ chức - Cấp bậc Chức danh (Job Levels)** | 6 | 6/6 (100%) | 6/6 (100%) | Hoàn tất tích hợp 100% |
 | **14. Quản lý Tổ chức - Sơ đồ & Phòng ban (Departments)** | 11 | 11/11 (100%) | 11/11 (100%) | Hoàn tất tích hợp 100% |
 | **15. Hồ sơ nhân sự & Vòng đời (Employee Profile)** | 37 | 37/37 (100%) | 26/37 (70%) | Hoàn tất nghiệp vụ lõi (26/37) |
-| **16. Quản lý Hợp đồng Lao động & Ký điện tử (Contracts & E-Sign)** | 42 | 42/42 (100%) | 0/42 (0%) | Hoàn tất Backend 100% |
-| **TỔNG CỘNG** | **160** | **160/160 (100%)** | **106/160 (66.3%)** | Đang phát triển |
+| **16. Quản lý Hợp đồng Lao động & Ký điện tử (Contracts & E-Sign)** | 42 | 42/42 (100%) | 40/42 (95%) | Hoàn tất nghiệp vụ lõi (40/42) |
+| **TỔNG CỘNG** | **160** | **160/160 (100%)** | **146/160 (91.3%)** | Đang phát triển |
 
 ---
 
@@ -259,46 +259,46 @@
 
 | STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
 | :-: | :--- | :--- | :--- | :-: | :-: | :--- |
-| 119 | `GET` | `/api/v1/contract-templates` | Lấy danh sách mẫu hợp đồng phân trang (lọc kind, isActive, search) | x |   | Quản lý biểu mẫu hợp đồng |
-| 120 | `GET` | `/api/v1/contract-templates/{id}` | Lấy chi tiết mẫu hợp đồng và phiên bản đang kích hoạt | x |   |  |
-| 121 | `POST` | `/api/v1/contract-templates` | Tạo mới mẫu hợp đồng kèm phiên bản ban đầu (version 1) | x |   | Modal tạo mẫu hợp đồng |
-| 122 | `PUT` | `/api/v1/contract-templates/{id}` | Cập nhật thông tin chung của mẫu hợp đồng (tên, phân loại) | x |   | Modal sửa mẫu hợp đồng |
-| 123 | `POST` | `/api/v1/contract-templates/{id}/versions` | Tạo phiên bản mới cho mẫu hợp đồng đã tồn tại | x |   | Soạn phiên bản mẫu mới |
-| 124 | `GET` | `/api/v1/contract-templates/{id}/versions` | Lấy danh sách toàn bộ phiên bản của một mẫu hợp đồng | x |   | Lịch sử phiên bản mẫu |
-| 125 | `GET` | `/api/v1/contract-templates/{id}/versions/{versionId}` | Xem chi tiết nội dung mẫu HTML/Handlebars của phiên bản cụ thể | x |   | Chi tiết phiên bản mẫu |
-| 126 | `POST` | `/api/v1/contract-templates/{id}/versions/{versionId}/publish` | Kích hoạt phát hành phiên bản mẫu để áp dụng soạn thảo | x |   | Nút phát hành mẫu |
-| 127 | `POST` | `/api/v1/contract-templates/render-preview` | Xem trước nội dung hợp đồng khi gán dữ liệu biến vào mẫu | x |   | Trình xem trước Handlebars |
-| 128 | `GET` | `/api/v1/contracts` | Lấy danh sách hợp đồng (phân trang, lọc nhân viên, phòng ban, loại HĐ, trạng thái, hạn ký) | x |   | Danh sách HĐLĐ (/contracts) |
-| 129 | `POST` | `/api/v1/contracts` | Soạn thảo hợp đồng mới ở trạng thái DRAFT (kèm danh mục phụ cấp và các bên ký) | x |   | Modal soạn thảo HĐLĐ |
-| 130 | `GET` | `/api/v1/contracts/{id}` | Lấy chi tiết hợp đồng, danh mục phụ cấp và tiến độ ký số các bên | x |   | Chi tiết HĐLĐ 360 độ |
-| 131 | `PUT` | `/api/v1/contracts/{id}` | Cập nhật nội dung hợp đồng (chỉ cho phép khi DRAFT hoặc PENDING_APPROVAL) | x |   | Chỉnh sửa điều khoản HĐ |
-| 132 | `DELETE`| `/api/v1/contracts/{id}` | Xóa hợp đồng bản nháp (DRAFT) | x |   | Xóa bản nháp chưa gửi duyệt |
-| 133 | `POST` | `/api/v1/contracts/{id}/submit-approval` | Trình duyệt hợp đồng lao động (DRAFT -> PENDING_APPROVAL) | x |   | Nút gửi phê duyệt |
-| 134 | `POST` | `/api/v1/contracts/{id}/approve` | Phê duyệt nội dung hợp đồng lao động (PENDING_APPROVAL -> APPROVED) | x |   | Nút phê duyệt hợp đồng |
-| 135 | `POST` | `/api/v1/contracts/{id}/reject` | Từ chối phê duyệt hợp đồng kèm lý do | x |   | Nút từ chối duyệt |
-| 136 | `POST` | `/api/v1/contracts/{id}/send-signing` | Phát lệnh ký điện tử đa bên (tạo phiên bản PDF, APPROVED -> IN_SIGNING) | x |   | Kích hoạt quy trình ký số |
-| 137 | `POST` | `/api/v1/contracts/{id}/activate` | Kích hoạt hiệu lực hợp đồng (chuyển sang ACTIVE sau khi các bên ký đủ) | x |   | Kích hoạt hợp đồng |
-| 138 | `POST` | `/api/v1/contracts/{id}/terminate` | Chấm dứt hợp đồng lao động (thanh lý hợp đồng / kết thúc quan hệ lao động) | x |   | Chấm dứt / Thanh lý HĐLĐ |
-| 139 | `GET` | `/api/v1/contracts/{id}/preview-pdf` | Tải xuống hoặc xem trước bản in / PDF hợp đồng lao động | x |   | Xem trước & In PDF |
-| 140 | `GET` | `/api/v1/contracts/{id}/versions` | Tra cứu lịch sử phiên bản và nhật ký thay đổi của hợp đồng | x |   | Lịch sử phiên bản hợp đồng |
-| 141 | `GET` | `/api/v1/contracts/compliance-check` | Kiểm tra tính tuân thủ pháp lý theo BLLĐ 2019 (số lần ký, thời hạn) | x |   | Wizard kiểm tra tuân thủ pháp lý |
-| 142 | `GET` | `/api/v1/contracts/{contractId}/appendices` | Lấy danh sách toàn bộ phụ lục của một hợp đồng lao động | x |   | Danh sách phụ lục HĐ |
-| 143 | `POST` | `/api/v1/contracts/{contractId}/appendices` | Soạn thảo phụ lục hợp đồng mới (DRAFT) | x |   | Soạn phụ lục thay đổi lương/vị trí |
-| 144 | `GET` | `/api/v1/contract-appendices/{id}` | Lấy chi tiết phụ lục hợp đồng và các điều khoản điều chỉnh | x |   | Chi tiết phụ lục |
-| 145 | `PUT` | `/api/v1/contract-appendices/{id}` | Cập nhật nội dung phụ lục hợp đồng (khi đang DRAFT) | x |   | Chỉnh sửa phụ lục |
-| 146 | `DELETE`| `/api/v1/contract-appendices/{id}` | Xóa phụ lục bản nháp | x |   | Xóa phụ lục bản nháp |
-| 147 | `POST` | `/api/v1/contract-appendices/{id}/submit-approval` | Gửi phê duyệt phụ lục hợp đồng | x |   | Gửi duyệt phụ lục |
-| 148 | `POST` | `/api/v1/contract-appendices/{id}/approve` | Phê duyệt phụ lục hợp đồng | x |   | Phê duyệt phụ lục |
-| 149 | `POST` | `/api/v1/contract-appendices/{id}/reject` | Từ chối phụ lục hợp đồng kèm lý do | x |   | Từ chối phụ lục |
-| 150 | `POST` | `/api/v1/contract-appendices/{id}/send-signing` | Phát lệnh ký số phụ lục hợp đồng | x |   | Gửi ký số phụ lục |
-| 151 | `POST` | `/api/v1/contract-appendices/{id}/activate` | Kích hoạt hiệu lực phụ lục hợp đồng | x |   | Kích hoạt phụ lục |
-| 152 | `GET` | `/api/v1/contract-appendices/{id}/preview-pdf` | Xem trước hoặc tải PDF phụ lục hợp đồng | x |   | Xem trước PDF phụ lục |
-| 153 | `GET` | `/api/v1/contracts/{contractId}/signers` | Tra cứu tiến độ ký và danh sách người ký hợp đồng | x |   | Tiến độ ký số các bên |
-| 154 | `POST` | `/api/v1/contract-signers/{id}/resend-otp` | Gửi lại mã xác thực OTP ký số cho người ký qua Email / SMS | x |   | Nút gửi lại OTP cho người ký |
-| 155 | `POST` | `/api/v1/contract-signers/{id}/verify-audit` | Kiểm tra xác thực tính toàn vẹn chữ ký số và mã băm SHA-256 | x |   | Kiểm toán toàn vẹn chữ ký |
-| 156 | `POST` | `/api/v1/contract-signers/{id}/cancel-request` | Hủy lượt ký hợp đồng của một cá nhân | x |   | Hủy yêu cầu ký |
-| 157 | `GET` | `/api/v1/me/contracts` | Nhân viên tra cứu danh sách hợp đồng cá nhân của mình | x |   | Cổng tự phục vụ (Self-service) |
-| 158 | `GET` | `/api/v1/me/contracts/{id}` | Nhân viên xem chi tiết hợp đồng và tải tệp tin hợp đồng đã ký | x |   | Xem & Tải HĐLĐ cá nhân |
-| 159 | `POST` | `/api/v1/me/contracts/{id}/request-otp` | Nhân viên bấm yêu cầu nhận mã OTP xác thực ký số cá nhân | x |   | Yêu cầu OTP ký hợp đồng |
-| 160 | `POST` | `/api/v1/me/contracts/{id}/sign` | Nhân viên xác nhận ký điện tử vào hợp đồng với mã OTP | x |   | Ký điện tử OTP |
+| 119 | `GET` | `/api/v1/contract-templates` | Lấy danh sách mẫu hợp đồng phân trang (lọc kind, isActive, search) | x | x | Trang /contracts/templates |
+| 120 | `GET` | `/api/v1/contract-templates/{id}` | Lấy chi tiết mẫu hợp đồng và phiên bản đang kích hoạt | x | x | Modal ContractTemplateDialog |
+| 121 | `POST` | `/api/v1/contract-templates` | Tạo mới mẫu hợp đồng kèm phiên bản ban đầu (version 1) | x | x | Modal tạo mẫu hợp đồng |
+| 122 | `PUT` | `/api/v1/contract-templates/{id}` | Cập nhật thông tin chung của mẫu hợp đồng (tên, phân loại) | x | x | Modal sửa mẫu hợp đồng |
+| 123 | `POST` | `/api/v1/contract-templates/{id}/versions` | Tạo phiên bản mới cho mẫu hợp đồng đã tồn tại | x | x | Nút lưu thành phiên bản mới |
+| 124 | `GET` | `/api/v1/contract-templates/{id}/versions` | Lấy danh sách toàn bộ phiên bản của một mẫu hợp đồng | x | x | Tab Lịch sử phiên bản mẫu |
+| 125 | `GET` | `/api/v1/contract-templates/{id}/versions/{versionId}` | Xem chi tiết nội dung mẫu HTML/Handlebars của phiên bản cụ thể | x | x | Chi tiết phiên bản mẫu |
+| 126 | `POST` | `/api/v1/contract-templates/{id}/versions/{versionId}/publish` | Kích hoạt phát hành phiên bản mẫu để áp dụng soạn thảo | x | x | Nút kích hoạt bản này |
+| 127 | `POST` | `/api/v1/contract-templates/render-preview` | Xem trước nội dung hợp đồng khi gán dữ liệu biến vào mẫu | x | x | Nút Render thử nghiệm Handlebars |
+| 128 | `GET` | `/api/v1/contracts` | Lấy danh sách hợp đồng (phân trang, lọc nhân viên, phòng ban, loại HĐ, trạng thái, hạn ký) | x | x | Màn hình chính /contracts & KPI Cards |
+| 129 | `POST` | `/api/v1/contracts` | Soạn thảo hợp đồng mới ở trạng thái DRAFT (kèm danh mục phụ cấp và các bên ký) | x | x | Modal Soạn thảo HĐLĐ (ContractCreateDialog) |
+| 130 | `GET` | `/api/v1/contracts/{id}` | Lấy chi tiết hợp đồng, danh mục phụ cấp và tiến độ ký số các bên | x | x | Modal Chi tiết 360 độ (ContractDetailDialog) |
+| 131 | `PUT` | `/api/v1/contracts/{id}` | Cập nhật nội dung hợp đồng (chỉ cho phép khi DRAFT hoặc PENDING_APPROVAL) | x | x | Chỉnh sửa điều khoản hợp đồng |
+| 132 | `DELETE`| `/api/v1/contracts/{id}` | Xóa hợp đồng bản nháp (DRAFT) | x | x | Nút Xóa nháp trên Modal Chi tiết |
+| 133 | `POST` | `/api/v1/contracts/{id}/submit-approval` | Trình duyệt hợp đồng lao động (DRAFT -> PENDING_APPROVAL) | x | x | Nút Trình phê duyệt |
+| 134 | `POST` | `/api/v1/contracts/{id}/approve` | Phê duyệt nội dung hợp đồng lao động (PENDING_APPROVAL -> APPROVED) | x | x | Nút Phê duyệt hợp đồng |
+| 135 | `POST` | `/api/v1/contracts/{id}/reject` | Từ chối phê duyệt hợp đồng kèm lý do | x | x | Nút Từ chối phê duyệt |
+| 136 | `POST` | `/api/v1/contracts/{id}/send-signing` | Phát lệnh ký điện tử đa bên (tạo phiên bản PDF, APPROVED -> IN_SIGNING) | x | x | Nút Phát lệnh Ký điện tử |
+| 137 | `POST` | `/api/v1/contracts/{id}/activate` | Kích hoạt hiệu lực hợp đồng (chuyển sang ACTIVE sau khi các bên ký đủ) | x | x | Nút Kích hoạt hiệu lực |
+| 138 | `POST` | `/api/v1/contracts/{id}/terminate` | Chấm dứt hợp đồng lao động (thanh lý hợp đồng / kết thúc quan hệ lao động) | x | x | Modal Chấm dứt / Thanh lý (ContractTerminateDialog) |
+| 139 | `GET` | `/api/v1/contracts/{id}/preview-pdf` | Tải xuống hoặc xem trước bản in / PDF hợp đồng lao động | x | x | Nút In hợp đồng / Preview |
+| 140 | `GET` | `/api/v1/contracts/{id}/versions` | Tra cứu lịch sử phiên bản và nhật ký thay đổi của hợp đồng | x | x | Tab 4 Nhật ký & Phiên bản (ContractDetailDialog) |
+| 141 | `GET` | `/api/v1/contracts/compliance-check` | Kiểm tra tính tuân thủ pháp lý theo BLLĐ 2019 (số lần ký, thời hạn) | x | x | Tự động kiểm tra tuân thủ trên ContractCreateDialog |
+| 142 | `GET` | `/api/v1/contracts/{contractId}/appendices` | Lấy danh sách toàn bộ phụ lục của một hợp đồng lao động | x | x | Tab 2 Phụ lục (ContractDetailDialog) |
+| 143 | `POST` | `/api/v1/contracts/{contractId}/appendices` | Soạn thảo phụ lục hợp đồng mới (DRAFT) | x | x | Modal Soạn thảo phụ lục (ContractAppendixDialog) |
+| 144 | `GET` | `/api/v1/contract-appendices/{id}` | Lấy chi tiết phụ lục hợp đồng và các điều khoản điều chỉnh | x | x | Modal Chi tiết phụ lục (ContractAppendixDialog) |
+| 145 | `PUT` | `/api/v1/contract-appendices/{id}` | Cập nhật nội dung phụ lục hợp đồng (khi đang DRAFT) | x | x | Cập nhật phụ lục bản nháp |
+| 146 | `DELETE`| `/api/v1/contract-appendices/{id}` | Xóa phụ lục bản nháp | x | x | Nút Xóa nháp phụ lục |
+| 147 | `POST` | `/api/v1/contract-appendices/{id}/submit-approval` | Gửi phê duyệt phụ lục hợp đồng | x | x | Nút Gửi duyệt phụ lục |
+| 148 | `POST` | `/api/v1/contract-appendices/{id}/approve` | Phê duyệt phụ lục hợp đồng | x | x | Nút Phê duyệt phụ lục |
+| 149 | `POST` | `/api/v1/contract-appendices/{id}/reject` | Từ chối phụ lục hợp đồng kèm lý do | x | x | Nút Từ chối phụ lục |
+| 150 | `POST` | `/api/v1/contract-appendices/{id}/send-signing` | Phát lệnh ký số phụ lục hợp đồng | x | x | Nút Phát lệnh ký số phụ lục |
+| 151 | `POST` | `/api/v1/contract-appendices/{id}/activate` | Kích hoạt hiệu lực phụ lục hợp đồng | x | x | Nút Kích hoạt phụ lục |
+| 152 | `GET` | `/api/v1/contract-appendices/{id}/preview-pdf` | Xem trước hoặc tải PDF phụ lục hợp đồng | x | x | Tích hợp xem trước phụ lục |
+| 153 | `GET` | `/api/v1/contracts/{contractId}/signers` | Tra cứu tiến độ ký và danh sách người ký hợp đồng | x | x | Tab 3 & Modal Ký số (ContractSigningDialog) |
+| 154 | `POST` | `/api/v1/contract-signers/{id}/resend-otp` | Gửi lại mã xác thực OTP ký số cho người ký qua Email / SMS | x | x | Nút Gửi lại OTP trên ContractSigningDialog |
+| 155 | `POST` | `/api/v1/contract-signers/{id}/verify-audit` | Kiểm tra xác thực tính toàn vẹn chữ ký số và mã băm SHA-256 | x | x | Nút Kiểm toán băm SHA-256 |
+| 156 | `POST` | `/api/v1/contract-signers/{id}/cancel-request` | Hủy lượt ký hợp đồng của một cá nhân | x | x | Tích hợp hủy yêu cầu ký |
+| 157 | `GET` | `/api/v1/me/contracts` | Nhân viên tra cứu danh sách hợp đồng cá nhân của mình | x |   | Tạm thời hoãn trang cá nhân (/me/contracts) |
+| 158 | `GET` | `/api/v1/me/contracts/{id}` | Nhân viên xem chi tiết hợp đồng và tải tệp tin hợp đồng đã ký | x |   | Tạm thời hoãn trang cá nhân (/me/contracts) |
+| 159 | `POST` | `/api/v1/me/contracts/{id}/request-otp` | Nhân viên bấm yêu cầu nhận mã OTP xác thực ký số cá nhân | x | x | Nút Lấy mã OTP (ContractSigningDialog) |
+| 160 | `POST` | `/api/v1/me/contracts/{id}/sign` | Nhân viên xác nhận ký điện tử vào hợp đồng với mã OTP | x | x | Nút Xác nhận Ký (ContractSigningDialog) |
 

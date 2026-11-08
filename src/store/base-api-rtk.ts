@@ -166,6 +166,10 @@ export const baseApi = createApi({
     "Department",
     "DepartmentTree",
     "Employee",
+    "Contract",
+    "ContractTemplate",
+    "ContractAppendix",
+    "ContractSigner",
   ],
   endpoints: () => ({}),
 });
