@@ -24,7 +24,8 @@
 | **12. Quản lý Tổ chức - Chức danh Công việc (Job Titles)** | 6 | 6/6 (100%) | 6/6 (100%) | Hoàn tất tích hợp 100% |
 | **13. Quản lý Tổ chức - Cấp bậc Chức danh (Job Levels)** | 6 | 6/6 (100%) | 6/6 (100%) | Hoàn tất tích hợp 100% |
 | **14. Quản lý Tổ chức - Sơ đồ & Phòng ban (Departments)** | 11 | 11/11 (100%) | 11/11 (100%) | Hoàn tất tích hợp 100% |
-| **TỔNG CỘNG** | **81** | **81/81 (100%)** | **80/81 (99%)** | Đang phát triển |
+| **15. Hồ sơ nhân sự & Vòng đời (Employee Profile)** | 37 | 37/37 (100%) | 37/37 (100%) | Hoàn tất tích hợp 100% |
+| **TỔNG CỘNG** | **118** | **118/118 (100%)** | **117/118 (99%)** | Đang phát triển |
 
 ---
 
@@ -206,3 +207,47 @@
 | 79 | `PUT` | `/api/v1/departments/{departmentId}/move` | Điều chuyển vị trí phòng ban trong cây cơ cấu sang phòng ban cha mới | x | x | Kéo thả cây / Modal chuyển vị trí |
 | 80 | `PUT` | `/api/v1/departments/{departmentId}/permission-inheritance` | Bật / tắt cờ kế thừa phân quyền xuống các đơn vị con | x | x | Switch toggle kế thừa quyền |
 | 81 | `DELETE`| `/api/v1/departments/{departmentId}` | Giải thể phòng ban (chỉ khi không còn phòng ban con trực thuộc) | x | x | Dialog xác nhận giải thể |
+
+---
+
+### Module 15: Hồ sơ nhân sự & Vòng đời nhân viên (Employee Profile & Lifecycle - `EmployeeController`, `EmployeeDocumentController`, `EmployeeFamilyController`, `EmployeeAssignmentController`, `EmployeeLifecycleController`, `FaceEnrollmentController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 82 | `GET` | `/api/v1/employees` | Lấy danh sách nhân viên phân trang (lọc phòng ban, chức danh, chi nhánh, trạng thái) | x | x | Màn hình /employees (Bộ lọc đa tiêu chí, phân trang) |
+| 83 | `POST` | `/api/v1/employees` | Tiếp nhận và khởi tạo hồ sơ nhân viên mới (kèm tài khoản & bổ nhiệm ban đầu) | x | x | Modal Tiếp nhận nhân sự (EmployeeCreateDialog) |
+| 84 | `GET` | `/api/v1/employees/{employeeId}` | Lấy chi tiết toàn diện hồ sơ nhân viên (tính toán bộ 3 chiều & trạng thái hiện hành) | x | x | Modal Chi tiết nhân viên 5 tabs (EmployeeDetailDialog) |
+| 85 | `PUT` | `/api/v1/employees/{employeeId}` | Cập nhật thông tin cá nhân, định danh và thuế - bảo hiểm của nhân sự | x | x | Modal Cập nhật lý lịch nhân sự |
+| 86 | `GET` | `/api/v1/employees/export` | Yêu cầu xuất báo cáo danh sách nhân sự ra file Excel (bất đồng bộ) | x | x | Hook useExportEmployeesQuery & nút Xuất Excel |
+| 87 | `GET` | `/api/v1/me/profile` | Tra cứu thông tin hồ sơ của chính nhân viên đang đăng nhập | x | x | Màn hình Hồ sơ cá nhân /me/profile |
+| 88 | `PUT` | `/api/v1/me/profile` | Nhân viên tự cập nhật thông tin liên hệ được phép (SĐT, email cá nhân, địa chỉ) | x | x | Hook useUpdateMyProfileMutation |
+| 89 | `GET` | `/api/v1/employees/{employeeId}/identity-documents` | Lấy danh sách giấy tờ định danh (CCCD, Hộ chiếu) | x | x | Tab Giấy tờ & Ngân hàng (EmployeeDetailDialog) |
+| 90 | `POST` | `/api/v1/employees/{employeeId}/identity-documents` | Thêm mới giấy tờ định danh (kiểm tra chống trùng số định danh) | x | x | Hook useCreateIdentityDocumentMutation |
+| 91 | `PUT` | `/api/v1/identity-documents/{documentId}` | Sửa thông tin ngày cấp, nơi cấp, hạn dùng giấy tờ | x | x | Hook useUpdateIdentityDocumentMutation |
+| 92 | `DELETE`| `/api/v1/identity-documents/{documentId}` | Xóa mềm giấy tờ định danh khỏi hồ sơ | x | x | Hook useDeleteIdentityDocumentMutation |
+| 93 | `GET` | `/api/v1/employees/{employeeId}/bank-account` | Xem chi tiết thông tin tài khoản ngân hàng nhận lương | x | x | Tab Giấy tờ & Ngân hàng (EmployeeDetailDialog) |
+| 94 | `PUT` | `/api/v1/employees/{employeeId}/bank-account` | Cài đặt / cập nhật tài khoản ngân hàng nhận lương | x | x | Hook useUpdateBankAccountMutation |
+| 95 | `GET` | `/api/v1/employees/{employeeId}/dependents` | Danh sách người phụ thuộc đăng ký giảm trừ gia cảnh | x | x | Tab Người phụ thuộc & Khẩn cấp (EmployeeDetailDialog) |
+| 96 | `POST` | `/api/v1/employees/{employeeId}/dependents` | Đăng ký mới người phụ thuộc giảm trừ gia cảnh | x | x | Hook useCreateDependentMutation |
+| 97 | `PUT` | `/api/v1/dependents/{dependentId}` | Cập nhật thông tin người phụ thuộc và mốc giảm trừ thuế | x | x | Hook useUpdateDependentMutation |
+| 98 | `DELETE`| `/api/v1/dependents/{dependentId}` | Xóa bản ghi người phụ thuộc | x | x | Hook useDeleteDependentMutation |
+| 99 | `GET` | `/api/v1/employees/{employeeId}/emergency-contacts` | Lấy danh sách người liên hệ trong trường hợp khẩn cấp | x | x | Tab Người phụ thuộc & Khẩn cấp (EmployeeDetailDialog) |
+| 100 | `POST` | `/api/v1/employees/{employeeId}/emergency-contacts` | Thêm mới người liên hệ khẩn cấp | x | x | Hook useCreateEmergencyContactMutation |
+| 101 | `PUT` | `/api/v1/emergency-contacts/{contactId}` | Cập nhật thông tin người liên hệ khẩn cấp | x | x | Hook useUpdateEmergencyContactMutation |
+| 102 | `DELETE`| `/api/v1/emergency-contacts/{contactId}` | Xóa bản ghi người liên hệ khẩn cấp | x | x | Hook useDeleteEmergencyContactMutation |
+| 103 | `GET` | `/api/v1/employees/{employeeId}/work-assignments` | Tra cứu toàn bộ lịch sử phân công công tác 3 chiều của nhân viên | x | x | Tab Công tác 3 chiều (EmployeeDetailDialog) |
+| 104 | `GET` | `/api/v1/employees/{employeeId}/work-assignments/at` | Tra cứu phân công công tác có hiệu lực tại ngày chỉ định | x | x | Hook useGetWorkAssignmentAtQuery |
+| 105 | `POST` | `/api/v1/employees/{employeeId}/work-assignments` | Phân công công tác mới (Bổ nhiệm, luân chuyển phòng ban/chi nhánh/chức danh) | x | x | Hook useCreateWorkAssignmentMutation |
+| 106 | `GET` | `/api/v1/employees/{employeeId}/direct-reports` | Tra cứu danh sách nhân sự cấp dưới trực tiếp do nhân viên này quản lý | x | x | Hook useGetDirectReportsQuery |
+| 107 | `GET` | `/api/v1/employees/{employeeId}/status-history` | Tra cứu toàn bộ lịch sử biến động trạng thái làm việc | x | x | Tab Vòng đời & Thử việc (EmployeeDetailDialog) |
+| 108 | `POST` | `/api/v1/employees/{employeeId}/status-changes` | Chuyển trạng thái làm việc (Tạm đình chỉ, Nghỉ chế độ, Thôi việc) | x | x | Hook useChangeEmployeeStatusMutation |
+| 109 | `GET` | `/api/v1/employees/{employeeId}/probation-evaluations` | Xem danh sách kết quả đánh giá các kỳ thử việc của nhân sự | x | x | Tab Vòng đời & Thử việc (EmployeeDetailDialog) |
+| 110 | `POST` | `/api/v1/employees/{employeeId}/probation-evaluations` | Ghi nhận biên bản đánh giá thử việc (Đạt, Không đạt, Gia hạn) | x | x | Hook useCreateProbationEvaluationMutation |
+| 111 | `GET` | `/api/v1/employees/{employeeId}/official-eligibility` | Kiểm tra tự động điều kiện chuyển chính thức (thời hạn, kết quả thử việc) | x | x | Hook useGetOfficialEligibilityQuery |
+| 112 | `POST` | `/api/v1/employees/{employeeId}/confirm-official` | Phê duyệt chuyển chính thức sang ACTIVE (kết thúc thử việc) | x | x | Nút Xác nhận chuyển chính thức trên Modal Chi tiết |
+| 113 | `GET` | `/api/v1/employees/{employeeId}/face-enrollments` | Tra cứu lịch sử đăng ký và thu hồi dữ liệu sinh trắc khuôn mặt | x | x | Hook useGetFaceEnrollmentsQuery |
+| 114 | `POST` | `/api/v1/employees/{employeeId}/face-enrollments` | HR thực hiện thu thập và đăng ký vector mẫu khuôn mặt có sự đồng thuận | x | x | Hook useCreateFaceEnrollmentMutation |
+| 115 | `POST` | `/api/v1/face-enrollments/{enrollmentId}/revoke` | Thu hồi / hủy hiệu lực mẫu sinh trắc chấm công của nhân viên | x | x | Hook useRevokeFaceEnrollmentMutation |
+| 116 | `GET` | `/api/v1/me/face-enrollment` | Kiểm tra tình trạng đăng ký sinh trắc khuôn mặt của chính tôi | x | x | Hook useGetMyFaceEnrollmentQuery |
+| 117 | `POST` | `/api/v1/me/face-enrollment` | Nhân viên tự chụp và đăng ký mẫu khuôn mặt qua thiết bị di động | x | x | Hook useCreateMyFaceEnrollmentMutation |
+| 118 | `DELETE`| `/api/v1/me/face-enrollment` | Nhân viên yêu cầu xóa bỏ vĩnh viễn dữ liệu sinh trắc cá nhân | x | x | Hook useDeleteMyFaceEnrollmentMutation |
