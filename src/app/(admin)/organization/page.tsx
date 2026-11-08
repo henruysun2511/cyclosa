@@ -66,6 +66,7 @@ export default function OrganizationPage() {
 
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [targetParentId, setTargetParentId] = useState<string | null>(null);
+  const [moveTargetParentId, setMoveTargetParentId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   // Queries
@@ -206,9 +207,13 @@ export default function OrganizationPage() {
     setIsFormOpen(true);
   };
 
-  const handleOpenMove = (dept: Department | DepartmentNode) => {
+  const handleOpenMove = (
+    dept: Department | DepartmentNode,
+    targetParentId?: string
+  ) => {
     const d = "children" in dept ? nodeToDepartment(dept) : dept;
     setSelectedDept(d);
+    setMoveTargetParentId(targetParentId !== undefined ? targetParentId : null);
     setIsMoveOpen(true);
   };
 
@@ -510,6 +515,7 @@ export default function OrganizationPage() {
           open={isMoveOpen}
           onOpenChange={setIsMoveOpen}
           department={selectedDept}
+          targetParentDepartmentId={moveTargetParentId}
           companyId={selectedCompanyId}
           onSuccess={handleRefresh}
         />

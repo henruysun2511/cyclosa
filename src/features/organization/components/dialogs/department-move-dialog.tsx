@@ -32,6 +32,7 @@ interface DepartmentMoveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   department: Department | null;
+  targetParentDepartmentId?: string | null;
   companyId: string;
   onSuccess?: () => void;
 }
@@ -40,6 +41,7 @@ export function DepartmentMoveDialog({
   open,
   onOpenChange,
   department,
+  targetParentDepartmentId,
   companyId,
   onSuccess,
 }: DepartmentMoveDialogProps) {
@@ -76,10 +78,14 @@ export function DepartmentMoveDialog({
 
   useEffect(() => {
     if (department && open) {
-      setTargetParentId(department.parentDepartmentId || "none");
+      const initialTarget =
+        targetParentDepartmentId !== undefined
+          ? targetParentDepartmentId || "none"
+          : department.parentDepartmentId || "none";
+      setTargetParentId(initialTarget);
       setEffectiveFrom(new Date().toISOString().split("T")[0]);
     }
-  }, [department, open]);
+  }, [department, targetParentDepartmentId, open]);
 
   // Recalculate impact when target parent changes
   useEffect(() => {
