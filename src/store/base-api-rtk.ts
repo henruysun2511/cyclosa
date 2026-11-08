@@ -165,6 +165,7 @@ export const baseApi = createApi({
     "JobLevel",
     "Department",
     "DepartmentTree",
+    "Employee",
   ],
   endpoints: () => ({}),
 });
