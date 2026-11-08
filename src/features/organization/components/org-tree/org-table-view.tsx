@@ -86,9 +86,9 @@ export function OrgTableView({
         <TableBody>
           {departments.map((dept, index) => (
             <TableRow key={dept.id} className="hover:bg-slate-50/50">
-              <TableHead className="text-center font-normal text-slate-500">
+              <TableCell className="text-center font-normal text-slate-500">
                 {index + 1}
-              </TableHead>
+              </TableCell>
               <TableCell className="font-mono text-xs font-semibold text-primary">
                 {dept.code}
               </TableCell>

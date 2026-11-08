@@ -71,50 +71,103 @@ export default function OrganizationPage() {
   const { data: companiesData } = useGetCompaniesQuery({ size: 50 });
   const companies = companiesData?.items || [];
 
+  // Tự động chọn công ty hợp lệ đầu tiên nếu chưa chọn hoặc ID hiện tại không tồn tại trong danh sách
+  React.useEffect(() => {
+    if (companies.length > 0) {
+      const exists = companies.some((c) => c.id === selectedCompanyId);
+      if (!selectedCompanyId || !exists) {
+        updateFilters({ companyId: companies[0].id });
+      }
+    }
+  }, [companies, selectedCompanyId, updateFilters]);
+
   const {
     data: treeNodes = [],
     isLoading: isTreeLoading,
     refetch: refetchTree,
-  } = useGetDepartmentTreeQuery({
-    companyId: selectedCompanyId,
-    asOfDate: asOfDate || undefined,
-  });
+  } = useGetDepartmentTreeQuery(
+    {
+      companyId: selectedCompanyId,
+      asOfDate: asOfDate || undefined,
+    },
+    { skip: !selectedCompanyId }
+  );
 
   const {
     data: departmentsData,
     isLoading: isTableLoading,
     refetch: refetchTable,
-  } = useGetDepartmentsQuery({
-    companyId: selectedCompanyId,
-    keyword: keyword || undefined,
-    page,
-    size: 20,
-  });
+  } = useGetDepartmentsQuery(
+    {
+      companyId: selectedCompanyId,
+      keyword: keyword || undefined,
+      page,
+      size: 20,
+    },
+    { skip: !selectedCompanyId }
+  );
 
-  const departments = departmentsData?.items || [];
+  // Helper convert Node to Department for Modals & Panel & Fallback
+  const nodeToDepartment = React.useCallback(
+    (node: DepartmentNode, parentName?: string): Department => ({
+      id: node.id,
+      companyId: selectedCompanyId,
+      code: node.code,
+      name: node.name,
+      parentDepartmentId: node.parentDepartmentId,
+      parentDepartmentName: parentName,
+      costCenterId: node.costCenterId,
+      costCenterName: node.costCenterName,
+      managerEmployeeId: node.managerEmployeeId,
+      isPermissionInherited: node.isPermissionInherited,
+      effectiveFrom: node.effectiveFrom,
+      isActive: true,
+      createdAt: "",
+    }),
+    [selectedCompanyId]
+  );
+
+  // Flatten cây cơ cấu tổ chức làm nguồn dữ liệu fallback cho dạng bảng khi cần
+  const flattenTreeToDepartments = React.useCallback(
+    (nodes: DepartmentNode[], parentName?: string): Department[] => {
+      let result: Department[] = [];
+      nodes.forEach((n) => {
+        result.push(nodeToDepartment(n, parentName));
+        if (n.children && n.children.length > 0) {
+          result = result.concat(flattenTreeToDepartments(n.children, n.name));
+        }
+      });
+      return result;
+    },
+    [nodeToDepartment]
+  );
+
+  // Danh sách phòng ban dạng bảng: Ưu tiên dữ liệu từ API phân trang, nếu trống thì dùng dữ liệu cây đã nạp
+  const departments = React.useMemo(() => {
+    if (departmentsData?.items && departmentsData.items.length > 0) {
+      return departmentsData.items;
+    }
+    if (treeNodes.length > 0) {
+      let flat = flattenTreeToDepartments(treeNodes);
+      if (keyword) {
+        const kw = keyword.toLowerCase();
+        flat = flat.filter(
+          (d) =>
+            d.name.toLowerCase().includes(kw) ||
+            d.code.toLowerCase().includes(kw)
+        );
+      }
+      return flat;
+    }
+    return [];
+  }, [departmentsData, treeNodes, flattenTreeToDepartments, keyword]);
 
   // Tự động chọn phòng ban đầu tiên khi nạp xong dữ liệu cây
   React.useEffect(() => {
     if (!selectedDept && treeNodes.length > 0) {
       setSelectedDept(nodeToDepartment(treeNodes[0]));
     }
-  }, [treeNodes, selectedDept]);
-
-  // Helper convert Node to Department for Modals & Panel
-  const nodeToDepartment = (node: DepartmentNode): Department => ({
-    id: node.id,
-    companyId: selectedCompanyId,
-    code: node.code,
-    name: node.name,
-    parentDepartmentId: node.parentDepartmentId,
-    costCenterId: node.costCenterId,
-    costCenterName: node.costCenterName,
-    managerEmployeeId: node.managerEmployeeId,
-    isPermissionInherited: node.isPermissionInherited,
-    effectiveFrom: node.effectiveFrom,
-    isActive: true,
-    createdAt: "",
-  });
+  }, [treeNodes, selectedDept, nodeToDepartment]);
 
   // Handlers
   const handleOpenCreateRoot = () => {
@@ -258,16 +311,34 @@ export default function OrganizationPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 flex-1">
               {/* Bộ chọn công ty / pháp nhân */}
-              <div className="w-60">
+              <div className="w-72 sm:w-80 min-w-[220px]">
                 <Select
                   value={selectedCompanyId}
                   onValueChange={(val) => val && updateFilters({ companyId: val })}
                 >
-                  <SelectTrigger className="h-9 text-xs bg-white border-border">
+                  <SelectTrigger className="w-full h-9 text-xs bg-white border-border overflow-hidden min-w-0">
                     <SelectValue placeholder="Chọn công ty / pháp nhân">
                       {(val: string) => {
                         const comp = companies.find((c) => c.id === val);
-                        return comp ? `${comp.name} (${comp.code})` : val;
+                        if (comp) {
+                          return (
+                            <span className="truncate max-w-[200px] text-left block font-medium">
+                              {comp.name} ({comp.code})
+                            </span>
+                          );
+                        }
+                        if (companies.length === 0) {
+                          return (
+                            <span className="text-muted-foreground text-xs italic">
+                              Đang tải công ty...
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="text-muted-foreground text-xs">
+                            Chọn công ty / pháp nhân
+                          </span>
+                        );
                       }}
                     </SelectValue>
                   </SelectTrigger>
@@ -287,7 +358,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Ngày chốt cơ cấu hiệu lực (asOf Date) */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Calendar className="h-4 w-4 text-primary shrink-0" />
                 <span className="text-xs font-medium text-foreground whitespace-nowrap">
                   Xem cơ cấu tại thời điểm (asOf):
