@@ -60,10 +60,13 @@ export function OrgTreeView({
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpandedMap((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setExpandedMap((prev) => {
+      const current = prev[id] !== undefined ? prev[id] : true;
+      return {
+        ...prev,
+        [id]: !current,
+      };
+    });
   };
 
   const expandAll = () => {
@@ -79,13 +82,21 @@ export function OrgTreeView({
   };
 
   const collapseAll = () => {
-    setExpandedMap({});
+    const all: Record<string, boolean> = {};
+    const traverse = (list: DepartmentNode[]) => {
+      list.forEach((n) => {
+        all[n.id] = false;
+        if (n.children && n.children.length > 0) traverse(n.children);
+      });
+    };
+    traverse(nodes);
+    setExpandedMap(all);
   };
 
   const renderNodeCard = (node: DepartmentNode, level: number = 0) => {
     const hasChildren = Boolean(node.children && node.children.length > 0);
-    // Mặc định mở 2 cấp đầu tiên nếu chưa set
-    const isExpanded = expandedMap[node.id] !== undefined ? expandedMap[node.id] : level < 2;
+    // Mặc định mở nếu chưa cấu hình trong expandedMap
+    const isExpanded = expandedMap[node.id] !== undefined ? expandedMap[node.id] : true;
     const isSelected = selectedNodeId === node.id;
 
     return (
@@ -180,8 +191,8 @@ export function OrgTreeView({
               {node.isPermissionInherited ? "Kế thừa quyền" : "Quyền độc lập"}
             </Badge>
 
-            <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal">
-              <Users className="h-3 w-3 mr-1 text-slate-500" />
+            <Badge className="bg-primary/90 text-white px-2 py-0.5 text-xs font-normal border-transparent shadow-2xs">
+              <Users className="h-3 w-3 mr-1 text-white" />
               {node.memberCount || 0}
             </Badge>
 

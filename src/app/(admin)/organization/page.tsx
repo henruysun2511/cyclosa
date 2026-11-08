@@ -41,6 +41,7 @@ import { DepartmentMoveDialog } from "@/features/organization/components/dialogs
 import { DepartmentDetailDialog } from "@/features/organization/components/dialogs/department-detail-dialog";
 import { DepartmentDissolveDialog } from "@/features/organization/components/dialogs/department-dissolve-dialog";
 import type { Department, DepartmentNode } from "@/features/organization/types/department.types";
+import type { Company } from "@/features/organization/types/company.types";
 import { PermissionGuard } from "@/features/authorization/components/permission-guard";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import { env } from "@/config/env";
@@ -69,7 +70,24 @@ export default function OrganizationPage() {
 
   // Queries
   const { data: companiesData } = useGetCompaniesQuery({ size: 50 });
-  const companies = companiesData?.items || [];
+
+  const fallbackCompany: Company = React.useMemo(
+    () => ({
+      id: DEFAULT_COMPANY_ID,
+      code: "CYC_CORP",
+      name: "Công ty Cổ phần Tập đoàn CYCLOSA",
+      status: "ACTIVE",
+      createdAt: "",
+    }),
+    []
+  );
+
+  const companies = React.useMemo(() => {
+    if (companiesData?.items && companiesData.items.length > 0) {
+      return companiesData.items;
+    }
+    return [fallbackCompany];
+  }, [companiesData, fallbackCompany]);
 
   // Tự động chọn công ty hợp lệ đầu tiên nếu chưa chọn hoặc ID hiện tại không tồn tại trong danh sách
   React.useEffect(() => {
