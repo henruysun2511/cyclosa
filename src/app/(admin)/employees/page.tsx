@@ -32,10 +32,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import { usePermission } from "@/features/authorization/hooks/use-permission";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import { useGetCompaniesQuery, useGetDepartmentsQuery } from "@/features/organization/api";
-import { useGetEmployeesQuery } from "@/features/employee/api/employee-api";
+import { useGetEmployeesQuery, useLazyExportEmployeesQuery } from "@/features/employee/api/employee-api";
 import { EmployeeCreateDialog } from "@/features/employee/components/dialogs/employee-create-dialog";
 import { EmployeeDetailDialog } from "@/features/employee/components/dialogs/employee-detail-dialog";
 import type { EmployeeStatus, EmployeeSummary } from "@/features/employee/types/employee.types";
@@ -43,6 +44,7 @@ import type { EmployeeStatus, EmployeeSummary } from "@/features/employee/types/
 export default function EmployeesPage() {
   const { can } = usePermission();
   const canManage = can(PERMISSIONS.EMPLOYEE.CREATE);
+  const [triggerExport, { isFetching: isExporting }] = useLazyExportEmployeesQuery();
 
   // Filter states
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
@@ -99,6 +101,27 @@ export default function EmployeesPage() {
     setIsDetailOpen(true);
   };
 
+  const handleExportExcel = async () => {
+    if (!selectedCompanyId) return;
+    try {
+      const res = await triggerExport({
+        companyId: selectedCompanyId,
+        departmentId: selectedDeptId !== "all" ? selectedDeptId : undefined,
+        status: selectedStatus !== "all" ? (selectedStatus as EmployeeStatus) : undefined,
+        keyword: keyword.trim() || undefined,
+      }).unwrap();
+
+      if (res?.downloadUrl) {
+        window.open(res.downloadUrl, "_blank");
+        toast.success("Báo cáo danh sách nhân sự đã được xuất thành công!");
+      } else {
+        toast.success(res?.message || "Yêu cầu xuất Excel đã được tiếp nhận thành công!");
+      }
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Không thể xuất file Excel!");
+    }
+  };
+
   const getStatusBadge = (status: EmployeeStatus) => {
     switch (status) {
       case "ACTIVE":
@@ -136,6 +159,17 @@ export default function EmployeesPage() {
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5 h-9"
+            onClick={handleExportExcel}
+            disabled={!selectedCompanyId || isExporting}
+          >
+            <Download className="h-3.5 w-3.5" />
+            {isExporting ? "Đang xuất..." : "Xuất Excel"}
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
