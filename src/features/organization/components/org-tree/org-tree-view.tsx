@@ -34,6 +34,7 @@ import type { Department, DepartmentNode } from "../../types/organization.types"
 interface OrgTreeViewProps {
   nodes: DepartmentNode[];
   isLoading: boolean;
+  selectedNodeId?: string | null;
   onSelectNode: (node: DepartmentNode) => void;
   onAddSubDepartment: (parentId: string) => void;
   onEdit: (node: DepartmentNode) => void;
@@ -45,6 +46,7 @@ interface OrgTreeViewProps {
 export function OrgTreeView({
   nodes,
   isLoading,
+  selectedNodeId,
   onSelectNode,
   onAddSubDepartment,
   onEdit,
@@ -84,54 +86,73 @@ export function OrgTreeView({
     const hasChildren = Boolean(node.children && node.children.length > 0);
     // Mặc định mở 2 cấp đầu tiên nếu chưa set
     const isExpanded = expandedMap[node.id] !== undefined ? expandedMap[node.id] : level < 2;
+    const isSelected = selectedNodeId === node.id;
+
+    // DocuCore symbol and shape
+    const nodeIcon = level === 0 ? "◈" : level === 1 ? "▣" : "▪";
+    const iconShapeClass =
+      level === 0 ? "rounded-full" : level === 1 ? "rounded-md" : "rounded-xs";
 
     return (
       <div key={node.id} className="select-none">
         <div
+          onClick={() => onSelectNode(node)}
           className={cn(
-            "group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border my-1 transition-all",
-            level === 0
-              ? "bg-primary/5 border-primary/30 shadow-2xs"
-              : "bg-white border-border hover:border-primary/40 hover:bg-slate-50/80 shadow-2xs",
+            "group flex items-center justify-between gap-3 px-3 py-2 rounded-lg border my-1 transition-all cursor-pointer",
+            isSelected
+              ? "bg-primary/5 border-primary ring-1 ring-primary/25 shadow-xs"
+              : level === 0
+              ? "bg-slate-50/90 border-slate-200/90 hover:border-slate-300 shadow-2xs"
+              : "bg-white border-slate-200/80 hover:border-primary/40 hover:bg-slate-50/80 shadow-2xs",
             level > 0 && "ml-4"
           )}
-          style={{ paddingLeft: `${Math.max(12, level * 20)}px` }}
+          style={{ paddingLeft: `${Math.max(10, level * 20)}px` }}
         >
-          {/* Cột trái: Nút expand, Icon, Tên & Mã */}
+          {/* Cột trái: Nút expand, Icon DocuCore, Tên & Mã */}
           <div className="flex items-center gap-2 overflow-hidden flex-1">
             {hasChildren ? (
               <button
                 type="button"
-                className="h-6 w-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 shrink-0 transition-colors"
+                className="h-5 w-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 shrink-0 transition-colors"
                 onClick={(e) => toggleExpand(node.id, e)}
               >
                 {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3.5 w-3.5" />
                 )}
               </button>
             ) : (
-              <span className="w-6 shrink-0" />
+              <span className="w-5 shrink-0" />
             )}
 
-            <Building2
+            {/* DocuCore hierarchy icon badge */}
+            <span
               className={cn(
-                "h-4 w-4 shrink-0",
-                level === 0 ? "text-primary" : "text-slate-500"
+                "flex items-center justify-center w-5 h-5 font-mono text-[10px] font-bold shrink-0 transition-colors",
+                iconShapeClass,
+                isSelected
+                  ? "bg-primary text-white"
+                  : level === 0
+                  ? "bg-slate-800 text-white"
+                  : "bg-slate-100 border border-slate-200 text-slate-600"
               )}
-            />
-
-            <div
-              className="truncate cursor-pointer flex-1"
-              onClick={() => onSelectNode(node)}
             >
+              {nodeIcon}
+            </span>
+
+            <div className="truncate flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                <span
+                  className={cn(
+                    "text-xs font-semibold tracking-tight transition-colors truncate",
+                    isSelected ? "text-primary" : "text-slate-900 group-hover:text-primary"
+                  )}
+                >
                   {node.name}
                 </span>
-                <span className="text-xs font-mono font-normal text-muted-foreground">
-                  ({node.code})
+                <span className="font-mono text-[11px] text-slate-400 shrink-0">
+                  {node.code}
                 </span>
               </div>
             </div>
@@ -140,8 +161,8 @@ export function OrgTreeView({
           {/* Cột giữa: Tag Trung tâm chi phí & Kế thừa quyền & Số nhân sự */}
           <div className="flex items-center gap-2 shrink-0 text-xs">
             {node.costCenterName && (
-              <Badge variant="outline" className="hidden md:flex font-normal text-2xs bg-slate-50">
-                <Tag className="h-3 w-3 mr-1 text-slate-400" />
+              <Badge variant="outline" className="hidden lg:flex font-mono text-[10px] px-1.5 py-0 font-normal bg-slate-50 text-slate-500 border-slate-200">
+                <Tag className="h-2.5 w-2.5 mr-1 text-slate-400" />
                 {node.costCenterName}
               </Badge>
             )}
@@ -149,10 +170,10 @@ export function OrgTreeView({
             <Badge
               variant="outline"
               className={cn(
-                "hidden sm:flex text-2xs",
+                "hidden sm:flex text-[10px] font-normal px-1.5 py-0",
                 node.isPermissionInherited
                   ? "text-emerald-700 bg-emerald-50/50 border-emerald-200"
-                  : "text-slate-500"
+                  : "text-slate-400 border-slate-200"
               )}
               title={
                 node.isPermissionInherited
@@ -161,15 +182,18 @@ export function OrgTreeView({
               }
             >
               {node.isPermissionInherited ? (
-                <Unlock className="h-3 w-3 mr-1 text-emerald-600" />
+                <Unlock className="h-2.5 w-2.5 mr-1 text-emerald-600" />
               ) : (
-                <Lock className="h-3 w-3 mr-1 text-slate-400" />
+                <Lock className="h-2.5 w-2.5 mr-1 text-slate-400" />
               )}
               {node.isPermissionInherited ? "Kế thừa quyền" : "Quyền độc lập"}
             </Badge>
 
-            <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal">
-              <Users className="h-3 w-3 mr-1 text-slate-500" />
+            <Badge
+              variant="secondary"
+              className="px-1.5 py-0 font-mono text-[10px] font-normal bg-slate-100 text-slate-600"
+            >
+              <Users className="h-2.5 w-2.5 mr-1 text-slate-400" />
               {node.memberCount || 0}
             </Badge>
 

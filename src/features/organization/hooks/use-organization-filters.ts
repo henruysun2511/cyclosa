@@ -5,13 +5,16 @@ import { useCallback, useTransition } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import {
   DEFAULT_COMPANY_ID,
+  ORG_DIMENSIONS,
   ORG_VIEW_MODES,
+  type OrgDimension,
   type OrgViewMode,
 } from "../constants/organization.constants";
 
 export interface OrganizationFilterState {
   companyId: string;
   asOfDate: string;
+  dimension: OrgDimension;
   viewMode: OrgViewMode;
   keyword: string;
   page: number; // 0-based for API
@@ -27,6 +30,12 @@ export function useOrganizationFilters() {
   // 1. Đọc state hiện tại từ URL searchParams
   const companyId = searchParams.get("companyId") || DEFAULT_COMPANY_ID;
   const asOfDate = searchParams.get("asOfDate") || "";
+  const rawDim = searchParams.get("dimension");
+  const dimension: OrgDimension =
+    rawDim === ORG_DIMENSIONS.GEOGRAPHY || rawDim === ORG_DIMENSIONS.JOB_POSITIONS
+      ? rawDim
+      : ORG_DIMENSIONS.ORGANIZATION;
+
   const rawViewMode = searchParams.get("viewMode");
   const viewMode: OrgViewMode =
     rawViewMode === ORG_VIEW_MODES.TABLE
@@ -41,6 +50,7 @@ export function useOrganizationFilters() {
   const filters: OrganizationFilterState = {
     companyId,
     asOfDate,
+    dimension,
     viewMode,
     keyword,
     page,
