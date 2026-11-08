@@ -195,12 +195,22 @@ export function DepartmentFormDialog({
             <Label htmlFor="dept-parent">Đơn vị cấp trên (Trực thuộc)</Label>
             <Select value={parentId} onValueChange={(val) => setParentId(val || "none")}>
               <SelectTrigger id="dept-parent">
-                <SelectValue placeholder="Chọn đơn vị cấp trên" />
+                <SelectValue placeholder="Chọn đơn vị cấp trên">
+                  {(val: string) => {
+                    if (!val || val === "none") {
+                      return "-- Là đơn vị cấp cao nhất (Root) --";
+                    }
+                    const parent = availableParents.find((p) => p.id === val);
+                    return parent ? `${parent.name} (${parent.code})` : val;
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">-- Là đơn vị cấp cao nhất (Root) --</SelectItem>
+                <SelectItem value="none" label="-- Là đơn vị cấp cao nhất (Root) --">
+                  -- Là đơn vị cấp cao nhất (Root) --
+                </SelectItem>
                 {availableParents.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
+                  <SelectItem key={p.id} value={p.id} label={`${p.name} (${p.code})`}>
                     {p.name} ({p.code})
                   </SelectItem>
                 ))}
@@ -213,12 +223,22 @@ export function DepartmentFormDialog({
             <Label htmlFor="dept-cc">Trung tâm chi phí hạch toán</Label>
             <Select value={costCenterId} onValueChange={(val) => setCostCenterId(val || "none")}>
               <SelectTrigger id="dept-cc">
-                <SelectValue placeholder="Chọn trung tâm chi phí" />
+                <SelectValue placeholder="Chọn trung tâm chi phí">
+                  {(val: string) => {
+                    if (!val || val === "none") {
+                      return "-- Không phân bổ / Tự do --";
+                    }
+                    const cc = costCenters.find((c) => c.id === val);
+                    return cc ? `${cc.name} (${cc.code})` : val;
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">-- Không phân bổ / Tự do --</SelectItem>
+                <SelectItem value="none" label="-- Không phân bổ / Tự do --">
+                  -- Không phân bổ / Tự do --
+                </SelectItem>
                 {costCenters.map((cc) => (
-                  <SelectItem key={cc.id} value={cc.id}>
+                  <SelectItem key={cc.id} value={cc.id} label={`${cc.name} (${cc.code})`}>
                     {cc.name} ({cc.code})
                   </SelectItem>
                 ))}

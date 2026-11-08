@@ -199,11 +199,17 @@ export function CompanyFormDialog({
               <Label htmlFor="company-status">Trạng thái hoạt động</Label>
               <Select value={status} onValueChange={(val) => val && setStatus(val as "ACTIVE" | "INACTIVE")}>
                 <SelectTrigger id="company-status">
-                  <SelectValue />
+                  <SelectValue>
+                    {(val: string) => (val === "ACTIVE" ? "Hoạt động (ACTIVE)" : "Tạm ngưng (INACTIVE)")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Hoạt động (ACTIVE)</SelectItem>
-                  <SelectItem value="INACTIVE">Tạm ngưng (INACTIVE)</SelectItem>
+                  <SelectItem value="ACTIVE" label="Hoạt động (ACTIVE)">
+                    Hoạt động (ACTIVE)
+                  </SelectItem>
+                  <SelectItem value="INACTIVE" label="Tạm ngưng (INACTIVE)">
+                    Tạm ngưng (INACTIVE)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

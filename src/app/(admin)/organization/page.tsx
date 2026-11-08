@@ -264,11 +264,21 @@ export default function OrganizationPage() {
                   onValueChange={(val) => val && updateFilters({ companyId: val })}
                 >
                   <SelectTrigger className="h-9 text-xs bg-white border-border">
-                    <SelectValue placeholder="Chọn công ty / pháp nhân" />
+                    <SelectValue placeholder="Chọn công ty / pháp nhân">
+                      {(val: string) => {
+                        const comp = companies.find((c) => c.id === val);
+                        return comp ? `${comp.name} (${comp.code})` : val;
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {companies.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs">
+                      <SelectItem
+                        key={c.id}
+                        value={c.id}
+                        label={`${c.name} (${c.code})`}
+                        className="text-xs"
+                      >
                         {c.name} ({c.code})
                       </SelectItem>
                     ))}

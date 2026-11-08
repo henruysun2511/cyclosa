@@ -148,12 +148,22 @@ export function DepartmentMoveDialog({
               <Label htmlFor="target-parent">Chuyển sang làm cấp dưới của *</Label>
               <Select value={targetParentId} onValueChange={(val) => setTargetParentId(val || "none")}>
                 <SelectTrigger id="target-parent">
-                  <SelectValue placeholder="Chọn vị trí mới trong cây cơ cấu" />
+                  <SelectValue placeholder="Chọn vị trí mới trong cây cơ cấu">
+                    {(val: string) => {
+                      if (!val || val === "none") {
+                        return "-- Đưa lên làm đơn vị cấp cao nhất (Root) --";
+                      }
+                      const parent = availableParents.find((p) => p.id === val);
+                      return parent ? `${parent.name} (${parent.code})` : val;
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">-- Đưa lên làm đơn vị cấp cao nhất (Root) --</SelectItem>
+                  <SelectItem value="none" label="-- Đưa lên làm đơn vị cấp cao nhất (Root) --">
+                    -- Đưa lên làm đơn vị cấp cao nhất (Root) --
+                  </SelectItem>
                   {availableParents.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+                    <SelectItem key={p.id} value={p.id} label={`${p.name} (${p.code})`}>
                       {p.name} ({p.code})
                     </SelectItem>
                   ))}
