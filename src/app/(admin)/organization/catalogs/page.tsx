@@ -60,6 +60,7 @@ import { JobTitleFormDialog } from "@/features/organization/components/dialogs/j
 import { JobLevelFormDialog } from "@/features/organization/components/dialogs/job-level-form-dialog";
 import { useCatalogFilters } from "@/features/organization/hooks/use-catalog-filters";
 import {
+  DEFAULT_COMPANY_ID,
   CATALOG_TABS,
   type CatalogTab,
 } from "@/features/organization/constants/organization.constants";
@@ -102,7 +103,38 @@ export default function OrganizationCatalogsPage() {
 
   // Queries
   const { data: companiesData, isLoading: isCompaniesLoading } = useGetCompaniesQuery({ size: 50 });
-  const companies = companiesData?.items || [];
+
+  const fallbackCompany: Company = React.useMemo(
+    () => ({
+      id: DEFAULT_COMPANY_ID,
+      code: "CYC_CORP",
+      name: "Công ty Cổ phần Tập đoàn CYCLOSA",
+      taxCode: "0109998888",
+      address: "Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Nam Từ Liêm, Hà Nội",
+      phone: "02473008888",
+      email: "contact@cyclosa.vn",
+      status: "ACTIVE",
+      createdAt: "",
+    }),
+    []
+  );
+
+  const companies = React.useMemo(() => {
+    if (companiesData?.items && companiesData.items.length > 0) {
+      return companiesData.items;
+    }
+    return [fallbackCompany];
+  }, [companiesData, fallbackCompany]);
+
+  // Tự động chọn công ty hợp lệ đầu tiên nếu chưa chọn hoặc ID hiện tại không tồn tại trong danh sách
+  React.useEffect(() => {
+    if (companies.length > 0) {
+      const exists = companies.some((c) => c.id === selectedCompanyId);
+      if (!selectedCompanyId || !exists) {
+        setSelectedCompanyId(companies[0].id);
+      }
+    }
+  }, [companies, selectedCompanyId, setSelectedCompanyId]);
 
   const { data: regions = [], isLoading: isRegionsLoading } = useGetAllRegionsQuery(selectedCompanyId, {
     skip: !selectedCompanyId,
@@ -206,14 +238,35 @@ export default function OrganizationCatalogsPage() {
 
         {/* Company Dropdown (nếu tab không phải là companies) */}
         {activeTab !== "companies" && (
-          <div className="w-60">
+          <div className="w-72 sm:w-80 min-w-[220px]">
             <Select value={selectedCompanyId} onValueChange={(val) => val && setSelectedCompanyId(val)}>
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Chọn công ty / pháp nhân" />
+              <SelectTrigger className="w-full h-9 text-xs bg-white border-border overflow-hidden min-w-0">
+                <SelectValue placeholder="Chọn công ty / pháp nhân">
+                  {(val: string) => {
+                    const comp = companies.find((c) => c.id === val);
+                    if (comp) {
+                      return (
+                        <span className="truncate max-w-[200px] text-left block font-medium">
+                          {comp.name} ({comp.code})
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="text-muted-foreground text-xs">
+                        Chọn công ty / pháp nhân
+                      </span>
+                    );
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {companies.map((c) => (
-                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                  <SelectItem
+                    key={c.id}
+                    value={c.id}
+                    label={`${c.name} (${c.code})`}
+                    className="text-xs"
+                  >
                     {c.name} ({c.code})
                   </SelectItem>
                 ))}
