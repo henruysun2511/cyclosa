@@ -88,27 +88,22 @@ export function OrgTreeView({
     const isExpanded = expandedMap[node.id] !== undefined ? expandedMap[node.id] : level < 2;
     const isSelected = selectedNodeId === node.id;
 
-    // DocuCore symbol and shape
-    const nodeIcon = level === 0 ? "◈" : level === 1 ? "▣" : "▪";
-    const iconShapeClass =
-      level === 0 ? "rounded-full" : level === 1 ? "rounded-md" : "rounded-xs";
-
     return (
       <div key={node.id} className="select-none">
         <div
           onClick={() => onSelectNode(node)}
           className={cn(
-            "group flex items-center justify-between gap-3 px-3 py-2 rounded-lg border my-1 transition-all cursor-pointer",
+            "group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border my-1 transition-all cursor-pointer",
             isSelected
-              ? "bg-primary/5 border-primary ring-1 ring-primary/25 shadow-xs"
+              ? "bg-primary/10 border-primary/40 shadow-xs ring-1 ring-primary/20"
               : level === 0
-              ? "bg-slate-50/90 border-slate-200/90 hover:border-slate-300 shadow-2xs"
-              : "bg-white border-slate-200/80 hover:border-primary/40 hover:bg-slate-50/80 shadow-2xs",
+              ? "bg-slate-50 border-slate-200/90 hover:border-primary/30 shadow-2xs"
+              : "bg-white border-border hover:border-primary/40 hover:bg-slate-50/80 shadow-2xs",
             level > 0 && "ml-4"
           )}
-          style={{ paddingLeft: `${Math.max(10, level * 20)}px` }}
+          style={{ paddingLeft: `${Math.max(12, level * 20)}px` }}
         >
-          {/* Cột trái: Nút expand, Icon DocuCore, Tên & Mã */}
+          {/* Cột trái: Nút expand, Icon Building2, Tên & Mã */}
           <div className="flex items-center gap-2 overflow-hidden flex-1">
             {hasChildren ? (
               <button
@@ -117,42 +112,38 @@ export function OrgTreeView({
                 onClick={(e) => toggleExpand(node.id, e)}
               >
                 {isExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-4 w-4" />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-4 w-4" />
                 )}
               </button>
             ) : (
               <span className="w-5 shrink-0" />
             )}
 
-            {/* DocuCore hierarchy icon badge */}
-            <span
+            <Building2
               className={cn(
-                "flex items-center justify-center w-5 h-5 font-mono text-[10px] font-bold shrink-0 transition-colors",
-                iconShapeClass,
+                "h-4 w-4 shrink-0 transition-colors",
                 isSelected
-                  ? "bg-primary text-white"
+                  ? "text-primary"
                   : level === 0
-                  ? "bg-slate-800 text-white"
-                  : "bg-slate-100 border border-slate-200 text-slate-600"
+                  ? "text-primary"
+                  : "text-slate-400 group-hover:text-primary"
               )}
-            >
-              {nodeIcon}
-            </span>
+            />
 
             <div className="truncate flex-1">
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    "text-xs font-semibold tracking-tight transition-colors truncate",
-                    isSelected ? "text-primary" : "text-slate-900 group-hover:text-primary"
+                    "text-sm font-semibold tracking-tight transition-colors truncate",
+                    isSelected ? "text-primary" : "text-foreground group-hover:text-primary"
                   )}
                 >
                   {node.name}
                 </span>
-                <span className="font-mono text-[11px] text-slate-400 shrink-0">
-                  {node.code}
+                <span className="font-mono text-xs font-medium text-slate-400 shrink-0">
+                  ({node.code})
                 </span>
               </div>
             </div>
@@ -161,8 +152,8 @@ export function OrgTreeView({
           {/* Cột giữa: Tag Trung tâm chi phí & Kế thừa quyền & Số nhân sự */}
           <div className="flex items-center gap-2 shrink-0 text-xs">
             {node.costCenterName && (
-              <Badge variant="outline" className="hidden lg:flex font-mono text-[10px] px-1.5 py-0 font-normal bg-slate-50 text-slate-500 border-slate-200">
-                <Tag className="h-2.5 w-2.5 mr-1 text-slate-400" />
+              <Badge variant="outline" className="hidden lg:flex font-normal text-2xs bg-slate-50 text-slate-500">
+                <Tag className="h-3 w-3 mr-1 text-slate-400" />
                 {node.costCenterName}
               </Badge>
             )}
@@ -170,7 +161,7 @@ export function OrgTreeView({
             <Badge
               variant="outline"
               className={cn(
-                "hidden sm:flex text-[10px] font-normal px-1.5 py-0",
+                "hidden sm:flex text-2xs",
                 node.isPermissionInherited
                   ? "text-emerald-700 bg-emerald-50/50 border-emerald-200"
                   : "text-slate-400 border-slate-200"
@@ -182,18 +173,15 @@ export function OrgTreeView({
               }
             >
               {node.isPermissionInherited ? (
-                <Unlock className="h-2.5 w-2.5 mr-1 text-emerald-600" />
+                <Unlock className="h-3 w-3 mr-1 text-emerald-600" />
               ) : (
-                <Lock className="h-2.5 w-2.5 mr-1 text-slate-400" />
+                <Lock className="h-3 w-3 mr-1 text-slate-400" />
               )}
               {node.isPermissionInherited ? "Kế thừa quyền" : "Quyền độc lập"}
             </Badge>
 
-            <Badge
-              variant="secondary"
-              className="px-1.5 py-0 font-mono text-[10px] font-normal bg-slate-100 text-slate-600"
-            >
-              <Users className="h-2.5 w-2.5 mr-1 text-slate-400" />
+            <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal">
+              <Users className="h-3 w-3 mr-1 text-slate-500" />
               {node.memberCount || 0}
             </Badge>
 

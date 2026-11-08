@@ -5,45 +5,6 @@
 export const DEFAULT_COMPANY_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
- * 3 Chiều độc lập theo chuẩn DocuCore Enterprise UI Architecture
- */
-export const ORG_DIMENSIONS = {
-  ORGANIZATION: "organization",
-  GEOGRAPHY: "geography",
-  JOB_POSITIONS: "job_positions",
-} as const;
-
-export type OrgDimension = (typeof ORG_DIMENSIONS)[keyof typeof ORG_DIMENSIONS];
-
-export interface DimensionConfigItem {
-  id: OrgDimension;
-  code: string;
-  name: string;
-  desc: string;
-}
-
-export const ORG_DIMENSION_CONFIG: readonly DimensionConfigItem[] = [
-  {
-    id: ORG_DIMENSIONS.ORGANIZATION,
-    code: "F-C02",
-    name: "Đơn vị tổ chức",
-    desc: "Cây kế thừa quyền xuống đơn vị con (Hội sở, Khối, Phòng ban, Bộ phận)",
-  },
-  {
-    id: ORG_DIMENSIONS.GEOGRAPHY,
-    code: "F-C03",
-    name: "Địa lý & Chi nhánh",
-    desc: "Vùng / Chi nhánh / PGD — cây riêng, không suy diễn từ đơn vị",
-  },
-  {
-    id: ORG_DIMENSIONS.JOB_POSITIONS,
-    code: "F-C04",
-    name: "Vị trí việc làm",
-    desc: "Danh mục chức danh & cấp bậc phẳng, độc lập với hai cây trên",
-  },
-] as const;
-
-/**
  * Các chế độ hiển thị màn hình Sơ đồ tổ chức
  */
 export const ORG_VIEW_MODES = {
