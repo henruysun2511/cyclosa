@@ -484,7 +484,7 @@ export function WorkflowFlowCanvas({
       </div>
 
       {/* React Flow Container */}
-      <div className="w-full h-[580px] rounded-xl border bg-card/60 shadow-inner overflow-hidden relative">
+      <div className="w-full h-[640px] rounded-xl border bg-card/60 shadow-inner overflow-hidden relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}

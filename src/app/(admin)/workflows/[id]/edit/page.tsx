@@ -66,7 +66,7 @@ export default function EditWorkflowDefinitionPage({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl pb-12">
+    <div className="space-y-6 pb-12 w-full">
       {/* 1. Header: Title on top, Breadcrumb underneath */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
