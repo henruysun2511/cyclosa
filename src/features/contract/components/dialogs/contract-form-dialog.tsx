@@ -303,7 +303,7 @@ export function ContractFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[92vw] max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl w-[94vw] sm:max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">
             {isEdit ? "Chỉnh sửa điều khoản hợp đồng" : "Soạn thảo Hợp đồng Lao động mới"}

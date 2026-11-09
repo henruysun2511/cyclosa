@@ -99,7 +99,7 @@ export function EmergencyContactDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg w-[90vw] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <Phone className="h-5 w-5 text-primary" />

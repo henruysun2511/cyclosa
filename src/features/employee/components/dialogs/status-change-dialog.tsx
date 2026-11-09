@@ -82,7 +82,7 @@ export function StatusChangeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl w-[90vw]">
+      <DialogContent className="max-w-xl w-[90vw] sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-base font-bold">
             Thay đổi trạng thái làm việc nhân sự

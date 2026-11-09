@@ -259,7 +259,7 @@ export function ContractTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl w-[95vw] sm:max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileCode className="w-5 h-5 text-primary" />

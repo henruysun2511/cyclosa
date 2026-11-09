@@ -141,7 +141,7 @@ export function ContractDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] sm:max-w-6xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="space-y-1">

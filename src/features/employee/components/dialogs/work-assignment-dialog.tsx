@@ -114,7 +114,7 @@ export function WorkAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-[92vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl w-[92vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base font-bold">
             Bổ nhiệm & Luân chuyển công tác 3 chiều

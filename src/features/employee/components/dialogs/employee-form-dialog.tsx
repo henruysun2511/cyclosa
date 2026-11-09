@@ -219,7 +219,7 @@ export function EmployeeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[92vw] max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl w-[94vw] sm:max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">
             {isEdit ? "Chỉnh sửa hồ sơ nhân sự" : "Tiếp nhận nhân sự mới (Onboarding)"}

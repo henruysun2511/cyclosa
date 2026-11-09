@@ -70,7 +70,7 @@ export function ProbationEvaluationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl w-[90vw] sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <Award className="h-5 w-5 text-emerald-600" />
