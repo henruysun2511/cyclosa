@@ -388,26 +388,13 @@ export function ContractForm({
     <form onSubmit={handleSubmit} className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* ── 1. Top Bar & Breadcrumb ────────────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
-        <div className="space-y-1">
-          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Link
-              href="/contracts"
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              <span>Hợp đồng lao động</span>
-            </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium">
-              {isEdit ? "Chỉnh sửa hợp đồng" : "Soạn thảo hợp đồng mới"}
-            </span>
-          </nav>
-
+        <div>
           <div className="flex items-center gap-3">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+              className="h-8 w-8 -ml-1 text-slate-500 hover:text-foreground shrink-0"
               onClick={handleCancel}
               title="Quay lại"
             >
@@ -427,9 +414,23 @@ export function ContractForm({
               )}
             </div>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Thiết lập chủ thể, điều khoản tiền lương, phụ cấp và đối soát tự động theo quy định Bộ luật Lao động 2019.
-          </p>
+
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 ml-10">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <Link
+              href="/contracts"
+              className="hover:text-primary transition-colors"
+            >
+              Hợp đồng lao động
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">
+              {isEdit ? "Chỉnh sửa hợp đồng" : "Soạn thảo hợp đồng mới"}
+            </span>
+          </nav>
         </div>
 
         {/* Nút hành động */}

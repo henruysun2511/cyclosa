@@ -287,7 +287,7 @@ export default function OrganizationPage() {
                 className="flex items-center gap-1 hover:text-primary transition-colors"
               >
                 <Home className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Home</span>
+                <span>Trang chủ</span>
               </Link>
               <span>/</span>
               <span className="text-muted-foreground">Cơ cấu tổ chức</span>

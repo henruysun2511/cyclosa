@@ -10,7 +10,10 @@ export default function NewProductPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
         title="Thêm sản phẩm mới"
-        description="Khởi tạo thông tin sản phẩm mới vào danh mục hệ thống"
+        breadcrumbs={[
+          { label: "Danh mục sản phẩm", href: "/products" },
+          { label: "Thêm sản phẩm mới" },
+        ]}
       />
       <div className="rounded-lg border bg-card p-6 shadow-xs">
         <ProductForm mode="create" />

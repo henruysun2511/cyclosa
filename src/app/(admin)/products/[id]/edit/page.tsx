@@ -31,7 +31,13 @@ export default function EditProductPage() {
   if (isError || !product) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
-        <PageHeader title="Chỉnh sửa sản phẩm" />
+        <PageHeader
+          title="Chỉnh sửa sản phẩm"
+          breadcrumbs={[
+            { label: "Danh mục sản phẩm", href: "/products" },
+            { label: "Chỉnh sửa sản phẩm" },
+          ]}
+        />
         <ErrorState
           error={error ?? new Error("Không tìm thấy sản phẩm")}
           onRetry={refetch}
@@ -44,7 +50,10 @@ export default function EditProductPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
         title={`Chỉnh sửa: ${product.name}`}
-        description={`Cập nhật thông tin chi tiết sản phẩm (SKU: ${product.sku})`}
+        breadcrumbs={[
+          { label: "Danh mục sản phẩm", href: "/products" },
+          { label: product.name },
+        ]}
       />
       <div className="rounded-lg border bg-card p-6 shadow-xs">
         <ProductForm mode="edit" initialData={product} />

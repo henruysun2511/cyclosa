@@ -217,22 +217,9 @@ export default function ContractDetailPage({ params }: PageProps) {
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* ── 1. Top Header & Điều hướng ───────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
-        <div className="space-y-1">
-          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Link
-              href="/contracts"
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              <span>Hợp đồng lao động</span>
-            </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium font-mono">
-              {contract.contractNumber}
-            </span>
-          </nav>
-
+        <div>
           <div className="flex items-center gap-3">
-            <Button asChild variant="outline" size="icon" className="h-8 w-8 shrink-0">
+            <Button asChild variant="ghost" size="icon" className="h-8 w-8 -ml-1 text-slate-500">
               <Link href="/contracts" title="Quay lại danh sách">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
@@ -248,13 +235,22 @@ export default function ContractDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Người lao động:{" "}
-            <strong className="text-foreground">{contract.employeeName}</strong>{" "}
-            ({contract.employeeCode})
-            {contract.departmentName && ` • ${contract.departmentName}`}
-            {contract.jobTitleName && ` • ${contract.jobTitleName}`}
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 ml-10">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <Link
+              href="/contracts"
+              className="hover:text-primary transition-colors"
+            >
+              Hợp đồng lao động
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium font-mono">
+              {contract.contractNumber}
+            </span>
+          </nav>
         </div>
 
         {/* Nút thao tác nhanh theo trạng thái */}

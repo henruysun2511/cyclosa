@@ -73,22 +73,29 @@ export default function ContractTemplatesPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
+        <div>
           <div className="flex items-center gap-2">
             <Link href="/contracts">
-              <Button variant="ghost" size="sm" className="h-8 px-2 gap-1 text-muted-foreground">
+              <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1 text-slate-500">
                 <ArrowLeft className="w-4 h-4" />
-                Quay lại Hợp đồng
               </Button>
             </Link>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <FileCode className="w-6 h-6 text-primary" />
+              Quản lý Biểu mẫu Hợp đồng
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FileCode className="w-6 h-6 text-primary" />
-            Quản lý Biểu mẫu Hợp đồng & Phiên bản
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Thiết lập các khung biểu mẫu hợp đồng động với cú pháp Handlebars, hỗ trợ đa phiên bản.
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 ml-9">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <Link href="/contracts" className="hover:text-primary transition-colors">
+              Hợp đồng lao động
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">Biểu mẫu hợp đồng</span>
+          </nav>
         </div>
 
         <Link href="/contracts/templates/new">

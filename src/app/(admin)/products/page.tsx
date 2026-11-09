@@ -53,7 +53,7 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Danh mục Sản phẩm (Module mẫu chuẩn)"
-        description="Quản trị danh sách sản phẩm với đầy đủ tính năng CRUD, tìm kiếm, lọc đa tiêu chí, phân trang và xóa mềm kết nối Spring Boot Backend."
+        breadcrumbs={[{ label: "Danh mục sản phẩm" }]}
         action={
           <Button asChild>
             <Link href="/products/new">

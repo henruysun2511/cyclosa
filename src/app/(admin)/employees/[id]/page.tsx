@@ -254,39 +254,48 @@ export default function EmployeeDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
-      {/* ── 1. Top Navigation & Breadcrumbs ───────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Link
-            href="/employees"
-            className="inline-flex items-center gap-1.5 font-medium hover:text-foreground text-muted-foreground transition-colors py-1 px-2 -ml-2 rounded-lg hover:bg-muted"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Danh sách nhân sự</span>
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-foreground font-semibold font-mono">
-            {employee.employeeCode}
-          </span>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="truncate max-w-[200px] text-foreground font-medium">
-            {employee.fullName}
-          </span>
-        </div>
+      {/* ── 1. Top Header & Điều hướng ───────────────────────────────── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
+        <div>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="icon" className="h-8 w-8 -ml-1 text-slate-500">
+              <Link href="/employees" title="Quay lại danh sách">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <User className="h-6 w-6 text-primary" />
+                <span>Hồ sơ Chi tiết Nhân sự: {employee.fullName}</span>
+              </h1>
+              <Badge
+                variant="outline"
+                className="bg-card font-mono text-xs border-border text-foreground font-semibold px-2.5 py-0.5"
+              >
+                {employee.employeeCode}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn("text-xs font-semibold px-2.5 py-0.5", statusVariant.className)}
+              >
+                ● {statusVariant.label}
+              </Badge>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="bg-card font-mono text-xs border-border text-foreground font-semibold px-2.5 py-0.5"
-          >
-            Mã định danh: {employee.employeeCode}
-          </Badge>
-          <Badge
-            variant="outline"
-            className={cn("text-xs font-semibold px-2.5 py-0.5", statusVariant.className)}
-          >
-            ● {statusVariant.label}
-          </Badge>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 ml-10">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <Link href="/employees" className="hover:text-primary transition-colors">
+              Danh sách nhân sự
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium font-mono">
+              {employee.employeeCode}
+            </span>
+          </nav>
         </div>
       </div>
 

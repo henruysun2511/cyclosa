@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { SettingsNav } from "@/features/settings/components/settings-nav";
 import { Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -16,16 +17,20 @@ export default function SettingsLayout({
   return (
     <div className="space-y-6">
       {/* Module Page Header */}
-      <div className="space-y-0.5">
+      <div>
         <div className="flex items-center gap-2">
-          <Settings className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold tracking-tight text-foreground">
+          <Settings className="h-6 w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Cài đặt tài khoản
-          </h2>
+          </h1>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Quản lý thông tin định danh cá nhân, vai trò hoạt động và các thiết lập bảo mật tài khoản HRM.
-        </p>
+        <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
+          <Link href="/" className="hover:text-primary transition-colors">
+            Trang chủ
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Cài đặt tài khoản</span>
+        </nav>
       </div>
 
       <Separator />

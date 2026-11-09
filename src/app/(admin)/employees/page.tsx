@@ -156,9 +156,13 @@ export default function EmployeesPage() {
             <Users className="w-6 h-6 text-primary" />
             Hồ sơ Nhân sự & Quản trị Tổ chức 3 chiều
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Quản lý vòng đời nhân viên từ tiếp nhận, luân chuyển công tác đến quản lý hợp đồng pháp lý.
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">Danh sách nhân sự</span>
+          </nav>
         </div>
 
         <div className="flex items-center gap-2">

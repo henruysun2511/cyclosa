@@ -361,17 +361,47 @@ export function ContractTemplateEditor({
       {/* ── Top Header & Actions Bar ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <div>
-          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+          <div className="flex items-center gap-3">
+            <Link href="/contracts/templates">
+              <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1 text-slate-500">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <FileCode className="w-6 h-6 text-primary" />
+                {isEdit ? name || "Chỉnh sửa biểu mẫu" : "Tạo Biểu mẫu Hợp đồng mới"}
+              </h1>
+              {isEdit && (
+                <Badge
+                  variant={isActive ? "default" : "secondary"}
+                  className={
+                    isActive
+                      ? "bg-emerald-600 hover:bg-emerald-600 text-xs"
+                      : "text-xs"
+                  }
+                >
+                  {isActive ? "Đang áp dụng" : "Ngừng áp dụng"}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 ml-10">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
             <Link
               href="/contracts"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
-              Hợp đồng
+              Hợp đồng lao động
             </Link>
             <span>/</span>
             <Link
               href="/contracts/templates"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Biểu mẫu hợp đồng
             </Link>
@@ -380,37 +410,6 @@ export function ContractTemplateEditor({
               {isEdit ? "Chỉnh sửa biểu mẫu" : "Tạo biểu mẫu mới"}
             </span>
           </nav>
-
-          <div className="flex items-center gap-3">
-            <Link href="/contracts/templates">
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                  <FileCode className="w-6 h-6 text-primary" />
-                  {isEdit ? name || "Chỉnh sửa biểu mẫu" : "Tạo Biểu mẫu Hợp đồng mới"}
-                </h1>
-                {isEdit && (
-                  <Badge
-                    variant={isActive ? "default" : "secondary"}
-                    className={
-                      isActive
-                        ? "bg-emerald-600 hover:bg-emerald-600 text-xs"
-                        : "text-xs"
-                    }
-                  >
-                    {isActive ? "Đang áp dụng" : "Ngừng áp dụng"}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Thiết kế mẫu văn bản pháp lý với các biến giữ chỗ Handlebars và kiểm tra dữ liệu thực tế trước khi ban hành.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Action buttons */}

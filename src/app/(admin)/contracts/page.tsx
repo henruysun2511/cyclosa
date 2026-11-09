@@ -126,9 +126,13 @@ export default function ContractsPage() {
             <FileText className="w-6 h-6 text-primary" />
             Quản lý Hợp đồng Lao động & Ký điện tử
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Quản trị vòng đời hợp đồng lao động, đối soát Bộ luật Lao động 2019 và luồng ký số OTP.
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">Hợp đồng lao động</span>
+          </nav>
         </div>
 
         <div className="flex items-center gap-2">

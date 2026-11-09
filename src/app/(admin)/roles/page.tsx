@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { RouteGuard } from "@/features/authorization/components/route-guard";
 import {
@@ -210,9 +212,17 @@ function RolesPageContent() {
     <div className="space-y-4 lg:space-y-5 pb-6">
       {/* ── 1. Page Header ─────────────────────────────────────────── */}
       <div className="shrink-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-          Vai trò & Phân quyền Hệ thống
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+          <ShieldCheck className="h-6 w-6 text-primary" />
+          <span>Vai trò & Phân quyền Hệ thống</span>
         </h1>
+        <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
+          <Link href="/" className="hover:text-primary transition-colors">
+            Trang chủ
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Vai trò & Phân quyền</span>
+        </nav>
       </div>
 
       {/* ── 2. Two-Column Master-Detail Layout ────────────────────────── */}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   RouteGuard,
@@ -136,9 +137,13 @@ function UsersPageContent() {
             <Users className="h-6 w-6 text-primary" />
             <span>Quản lý Tài khoản Người dùng</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Quản lý tài khoản đăng nhập, trạng thái truy cập và phân bổ vai trò cho nhân sự trong toàn hệ thống
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">Người dùng & Tài khoản</span>
+          </nav>
         </div>
 
         <div className="flex items-center gap-2">

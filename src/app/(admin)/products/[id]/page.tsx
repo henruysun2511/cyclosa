@@ -53,7 +53,13 @@ export default function ProductDetailPage() {
   if (isError || !product) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
-        <PageHeader title="Chi tiết sản phẩm" />
+        <PageHeader
+          title="Chi tiết sản phẩm"
+          breadcrumbs={[
+            { label: "Danh mục sản phẩm", href: "/products" },
+            { label: "Chi tiết sản phẩm" },
+          ]}
+        />
         <ErrorState
           error={error ?? new Error("Không tìm thấy sản phẩm")}
           onRetry={refetch}
