@@ -32,19 +32,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useGetCompaniesQuery } from "@/features/organization/api";
 import { useGetContractTemplatesQuery } from "@/features/contract/api/contract-api";
 import { TEMPLATE_KIND_LABELS } from "@/features/contract/constants/contract.constants";
-import { ContractTemplateDialog } from "@/features/contract/components/dialogs/contract-template-dialog";
 import type { ContractTemplate, TemplateKind } from "@/features/contract/types/contract.types";
 
 export default function ContractTemplatesPage() {
+  const router = useRouter();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [search, setSearch] = useState<string>("");
   const [kindFilter, setKindFilter] = useState<string>("all");
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<ContractTemplate | null>(null);
 
   // Companies
   const { data: companiesData } = useGetCompaniesQuery({ size: 50 });
@@ -71,16 +69,6 @@ export default function ContractTemplatesPage() {
 
   const templates = templatesData?.items || [];
 
-  const handleCreate = () => {
-    setSelectedTemplate(null);
-    setIsDialogOpen(true);
-  };
-
-  const handleEdit = (tpl: ContractTemplate) => {
-    setSelectedTemplate(tpl);
-    setIsDialogOpen(true);
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Top Header */}
@@ -103,10 +91,12 @@ export default function ContractTemplatesPage() {
           </p>
         </div>
 
-        <Button onClick={handleCreate} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Tạo biểu mẫu mới
-        </Button>
+        <Link href="/contracts/templates/new">
+          <Button className="gap-2">
+            <Plus className="w-4 h-4" />
+            Tạo biểu mẫu mới
+          </Button>
+        </Link>
       </div>
 
       {/* Filter Bar */}
@@ -206,10 +196,18 @@ export default function ContractTemplatesPage() {
                 templates.map((tpl) => (
                   <TableRow key={tpl.id}>
                     <TableCell className="font-mono text-xs font-semibold">
-                      {tpl.templateCode}
+                      <Link
+                        href={`/contracts/templates/${tpl.id}`}
+                        className="hover:underline text-primary"
+                      >
+                        {tpl.templateCode}
+                      </Link>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-0.5">
+                      <Link
+                        href={`/contracts/templates/${tpl.id}`}
+                        className="space-y-0.5 block hover:underline"
+                      >
                         <span className="font-medium text-sm text-foreground">
                           {tpl.name}
                         </span>
@@ -218,7 +216,7 @@ export default function ContractTemplatesPage() {
                             {tpl.description}
                           </p>
                         )}
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell className="text-xs">
                       <Badge variant="outline">
@@ -246,15 +244,16 @@ export default function ContractTemplatesPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1 text-xs"
-                        onClick={() => handleEdit(tpl)}
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        Chỉnh sửa
-                      </Button>
+                      <Link href={`/contracts/templates/${tpl.id}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1 text-xs"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          Chỉnh sửa
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))
@@ -263,17 +262,6 @@ export default function ContractTemplatesPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Dialog */}
-      {isDialogOpen && (
-        <ContractTemplateDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          template={selectedTemplate}
-          companyId={selectedCompanyId}
-          onSuccess={() => refetch()}
-        />
-      )}
     </div>
   );
 }

@@ -377,145 +377,145 @@ export function ContractTemplateDialog({
           </div>
 
           {/* Tabs Soạn thảo & Xem trước & Lịch sử phiên bản */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-2">
-            <div className="flex items-center justify-between border-b pb-2">
-              <TabsList>
-                <TabsTrigger value="editor" className="gap-1.5">
-                  <FileCode className="w-4 h-4" />
-                  Nội dung Mẫu (HTML)
-                </TabsTrigger>
-                <TabsTrigger value="sampleData" className="gap-1.5">
-                  <Copy className="w-4 h-4" />
-                  Dữ liệu mẫu (JSON)
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="gap-1.5">
-                  <Eye className="w-4 h-4" />
-                  Xem trước Render
-                </TabsTrigger>
-                {isEdit && (
-                  <TabsTrigger value="history" className="gap-1.5">
-                    <History className="w-4 h-4" />
-                    Lịch sử Phiên bản ({versions.length})
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-2">
+              <div className="flex items-center justify-between border-b pb-2">
+                <TabsList>
+                  <TabsTrigger value="editor" className="gap-1.5">
+                    <FileCode className="w-4 h-4" />
+                    Nội dung Mẫu (HTML)
                   </TabsTrigger>
-                )}
-              </TabsList>
+                  <TabsTrigger value="sampleData" className="gap-1.5">
+                    <Copy className="w-4 h-4" />
+                    Dữ liệu mẫu (JSON)
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="gap-1.5">
+                    <Eye className="w-4 h-4" />
+                    Xem trước Render
+                  </TabsTrigger>
+                  {isEdit && (
+                    <TabsTrigger value="history" className="gap-1.5">
+                      <History className="w-4 h-4" />
+                      Lịch sử Phiên bản ({versions.length})
+                    </TabsTrigger>
+                  )}
+                </TabsList>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={handlePreview}
-                disabled={isRendering}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                {isRendering ? "Đang render..." : "Render thử nghiệm"}
-              </Button>
-            </div>
-
-            <TabsContent value="editor" className="space-y-2 pt-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="contentRaw">Nội dung khung mẫu HTML / Handlebars</Label>
-                <span className="text-xs text-muted-foreground">
-                  Hỗ trợ đầy đủ biến động Handlebars
-                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={handlePreview}
+                  disabled={isRendering}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  {isRendering ? "Đang render..." : "Render thử nghiệm"}
+                </Button>
               </div>
-              <Textarea
-                id="contentRaw"
-                value={contentRaw}
-                onChange={(e) => setContentRaw(e.target.value)}
-                rows={12}
-                className="font-mono text-xs leading-relaxed"
-              />
-              {isEdit && (
-                <div className="pt-2 flex justify-end">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="gap-1.5 text-xs"
-                    onClick={handleCreateNewVersion}
-                    disabled={isCreatingVersion}
-                  >
-                    <PlusCircle className="w-3.5 h-3.5" />
-                    Lưu thành Phiên bản mới
-                  </Button>
+
+              <TabsContent value="editor" className="space-y-2 pt-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="contentRaw">Nội dung khung mẫu HTML / Handlebars</Label>
+                  <span className="text-xs text-muted-foreground">
+                    Hỗ trợ đầy đủ biến động Handlebars
+                  </span>
                 </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="sampleData" className="space-y-2 pt-3">
-              <Label htmlFor="sampleDataJson">
-                Dữ liệu JSON giả lập để thử nghiệm gán biến
-              </Label>
-              <Textarea
-                id="sampleDataJson"
-                value={sampleDataJson}
-                onChange={(e) => setSampleDataJson(e.target.value)}
-                rows={10}
-                className="font-mono text-xs"
-              />
-            </TabsContent>
-
-            <TabsContent value="preview" className="pt-3">
-              {previewHtml ? (
-                <Card className="border-border">
-                  <CardContent className="p-4 bg-white dark:bg-slate-950 rounded-lg overflow-x-auto">
-                    <div
-                      dangerouslySetInnerHTML={{ __html: previewHtml }}
-                      className="prose dark:prose-invert max-w-none text-slate-900 dark:text-slate-100"
-                    />
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="text-center py-12 border border-dashed rounded-lg text-muted-foreground text-sm">
-                  Bấm nút <strong>&quot;Render thử nghiệm&quot;</strong> để xem nội dung hợp đồng được biên dịch
-                </div>
-              )}
-            </TabsContent>
-
-            {isEdit && (
-              <TabsContent value="history" className="space-y-3 pt-3">
-                <div className="space-y-2">
-                  {versions.map((v) => (
-                    <Card key={v.id} className="border-border/60">
-                      <CardContent className="p-3.5 flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">
-                              Phiên bản v{v.versionNumber}
-                            </span>
-                            {v.isActive && (
-                              <Badge className="bg-emerald-600 text-xs">
-                                Đang áp dụng
-                              </Badge>
-                            )}
-                            <Badge variant="outline" className="text-xs">
-                              {v.format}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Tạo ngày: {new Date(v.createdAt).toLocaleString("vi-VN")}
-                          </p>
-                        </div>
-
-                        {!v.isActive && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-xs text-emerald-600"
-                            onClick={() => handlePublishVersion(v.id)}
-                            disabled={isPublishing}
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Kích hoạt bản này
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <Textarea
+                  id="contentRaw"
+                  value={contentRaw}
+                  onChange={(e) => setContentRaw(e.target.value)}
+                  rows={12}
+                  className="font-mono text-xs leading-relaxed"
+                />
+                {isEdit && (
+                  <div className="pt-2 flex justify-end">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={handleCreateNewVersion}
+                      disabled={isCreatingVersion}
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      Lưu thành Phiên bản mới
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
-            )}
-          </Tabs>
+
+              <TabsContent value="sampleData" className="space-y-2 pt-3">
+                <Label htmlFor="sampleDataJson">
+                  Dữ liệu JSON giả lập để thử nghiệm gán biến
+                </Label>
+                <Textarea
+                  id="sampleDataJson"
+                  value={sampleDataJson}
+                  onChange={(e) => setSampleDataJson(e.target.value)}
+                  rows={10}
+                  className="font-mono text-xs"
+                />
+              </TabsContent>
+
+              <TabsContent value="preview" className="pt-3">
+                {previewHtml ? (
+                  <Card className="border-border">
+                    <CardContent className="p-4 bg-white dark:bg-slate-950 rounded-lg overflow-x-auto">
+                      <div
+                        dangerouslySetInnerHTML={{ __html: previewHtml }}
+                        className="prose dark:prose-invert max-w-none text-slate-900 dark:text-slate-100"
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="text-center py-12 border border-dashed rounded-lg text-muted-foreground text-sm">
+                    Bấm nút <strong>&quot;Render thử nghiệm&quot;</strong> để xem nội dung hợp đồng được biên dịch
+                  </div>
+                )}
+              </TabsContent>
+
+              {isEdit && (
+                <TabsContent value="history" className="space-y-3 pt-3">
+                  <div className="space-y-2">
+                    {versions.map((v) => (
+                      <Card key={v.id} className="border-border/60">
+                        <CardContent className="p-3.5 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm">
+                                Phiên bản v{v.versionNumber}
+                              </span>
+                              {v.isActive && (
+                                <Badge className="bg-emerald-600 text-xs">
+                                  Đang áp dụng
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {v.format}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Tạo ngày: {new Date(v.createdAt).toLocaleString("vi-VN")}
+                            </p>
+                          </div>
+
+                          {!v.isActive && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs text-emerald-600"
+                              onClick={() => handlePublishVersion(v.id)}
+                              disabled={isPublishing}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Kích hoạt bản này
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+              )}
+            </Tabs>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
