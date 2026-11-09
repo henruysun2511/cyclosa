@@ -26,7 +26,8 @@
 | **14. Quản lý Tổ chức - Sơ đồ & Phòng ban (Departments)** | 11 | 11/11 (100%) | 11/11 (100%) | Hoàn tất tích hợp 100% |
 | **15. Hồ sơ nhân sự & Vòng đời (Employee Profile)** | 37 | 37/37 (100%) | 26/37 (70%) | Hoàn tất nghiệp vụ lõi (26/37) |
 | **16. Quản lý Hợp đồng Lao động & Ký điện tử (Contracts & E-Sign)** | 42 | 42/42 (100%) | 40/42 (95%) | Hoàn tất nghiệp vụ lõi (40/42) |
-| **TỔNG CỘNG** | **160** | **160/160 (100%)** | **146/160 (91.3%)** | Đang phát triển |
+| **17. Quy trình Phê duyệt dùng chung (Generic Approval Workflow)** | 16 | 16/16 (100%) | 16/16 (100%) | Hoàn tất tích hợp 100% (/approvals & /settings/workflows) |
+| **TỔNG CỘNG** | **176** | **176/176 (100%)** | **162/176 (92%)** | Đang phát triển |
 
 ---
 
@@ -301,4 +302,28 @@
 | 158 | `GET` | `/api/v1/me/contracts/{id}` | Nhân viên xem chi tiết hợp đồng và tải tệp tin hợp đồng đã ký | x |   | Tạm thời hoãn trang cá nhân (/me/contracts) |
 | 159 | `POST` | `/api/v1/me/contracts/{id}/request-otp` | Nhân viên bấm yêu cầu nhận mã OTP xác thực ký số cá nhân | x | x | Nút Lấy mã OTP (ContractSigningDialog) |
 | 160 | `POST` | `/api/v1/me/contracts/{id}/sign` | Nhân viên xác nhận ký điện tử vào hợp đồng với mã OTP | x | x | Nút Xác nhận Ký (ContractSigningDialog) |
+
+---
+
+### Module 17: Quy trình Phê duyệt dùng chung (Generic Approval Workflow - `WorkflowDefinitionController` & `WorkflowRequestController`)
+
+| STT | Phương thức | Đường dẫn API (Endpoint) | Mô tả chức năng | Backend | Frontend | Ghi chú |
+| :-: | :--- | :--- | :--- | :-: | :-: | :--- |
+| 161 | `GET` | `/api/v1/workflow-definitions` | Danh sách quy trình phê duyệt (lọc công ty, loại chứng từ, trạng thái) | x | x | Màn hình /settings/workflows |
+| 162 | `POST` | `/api/v1/workflow-definitions` | Tạo mới định nghĩa quy trình duyệt đa cấp | x | x | Màn hình /settings/workflows/new |
+| 163 | `GET` | `/api/v1/workflow-definitions/{id}` | Chi tiết quy trình kèm danh sách các bước duyệt tuần tự | x | x | Màn hình /settings/workflows/[id]/edit |
+| 164 | `PUT` | `/api/v1/workflow-definitions/{id}` | Cập nhật cấu hình quy trình phê duyệt & các bước | x | x | Màn hình /settings/workflows/[id]/edit |
+| 165 | `PATCH` | `/api/v1/workflow-definitions/{id}/toggle-status` | Bật / tắt áp dụng quy trình (Active/Inactive) | x | x | Nút Switch trên /settings/workflows |
+| 166 | `DELETE`| `/api/v1/workflow-definitions/{id}` | Xóa định nghĩa quy trình phê duyệt | x | x | Menu thao tác trên từng quy trình |
+| 167 | `GET` | `/api/v1/workflow-requests/stats` | Thống kê số lượng hồ sơ (chờ duyệt, đã duyệt, đã gửi, quy trình) | x | x | 4 thẻ KPI WorkflowStatsCards |
+| 168 | `GET` | `/api/v1/workflow-requests/inbox` | Hộp thư phê duyệt: Danh sách yêu cầu đang chờ tôi xử lý | x | x | Tab "Chờ tôi duyệt" (/approvals) |
+| 169 | `GET` | `/api/v1/workflow-requests/my-submitted` | Danh sách các yêu cầu do tôi gửi đi đang chờ xử lý | x | x | Tab "Tôi đã gửi" (/approvals) |
+| 170 | `GET` | `/api/v1/workflow-requests/history` | Lịch sử các hồ sơ tôi đã phê duyệt hoặc từ chối | x | x | Tab "Lịch sử đã duyệt" (/approvals) |
+| 171 | `GET` | `/api/v1/workflow-requests/{id}` | Chi tiết yêu cầu và tiến trình từng bước phê duyệt | x | x | Modal ApprovalTimeline |
+| 172 | `GET` | `/api/v1/workflow-requests/by-reference` | Tra cứu tiến trình phê duyệt theo mã tham chiếu và loại chứng từ | x | x | Tích hợp chi tiết hợp đồng (/contracts/[id]) |
+| 173 | `POST` | `/api/v1/workflow-requests/submit` | Khởi tạo yêu cầu phê duyệt mới cho chứng từ | x | x | Tự động khi gửi duyệt HĐLĐ / Đơn từ |
+| 174 | `POST` | `/api/v1/workflow-requests/{id}/steps/{stepId}/approve` | Phê duyệt bước hiện tại (kèm nhận xét tùy chọn) | x | x | Dialog ApprovalActionDialog |
+| 175 | `POST` | `/api/v1/workflow-requests/{id}/steps/{stepId}/reject` | Từ chối bước duyệt (bắt buộc nêu lý do tối thiểu 5 ký tự) | x | x | Dialog ApprovalActionDialog |
+| 176 | `POST` | `/api/v1/workflow-requests/{id}/cancel` | Người tạo hủy yêu cầu phê duyệt đã gửi | x | x | Dialog ApprovalActionDialog |
+
 

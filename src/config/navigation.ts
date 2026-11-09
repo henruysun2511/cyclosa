@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, Package, Users, Settings, Building2, Layers, UserCheck, FileText } from "lucide-react";
+import { ShieldCheck, Package, Users, Settings, Building2, Layers, UserCheck, FileText, CheckSquare, GitFork } from "lucide-react";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import type {
   PermissionCode,
@@ -57,6 +57,11 @@ export const navigationConfig: NavGroup[] = [
     label: "QUẢN TRỊ NHÂN SỰ",
     items: [
       {
+        title: "Hộp thư phê duyệt",
+        href: "/approvals",
+        icon: CheckSquare,
+      },
+      {
         title: "Hồ sơ nhân viên",
         href: "/employees",
         icon: UserCheck,
@@ -100,6 +105,11 @@ export const navigationConfig: NavGroup[] = [
         icon: ShieldCheck,
         permission: PERMISSIONS.ROLE.VIEW,
         resource: "ROLE",
+      },
+      {
+        title: "Quy trình phê duyệt",
+        href: "/settings/workflows",
+        icon: GitFork,
       },
     ],
   },

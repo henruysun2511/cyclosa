@@ -67,6 +67,7 @@ import { ContractTerminateDialog } from "@/features/contract/components/dialogs/
 import type { ContractAppendixSummary } from "@/features/contract/types/contract.types";
 import { usePermission } from "@/features/authorization/hooks/use-permission";
 import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
+import { ApprovalTimeline } from "@/features/workflow";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -787,6 +788,13 @@ export default function ContractDetailPage({ params }: PageProps) {
 
           {/* Cột phải (5 cột): Tiến trình ký kết & Thao tác */}
           <div className="lg:col-span-5 space-y-6">
+            {/* Tiến trình Phê duyệt chứng từ đa cấp */}
+            <ApprovalTimeline
+              referenceId={contract.id}
+              requestType="CONTRACT"
+              canApprove={canManage}
+            />
+
             {/* Tiến trình ký kết */}
             <Card className="border-border bg-card shadow-xs">
               <CardHeader className="py-3.5 px-5 border-b border-border bg-muted/20">

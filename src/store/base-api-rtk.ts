@@ -170,6 +170,10 @@ export const baseApi = createApi({
     "ContractTemplate",
     "ContractAppendix",
     "ContractSigner",
+    "WorkflowDefinition",
+    "WorkflowRequest",
+    "WorkflowStats",
+    "WorkflowDelegation",
   ],
   endpoints: () => ({}),
 });
