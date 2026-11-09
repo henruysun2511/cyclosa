@@ -10,3 +10,4 @@ export default function NewContractPage() {
 
   return <ContractForm initialCompanyId={companyId} />;
 }
+

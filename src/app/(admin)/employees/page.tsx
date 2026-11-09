@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Users, UserPlus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,13 +16,13 @@ import {
   EmployeeFilters,
   EmployeeTable,
   EmployeeFormDialog,
-  EmployeeDetailDialog,
   WorkAssignmentDialog,
   StatusChangeDialog,
 } from "@/features/employee";
 import type { EmployeeDetail } from "@/features/employee/types/employee.types";
 
 export default function EmployeesPage() {
+  const router = useRouter();
   const { can } = usePermission();
   const canManage = can(PERMISSIONS.EMPLOYEE.CREATE);
 
@@ -49,8 +50,6 @@ export default function EmployeesPage() {
   // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<EmployeeDetail | null>(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [transferEmployeeId, setTransferEmployeeId] = useState<string | null>(null);
   const [statusEmployeeId, setStatusEmployeeId] = useState<string | null>(null);
 
@@ -116,8 +115,7 @@ export default function EmployeesPage() {
   };
 
   const handleOpenDetail = (empId: string) => {
-    setSelectedEmployeeId(empId);
-    setIsDetailOpen(true);
+    router.push(`/employees/${empId}`);
   };
 
   const handleOpenTransfer = (empId: string) => {
@@ -237,14 +235,6 @@ export default function EmployeesPage() {
         onOpenChange={setIsFormOpen}
         employee={editingEmployee}
         companyId={companyId}
-        onSuccess={() => refetch()}
-      />
-
-      {/* 6. Dialog Xem Chi tiết 360 độ */}
-      <EmployeeDetailDialog
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-        employeeId={selectedEmployeeId}
         onSuccess={() => refetch()}
       />
 

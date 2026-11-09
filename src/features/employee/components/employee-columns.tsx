@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Eye,
@@ -46,13 +47,12 @@ export function getEmployeeColumns({
       cell: ({ row }) => {
         const emp = row.original;
         return (
-          <button
-            type="button"
-            onClick={() => onViewDetail(emp.id)}
+          <Link
+            href={`/employees/${emp.id}`}
             className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
           >
             {emp.employeeCode}
-          </button>
+          </Link>
         );
       },
     },
@@ -77,13 +77,12 @@ export function getEmployeeColumns({
               </div>
             )}
             <div className="min-w-0">
-              <button
-                type="button"
-                onClick={() => onViewDetail(emp.id)}
+              <Link
+                href={`/employees/${emp.id}`}
                 className="font-medium text-sm text-foreground hover:text-primary hover:underline block truncate text-left cursor-pointer"
               >
                 {emp.fullName}
-              </button>
+              </Link>
               <p className="text-xs text-muted-foreground truncate font-normal">
                 {emp.personalEmail || emp.phone || "—"}
               </p>

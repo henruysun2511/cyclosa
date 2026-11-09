@@ -13,3 +13,4 @@ export default function EditContractPage({ params }: PageProps) {
 
   return <ContractForm contractId={contractId} />;
 }
+
