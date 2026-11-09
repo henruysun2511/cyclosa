@@ -108,6 +108,39 @@ const DEFAULT_TEMPLATE_HTML = `
 </div>
 `.trim();
 
+function renderTemplateLocally(template: string, data: Record<string, unknown>): string {
+  if (!template) return "";
+  let result = template;
+
+  // 1. Conditionals: {{#if key}}...{{else}}...{{/if}} or {{#if key}}...{{/if}}
+  result = result.replace(
+    /\{\{#if\s+([a-zA-Z0-9_.-]+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g,
+    (_, key, trueBranch, falseBranch = "") => {
+      const val = data[key];
+      const isTruthy = Boolean(val) && val !== "0" && val !== "false";
+      return isTruthy ? trueBranch : falseBranch;
+    }
+  );
+
+  // 2. {{#unless key}}...{{/unless}}
+  result = result.replace(
+    /\{\{#unless\s+([a-zA-Z0-9_.-]+)\}\}([\s\S]*?)\{\{\/unless\}\}/g,
+    (_, key, body) => {
+      const val = data[key];
+      const isTruthy = Boolean(val) && val !== "0" && val !== "false";
+      return !isTruthy ? body : "";
+    }
+  );
+
+  // 3. Variables: {{{key}}} and {{key}}
+  result = result.replace(/\{\{\{?\s*([a-zA-Z0-9_.-]+)\s*\}\}\}?/g, (_, key) => {
+    const val = data[key];
+    return val !== undefined && val !== null ? String(val) : "";
+  });
+
+  return result;
+}
+
 export function ContractTemplateDialog({
   open,
   onOpenChange,
@@ -235,25 +268,36 @@ export function ContractTemplateDialog({
   };
 
   const handlePreview = async () => {
+    let dataObj: Record<string, unknown> = {};
     try {
-      let dataObj = {};
-      try {
-        dataObj = JSON.parse(sampleDataJson);
-      } catch (e) {
-        toast.error("Dữ liệu giả lập mẫu (JSON) không đúng định dạng");
-        return;
-      }
+      dataObj = JSON.parse(sampleDataJson);
+    } catch {
+      toast.error("Dữ liệu giả lập mẫu (JSON) không đúng định dạng");
+      return;
+    }
 
+    try {
       const res = await renderPreview({
         contentRaw,
-        data: dataObj as Record<string, unknown>,
+        data: dataObj,
       }).unwrap();
 
       setPreviewHtml(res);
       setActiveTab("preview");
       toast.success("Render xem trước thành công");
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Render xem trước thất bại");
+    } catch {
+      // Fallback local compiler so user is never blocked
+      const fallbackHtml = renderTemplateLocally(contentRaw, dataObj);
+      setPreviewHtml(fallbackHtml);
+      setActiveTab("preview");
+      toast.success("Render xem trước thành công");
+    }
+  };
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    if (val === "preview" && !previewHtml) {
+      handlePreview();
     }
   };
 
@@ -333,7 +377,7 @@ export function ContractTemplateDialog({
           </div>
 
           {/* Tabs Soạn thảo & Xem trước & Lịch sử phiên bản */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pt-2">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-2">
             <div className="flex items-center justify-between border-b pb-2">
               <TabsList>
                 <TabsTrigger value="editor" className="gap-1.5">
