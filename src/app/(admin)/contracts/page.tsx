@@ -129,7 +129,7 @@ export default function ContractsPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6 pb-12">
       {/* 1. Top Header & Nút Điều hướng */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -194,13 +194,14 @@ export default function ContractsPage() {
         onReset={resetFilters}
       />
 
-      {/* 4. Bảng Dữ liệu Chuẩn shadcn Table + DataPagination */}
+      {/* 4. Bảng Dữ liệu Chuẩn Table */}
       <ContractTable
-        data={contracts}
-        pagination={contractsData?.pagination}
+        contracts={contracts}
         isLoading={isLoading}
-        onPageChange={(pageIndex) => setPage(pageIndex + 1)}
-        onPageSizeChange={setSize}
+        page={page}
+        totalPages={contractsData?.pagination?.pages || 1}
+        totalItems={totalElements}
+        onPageChange={setPage}
         onViewDetail={handleOpenDetail}
         onEdit={handleOpenEdit}
         onSign={handleOpenSign}

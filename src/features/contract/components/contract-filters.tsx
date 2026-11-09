@@ -4,7 +4,6 @@ import React from "react";
 import { Search, RotateCcw, Building2, Filter, FileText, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -54,9 +53,8 @@ export function ContractFilters({
   onReset,
 }: ContractFiltersProps) {
   return (
-    <Card className="border border-border shadow-xs">
-      <CardContent className="p-3.5 space-y-3">
-        {/* Hàng 1: Tìm kiếm từ khóa */}
+    <div className="p-4 rounded-xl border border-border bg-card shadow-xs space-y-3">
+      {/* Hàng 1: Tìm kiếm từ khóa */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -198,8 +196,7 @@ export function ContractFilters({
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 

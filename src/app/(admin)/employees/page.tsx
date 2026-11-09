@@ -150,7 +150,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6 pb-12">
       {/* 1. Header Trang & Nút Thao tác */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -218,11 +218,12 @@ export default function EmployeesPage() {
 
       {/* 4. Bảng Dữ liệu & Phân trang */}
       <EmployeeTable
-        data={employees}
-        pagination={employeePageData?.pagination}
+        employees={employees}
         isLoading={isLoading}
-        onPageChange={(pageIndex) => setPage(pageIndex + 1)}
-        onPageSizeChange={setSize}
+        page={page}
+        totalPages={employeePageData?.pagination?.pages || 1}
+        totalItems={totalElements}
+        onPageChange={setPage}
         onViewDetail={handleOpenDetail}
         onEdit={handleOpenEdit}
         onTransfer={handleOpenTransfer}
