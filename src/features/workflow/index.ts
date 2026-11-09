@@ -10,4 +10,5 @@ export * from "./components/workflow-inbox-table";
 export * from "./components/approval-action-dialog";
 export * from "./components/approval-timeline";
 export * from "./components/workflow-definition-form";
+export * from "./components/workflow-flow-canvas";
 
