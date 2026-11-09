@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Search, RotateCcw, Building2, Filter, FileText, Calendar } from "lucide-react";
+import { useDebouncedCallback } from "use-debounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,18 +53,39 @@ export function ContractFilters({
   onExpiringChange,
   onReset,
 }: ContractFiltersProps) {
+  const [searchTerm, setSearchTerm] = useState(search);
+
+  useEffect(() => {
+    setSearchTerm(search);
+  }, [search]);
+
+  const debouncedSearchChange = useDebouncedCallback((val: string) => {
+    onSearchChange(val);
+  }, 350);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    debouncedSearchChange(val);
+  };
+
+  const handleReset = () => {
+    setSearchTerm("");
+    onReset();
+  };
+
   return (
     <div className="p-4 rounded-xl border border-border bg-card shadow-xs space-y-3">
       {/* Hàng 1: Tìm kiếm từ khóa */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm theo số HĐ, tên hợp đồng, họ tên nhân viên, mã nhân viên..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 text-sm h-9 bg-background"
-          />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Tìm theo số HĐ, tên hợp đồng, họ tên nhân viên, mã nhân viên..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="pl-9 text-sm h-9 bg-background"
+        />
+      </div>
 
         {/* Hàng 2: Các dropdown lọc chuẩn Design System (Rule 11.8) */}
         <div className="flex flex-wrap items-center gap-3">
@@ -188,7 +210,7 @@ export function ContractFilters({
             <Button
               variant="outline"
               size="sm"
-              onClick={onReset}
+              onClick={handleReset}
               className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="w-3.5 h-3.5" />

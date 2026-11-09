@@ -31,6 +31,7 @@ export const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
   PROBATION: "Hợp đồng thử việc",
   FIXED_TERM: "Xác định thời hạn",
   INDEFINITE: "Không xác định thời hạn",
+  SERVICE: "Hợp đồng dịch vụ",
   SEASONAL: "Theo mùa vụ / Công việc nhất định",
   APPRENTICESHIP: "Hợp đồng đào tạo / Học nghề",
   COLLABORATOR: "Hợp đồng cộng tác viên",

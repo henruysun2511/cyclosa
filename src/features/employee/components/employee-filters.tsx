@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Search, RotateCcw, Download, Building2, Layers, Filter } from "lucide-react";
+import { useDebouncedCallback } from "use-debounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,18 +60,39 @@ export function EmployeeFilters({
   onExport,
   isExporting,
 }: EmployeeFiltersProps) {
+  const [searchTerm, setSearchTerm] = useState(keyword);
+
+  useEffect(() => {
+    setSearchTerm(keyword);
+  }, [keyword]);
+
+  const debouncedKeywordChange = useDebouncedCallback((val: string) => {
+    onKeywordChange(val);
+  }, 350);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    debouncedKeywordChange(val);
+  };
+
+  const handleReset = () => {
+    setSearchTerm("");
+    onReset();
+  };
+
   return (
     <div className="p-4 rounded-xl border border-border bg-card shadow-xs space-y-3">
       {/* Hàng 1: Ô tìm kiếm từ khóa */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm kiếm theo mã NV, họ tên, email, số điện thoại..."
-            value={keyword}
-            onChange={(e) => onKeywordChange(e.target.value)}
-            className="pl-9 text-sm h-9 bg-background"
-          />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Tìm kiếm theo mã NV, họ tên, email, số điện thoại..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="pl-9 text-sm h-9 bg-background"
+        />
+      </div>
 
         {/* Hàng 2: Bộ lọc phân cấp Công ty - Phòng ban - Trạng thái & Thao tác */}
         <div className="flex flex-wrap items-center gap-3">
@@ -162,7 +184,7 @@ export function EmployeeFilters({
             <Button
               variant="outline"
               size="sm"
-              onClick={onReset}
+              onClick={handleReset}
               className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="w-3.5 h-3.5" />

@@ -16,6 +16,7 @@ export type ContractType =
   | "PROBATION"
   | "FIXED_TERM"
   | "INDEFINITE"
+  | "SERVICE"
   | "SEASONAL"
   | "APPRENTICESHIP"
   | "COLLABORATOR";
