@@ -28,6 +28,7 @@ import {
   ArrowDown,
   LayoutGrid,
   Sparkles,
+  GitBranch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -230,7 +231,59 @@ function ApprovalStepNode({ data }: { data: ApprovalStepNodeData }) {
   );
 }
 
-// 3. End Node
+// 3. Condition Gateway Node (Khối Rẽ Nhánh Điều Kiện)
+interface ConditionGatewayNodeData {
+  threshold: number;
+  stepName: string;
+  stepIndex: number;
+  onEdit: (index: number) => void;
+}
+
+function ConditionGatewayNode({ data }: { data: ConditionGatewayNodeData }) {
+  const { threshold, stepName, stepIndex, onEdit } = data;
+  return (
+    <div
+      onClick={() => onEdit(stepIndex)}
+      className="relative group cursor-pointer p-3 rounded-xl bg-amber-500/10 border-2 border-amber-500/70 dark:bg-amber-950/40 shadow-md hover:shadow-lg hover:border-amber-500 transition-all text-center min-w-[230px] max-w-[270px]"
+    >
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!bg-amber-500 !w-3 !h-3 !border-2 !border-white"
+      />
+      <div className="flex items-center justify-center gap-1.5 text-amber-700 dark:text-amber-400 mb-1">
+        <GitBranch className="w-4 h-4" />
+        <span className="text-[11px] font-bold uppercase tracking-wider">
+          Rẽ nhánh điều kiện
+        </span>
+      </div>
+      <div className="text-xs font-semibold text-foreground">
+        Số tiền {">"} {Number(threshold || 0).toLocaleString("vi-VN")} đ?
+      </div>
+      <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+        Duyệt bởi: {stepName}
+      </div>
+
+      {/* Handle YES: Bottom */}
+      <Handle
+        type="source"
+        id="yes"
+        position={Position.Bottom}
+        className="!bg-emerald-500 !w-3 !h-3 !border-2 !border-white"
+      />
+
+      {/* Handle NO: Right */}
+      <Handle
+        type="source"
+        id="no"
+        position={Position.Right}
+        className="!bg-amber-500 !w-3 !h-3 !border-2 !border-white"
+      />
+    </div>
+  );
+}
+
+// 4. End Node
 function EndNode() {
   return (
     <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-emerald-600 to-green-700 text-white shadow-lg border-2 border-emerald-400/50 min-w-[170px] text-center">
@@ -251,6 +304,7 @@ function EndNode() {
 const nodeTypes = {
   start: StartNode,
   approvalStep: ApprovalStepNode,
+  conditionGateway: ConditionGatewayNode,
   end: EndNode,
 };
 
@@ -278,92 +332,222 @@ export function WorkflowFlowCanvas({
     const generatedNodes: Node[] = [];
     const generatedEdges: Edge[] = [];
 
-    const startX = 300;
+    const startX = 260;
     let currentY = 30;
 
     // 1. Start Node
     generatedNodes.push({
       id: "node-start",
       type: "start",
-      position: { x: startX + 50, y: currentY },
+      position: { x: startX + 45, y: currentY },
       data: {},
     });
 
     currentY += 120;
 
-    // 2. Step Nodes
+    let previousTargetId = "node-start";
+    // Stores bypass edges from any conditional step that should merge into the next target
+    let pendingBypassList: { gatewayId: string; threshold: number }[] = [];
+
+    // 2. Iterate through steps
     steps.forEach((step, idx) => {
       const role = roles.find((r) => r.id === step.approverRoleId);
       const emp = employees.find((e) => e.id === step.approverEmployeeId);
+      const stepNodeId = `node-step-${idx}`;
+      const isConditional = step.conditionType === "AMOUNT_ABOVE_THRESHOLD";
 
-      const nodeId = `node-step-${idx}`;
-      generatedNodes.push({
-        id: nodeId,
-        type: "approvalStep",
-        position: { x: startX, y: currentY },
-        data: {
-          index: idx,
-          step,
-          roleName: role?.name,
-          employeeName: emp ? `${emp.fullName} (${emp.employeeCode})` : undefined,
-          onEdit: (i: number) => {
-            setEditingIndex(i);
-            setEditStepForm({ ...steps[i] });
+      if (isConditional) {
+        const gatewayId = `node-gateway-${idx}`;
+        const threshold = Number(step.conditionThreshold || 0);
+
+        // A. Add Condition Gateway Node
+        generatedNodes.push({
+          id: gatewayId,
+          type: "conditionGateway",
+          position: { x: startX + 20, y: currentY },
+          data: {
+            threshold,
+            stepName: step.stepName || `Cấp duyệt ${idx + 1}`,
+            stepIndex: idx,
+            onEdit: (i: number) => {
+              setEditingIndex(i);
+              setEditStepForm({ ...steps[i] });
+            },
           },
-          onDelete: (i: number) => {
-            if (steps.length <= 1) return;
-            const updated = steps
-              .filter((_, sIdx) => sIdx !== i)
-              .map((s, newIdx) => ({ ...s, stepOrder: newIdx + 1 }));
-            onChangeSteps(updated);
+        });
+
+        // Edge from previous step into gateway
+        generatedEdges.push({
+          id: `edge-${previousTargetId}-${gatewayId}`,
+          source: previousTargetId,
+          target: gatewayId,
+          animated: true,
+          style: { stroke: "var(--primary)", strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "var(--primary)" },
+        });
+
+        // Connect any previous pending bypasses into this gateway
+        if (pendingBypassList.length > 0) {
+          pendingBypassList.forEach((bypass, bIdx) => {
+            generatedEdges.push({
+              id: `edge-bypass-${bypass.gatewayId}-${gatewayId}-${bIdx}`,
+              source: bypass.gatewayId,
+              sourceHandle: "no",
+              target: gatewayId,
+              type: "smoothstep",
+              animated: true,
+              style: { stroke: "#f59e0b", strokeWidth: 2, strokeDasharray: "5,5" },
+              markerEnd: { type: MarkerType.ArrowClosed, color: "#f59e0b" },
+              label: `Bỏ qua (<= ${bypass.threshold.toLocaleString("vi-VN")} đ)`,
+              labelStyle: { fill: "#b45309", fontSize: 10, fontWeight: 600 },
+              labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+            });
+          });
+          pendingBypassList = [];
+        }
+
+        currentY += 130;
+
+        // B. Add Approval Step Node (Branch YES)
+        generatedNodes.push({
+          id: stepNodeId,
+          type: "approvalStep",
+          position: { x: startX, y: currentY },
+          data: {
+            index: idx,
+            step,
+            roleName: role?.name,
+            employeeName: emp ? `${emp.fullName} (${emp.employeeCode})` : undefined,
+            onEdit: (i: number) => {
+              setEditingIndex(i);
+              setEditStepForm({ ...steps[i] });
+            },
+            onDelete: (i: number) => {
+              if (steps.length <= 1) return;
+              const updated = steps
+                .filter((_, sIdx) => sIdx !== i)
+                .map((s, newIdx) => ({ ...s, stepOrder: newIdx + 1 }));
+              onChangeSteps(updated);
+            },
+            canDelete: steps.length > 1,
           },
-          canDelete: steps.length > 1,
-        },
-      });
+        });
 
-      // Edge from previous node
-      const sourceId = idx === 0 ? "node-start" : `node-step-${idx - 1}`;
-      generatedEdges.push({
-        id: `edge-${sourceId}-${nodeId}`,
-        source: sourceId,
-        target: nodeId,
-        animated: true,
-        style: { stroke: "var(--primary)", strokeWidth: 2 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: "var(--primary)",
-        },
-        label:
-          idx > 0 && steps[idx - 1].conditionType === "AMOUNT_ABOVE_THRESHOLD"
-            ? `> ${Number(steps[idx - 1].conditionThreshold || 0).toLocaleString("vi-VN")} đ`
-            : undefined,
-        labelStyle: { fill: "var(--foreground)", fontSize: 10, fontWeight: 600 },
-        labelBgStyle: { fill: "var(--card)", fillOpacity: 0.85 },
-      });
+        // Edge YES: Gateway (Bottom) -> Step Node
+        generatedEdges.push({
+          id: `edge-yes-${gatewayId}-${stepNodeId}`,
+          source: gatewayId,
+          sourceHandle: "yes",
+          target: stepNodeId,
+          animated: true,
+          style: { stroke: "#10b981", strokeWidth: 2.5 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
+          label: `Thỏa (> ${threshold.toLocaleString("vi-VN")} đ)`,
+          labelStyle: { fill: "#047857", fontSize: 10, fontWeight: 700 },
+          labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+        });
 
-      currentY += 170;
+        // Add this gateway's NO branch to pending list (to connect to the next step or End)
+        pendingBypassList.push({ gatewayId, threshold });
+        previousTargetId = stepNodeId;
+        currentY += 170;
+      } else {
+        // ALWAYS step
+        generatedNodes.push({
+          id: stepNodeId,
+          type: "approvalStep",
+          position: { x: startX, y: currentY },
+          data: {
+            index: idx,
+            step,
+            roleName: role?.name,
+            employeeName: emp ? `${emp.fullName} (${emp.employeeCode})` : undefined,
+            onEdit: (i: number) => {
+              setEditingIndex(i);
+              setEditStepForm({ ...steps[i] });
+            },
+            onDelete: (i: number) => {
+              if (steps.length <= 1) return;
+              const updated = steps
+                .filter((_, sIdx) => sIdx !== i)
+                .map((s, newIdx) => ({ ...s, stepOrder: newIdx + 1 }));
+              onChangeSteps(updated);
+            },
+            canDelete: steps.length > 1,
+          },
+        });
+
+        // Edge from previous step
+        generatedEdges.push({
+          id: `edge-${previousTargetId}-${stepNodeId}`,
+          source: previousTargetId,
+          target: stepNodeId,
+          animated: true,
+          style: { stroke: "var(--primary)", strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "var(--primary)" },
+        });
+
+        // If there were any pending bypass edges from prior steps, connect them to this step
+        if (pendingBypassList.length > 0) {
+          pendingBypassList.forEach((bypass, bIdx) => {
+            generatedEdges.push({
+              id: `edge-bypass-${bypass.gatewayId}-${stepNodeId}-${bIdx}`,
+              source: bypass.gatewayId,
+              sourceHandle: "no",
+              target: stepNodeId,
+              type: "smoothstep",
+              animated: true,
+              style: { stroke: "#f59e0b", strokeWidth: 2, strokeDasharray: "5,5" },
+              markerEnd: { type: MarkerType.ArrowClosed, color: "#f59e0b" },
+              label: `Bỏ qua (<= ${bypass.threshold.toLocaleString("vi-VN")} đ)`,
+              labelStyle: { fill: "#b45309", fontSize: 10, fontWeight: 600 },
+              labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+            });
+          });
+          pendingBypassList = [];
+        }
+
+        previousTargetId = stepNodeId;
+        currentY += 170;
+      }
     });
 
     // 3. End Node
-    const lastStepId = steps.length > 0 ? `node-step-${steps.length - 1}` : "node-start";
     generatedNodes.push({
       id: "node-end",
       type: "end",
-      position: { x: startX + 50, y: currentY },
+      position: { x: startX + 45, y: currentY },
       data: {},
     });
 
+    // Connect from last step to End Node
     generatedEdges.push({
-      id: `edge-${lastStepId}-node-end`,
-      source: lastStepId,
+      id: `edge-${previousTargetId}-node-end`,
+      source: previousTargetId,
       target: "node-end",
       animated: true,
       style: { stroke: "#10b981", strokeWidth: 2 },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: "#10b981",
-      },
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
     });
+
+    // Connect any remaining bypasses into End Node
+    if (pendingBypassList.length > 0) {
+      pendingBypassList.forEach((bypass, bIdx) => {
+        generatedEdges.push({
+          id: `edge-bypass-${bypass.gatewayId}-node-end-${bIdx}`,
+          source: bypass.gatewayId,
+          sourceHandle: "no",
+          target: "node-end",
+          type: "smoothstep",
+          animated: true,
+          style: { stroke: "#f59e0b", strokeWidth: 2, strokeDasharray: "5,5" },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#f59e0b" },
+          label: `Bỏ qua (<= ${bypass.threshold.toLocaleString("vi-VN")} đ)`,
+          labelStyle: { fill: "#b45309", fontSize: 10, fontWeight: 600 },
+          labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+        });
+      });
+    }
 
     return { nodes: generatedNodes, edges: generatedEdges };
   }, [steps, roles, employees, onChangeSteps]);
