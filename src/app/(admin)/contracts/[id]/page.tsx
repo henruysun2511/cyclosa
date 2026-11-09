@@ -393,16 +393,16 @@ export default function ContractDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* ── 2. Thẻ KPI Tổng quan ───────────────────────────────────── */}
+      {/* ── 2. Thẻ KPI Tổng quan (Thiết kế chuẩn Static-UI) ─────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Lương chính */}
-        <Card className="border-border bg-card shadow-xs">
+        <Card className="border-border bg-card shadow-xs hover:shadow-md transition-shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-xs text-muted-foreground font-medium block">
                 Mức lương cơ bản (Gross)
               </span>
-              <div className="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <div className="text-xl font-bold font-mono text-primary mt-0.5">
                 {Number(contract.baseSalary).toLocaleString("vi-VN")}{" "}
                 <span className="text-xs font-normal text-muted-foreground">VNĐ</span>
               </div>
@@ -410,70 +410,75 @@ export default function ContractDetailPage({ params }: PageProps) {
                 Phụ cấp: {totalAllowances.toLocaleString("vi-VN")} VNĐ
               </span>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Coins className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* Thời hạn hiệu lực */}
-        <Card className="border-border bg-card shadow-xs">
+        <Card className="border-border bg-card shadow-xs hover:shadow-md transition-shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-xs text-muted-foreground font-medium block">
                 Thời hạn hợp đồng
               </span>
-              <div className="text-sm font-semibold font-mono text-foreground mt-1">
-                {contract.startDate} → {contract.endDate || "Không xác định"}
+              <div className="text-sm font-bold font-mono text-foreground mt-0.5">
+                {contract.startDate} ➔ {contract.endDate || "Không xác định"}
               </div>
-              <span className="text-[11px] text-muted-foreground">
-                Ký ngày: {contract.signingDate || "Chưa ký"}
+              <span className="text-[11px] text-muted-foreground font-mono">
+                Ký ngày: {contract.signingDate || "Chưa xác định"}
               </span>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 flex items-center justify-center shrink-0">
               <Calendar className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Tiến trình ký số */}
-        <Card className="border-border bg-card shadow-xs">
+        {/* Tiến trình ký số kèm thanh tiến độ */}
+        <Card className="border-border bg-card shadow-xs hover:shadow-md transition-shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-xs text-muted-foreground font-medium block">
                 Tiến trình Ký điện tử
               </span>
-              <div className="text-xl font-bold font-mono text-purple-600 dark:text-purple-400 mt-0.5">
+              <div className="text-xl font-bold font-mono text-foreground mt-0.5">
                 {signedCount} / {totalSigners || 2}{" "}
                 <span className="text-xs font-normal text-muted-foreground">bên đã ký</span>
               </div>
-              <span className="text-[11px] text-muted-foreground">
-                Hình thức: {SIGNING_FORM_LABELS[contract.signingForm]}
-              </span>
+              {/* Thanh tiến độ thương hiệu CYCLOSA */}
+              <div className="w-28 bg-primary/15 h-1.5 rounded-full overflow-hidden mt-1.5">
+                <div
+                  className="bg-primary h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.round((signedCount / (totalSigners || 2)) * 100)}%`,
+                  }}
+                />
+              </div>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5" />
+            <div className="h-11 w-11 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <UserCheck className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Phụ lục & Phiên bản */}
-        <Card className="border-border bg-card shadow-xs">
+        {/* Trạng thái & Phụ lục */}
+        <Card className="border-border bg-card shadow-xs hover:shadow-md transition-shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-xs text-muted-foreground font-medium block">
-                Phụ lục & Phiên bản
+                Trạng thái & Phụ lục
               </span>
-              <div className="text-xl font-bold font-mono text-primary mt-0.5">
-                {appendices.length}{" "}
-                <span className="text-xs font-normal text-muted-foreground">phụ lục</span>
+              <div className="text-sm font-bold text-foreground mt-0.5 flex items-center gap-1.5">
+                <ContractStatusBadge status={contract.status} />
               </div>
-              <span className="text-[11px] text-muted-foreground">
-                Phiên bản: #{versions.length || 1}
+              <span className="text-[11px] text-muted-foreground mt-1 block">
+                Đã phát sinh {appendices.length} phụ lục sửa đổi
               </span>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <Paperclip className="h-5 w-5" />
+            <div className="h-11 w-11 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>
