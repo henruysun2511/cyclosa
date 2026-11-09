@@ -157,9 +157,9 @@ export default function WorkflowDefinitionsPage() {
       </div>
 
       {/* 2. Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-card p-3 rounded-xl border shadow-sm">
+      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 bg-card p-3 rounded-xl border shadow-sm">
         {/* Search Input */}
-        <div className="relative">
+        <div className="relative flex-1 min-w-[220px] w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Tìm theo tên quy trình..."
@@ -170,10 +170,14 @@ export default function WorkflowDefinitionsPage() {
         </div>
 
         {/* Company Select */}
-        <div>
+        <div className="w-full sm:w-auto sm:min-w-[190px]">
           <Select value={companyId || "all"} onValueChange={(val) => setCompanyId(val || "")}>
-            <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Công ty áp dụng" />
+            <SelectTrigger className="w-full h-9 text-xs">
+              <SelectValue placeholder="Công ty áp dụng">
+                {companyId && companyId !== "all"
+                  ? companies.find((c) => c.id === companyId)?.name || "Tất cả công ty"
+                  : "Tất cả công ty"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả công ty</SelectItem>
@@ -187,10 +191,14 @@ export default function WorkflowDefinitionsPage() {
         </div>
 
         {/* Request Type Select */}
-        <div>
+        <div className="w-full sm:w-auto sm:min-w-[175px]">
           <Select value={requestTypeParam} onValueChange={(val) => setRequestType(val || "all")}>
-            <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Loại chứng từ" />
+            <SelectTrigger className="w-full h-9 text-xs">
+              <SelectValue placeholder="Loại chứng từ">
+                {requestTypeParam && requestTypeParam !== "all"
+                  ? REQUEST_TYPE_OPTIONS.find((opt) => opt.value === requestTypeParam)?.label || "Tất cả chứng từ"
+                  : "Tất cả chứng từ"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả chứng từ</SelectItem>
@@ -204,17 +212,25 @@ export default function WorkflowDefinitionsPage() {
         </div>
 
         {/* Status Select */}
-        <div className="flex items-center gap-2">
-          <Select value={statusParam} onValueChange={(val) => setStatus(val || "all")}>
-            <SelectTrigger className="h-9 text-xs flex-1">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="active">Đang kích hoạt</SelectItem>
-              <SelectItem value="inactive">Đã tạm dừng</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="w-full sm:w-[145px]">
+            <Select value={statusParam} onValueChange={(val) => setStatus(val || "all")}>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Trạng thái">
+                  {statusParam === "active"
+                    ? "Đang kích hoạt"
+                    : statusParam === "inactive"
+                    ? "Đã tạm dừng"
+                    : "Tất cả trạng thái"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">Đang kích hoạt</SelectItem>
+                <SelectItem value="inactive">Đã tạm dừng</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {(search || companyId || requestTypeParam !== "all" || statusParam !== "all") && (
             <Button

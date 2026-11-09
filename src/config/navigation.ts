@@ -57,11 +57,6 @@ export const navigationConfig: NavGroup[] = [
     label: "QUẢN TRỊ NHÂN SỰ",
     items: [
       {
-        title: "Hộp thư phê duyệt",
-        href: "/approvals",
-        icon: CheckSquare,
-      },
-      {
         title: "Hồ sơ nhân viên",
         href: "/employees",
         icon: UserCheck,
@@ -90,6 +85,21 @@ export const navigationConfig: NavGroup[] = [
     ],
   },
   {
+    label: "PHÊ DUYỆT",
+    items: [
+      {
+        title: "Hộp thư phê duyệt",
+        href: "/approvals",
+        icon: CheckSquare,
+      },
+      {
+        title: "Quy trình phê duyệt",
+        href: "/settings/workflows",
+        icon: GitFork,
+      },
+    ],
+  },
+  {
     label: "HỆ THỐNG & PHÂN QUYỀN",
     items: [
       {
@@ -105,11 +115,6 @@ export const navigationConfig: NavGroup[] = [
         icon: ShieldCheck,
         permission: PERMISSIONS.ROLE.VIEW,
         resource: "ROLE",
-      },
-      {
-        title: "Quy trình phê duyệt",
-        href: "/settings/workflows",
-        icon: GitFork,
       },
     ],
   },

@@ -63,10 +63,14 @@ export function WorkflowInboxFilters({
       </div>
 
       {/* Request Type Select */}
-      <div className="w-full sm:w-[220px]">
+      <div className="w-full sm:w-auto sm:min-w-[200px]">
         <Select value={selectedType || "all"} onValueChange={(val) => onTypeChange(val || "all")}>
-          <SelectTrigger className="h-9 text-sm">
-            <SelectValue placeholder="Loại chứng từ" />
+          <SelectTrigger className="w-full h-9 text-xs">
+            <SelectValue placeholder="Loại chứng từ">
+              {selectedType === "all" || !selectedType
+                ? "Tất cả loại chứng từ"
+                : REQUEST_TYPE_OPTIONS.find((o) => o.value === selectedType)?.label}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả loại chứng từ</SelectItem>

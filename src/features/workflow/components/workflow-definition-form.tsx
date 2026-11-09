@@ -165,7 +165,13 @@ export function WorkflowDefinitionForm({
               onValueChange={(val) => form.setValue("companyId", val || "", { shouldValidate: true })}
             >
               <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Chọn công ty" />
+                <SelectValue placeholder="Chọn công ty">
+                  {(() => {
+                    const cId = form.watch("companyId");
+                    const c = companies.find((x) => x.id === cId);
+                    return c ? `${c.name} (${c.code})` : undefined;
+                  })()}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {companies.map((c) => (
@@ -195,7 +201,9 @@ export function WorkflowDefinitionForm({
               }
             >
               <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Chọn loại chứng từ" />
+                <SelectValue placeholder="Chọn loại chứng từ">
+                  {REQUEST_TYPE_OPTIONS.find((opt) => opt.value === form.watch("requestType"))?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {REQUEST_TYPE_OPTIONS.map((opt) => (
@@ -364,7 +372,9 @@ export function WorkflowDefinitionForm({
                       }}
                     >
                       <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
+                        <SelectValue placeholder="Chọn đối tượng duyệt">
+                          {APPROVER_TYPE_OPTIONS.find((opt) => opt.value === approverType)?.label}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {APPROVER_TYPE_OPTIONS.map((opt) => (
@@ -392,7 +402,9 @@ export function WorkflowDefinitionForm({
                           }
                         >
                           <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Chọn vai trò..." />
+                            <SelectValue placeholder="Chọn vai trò...">
+                              {roles.find((r) => r.id === form.watch(`steps.${index}.approverRoleId`))?.name}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {roles.map((r) => (
@@ -422,7 +434,13 @@ export function WorkflowDefinitionForm({
                           }
                         >
                           <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Chọn nhân viên..." />
+                            <SelectValue placeholder="Chọn nhân viên...">
+                              {(() => {
+                                const empId = form.watch(`steps.${index}.approverEmployeeId`);
+                                const e = employees.find((emp) => emp.id === empId);
+                                return e ? `${e.fullName} (${e.employeeCode})` : undefined;
+                              })()}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {employees.map((e) => (
@@ -462,7 +480,9 @@ export function WorkflowDefinitionForm({
                       }}
                     >
                       <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
+                        <SelectValue placeholder="Chọn điều kiện kích hoạt">
+                          {CONDITION_TYPE_OPTIONS.find((opt) => opt.value === conditionType)?.label}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {CONDITION_TYPE_OPTIONS.map((opt) => (
