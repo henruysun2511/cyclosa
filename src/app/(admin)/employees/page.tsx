@@ -78,17 +78,14 @@ export default function EmployeesPage() {
     isLoading,
     isFetching,
     refetch,
-  } = useGetEmployeesQuery(
-    {
-      companyId: companyId || undefined,
-      departmentId: departmentId || undefined,
-      status: status,
-      keyword: debouncedKeyword.trim() || undefined,
-      page,
-      size,
-    },
-    { skip: !companyId }
-  );
+  } = useGetEmployeesQuery({
+    companyId: companyId || undefined,
+    departmentId: departmentId || undefined,
+    status: status,
+    keyword: debouncedKeyword.trim() || undefined,
+    page,
+    size,
+  });
 
   const employees = employeePageData?.items || [];
   const totalElements = employeePageData?.pagination?.total || 0;

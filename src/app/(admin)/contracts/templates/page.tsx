@@ -61,16 +61,13 @@ export default function ContractTemplatesPage() {
     data: templatesData,
     isLoading,
     refetch,
-  } = useGetContractTemplatesQuery(
-    {
-      companyId: selectedCompanyId,
-      page: 0,
-      size: 50,
-      kind: kindFilter !== "all" ? kindFilter : undefined,
-      search: search.trim() || undefined,
-    },
-    { skip: !selectedCompanyId }
-  );
+  } = useGetContractTemplatesQuery({
+    companyId: selectedCompanyId || undefined,
+    page: 0,
+    size: 50,
+    kind: kindFilter !== "all" ? kindFilter : undefined,
+    search: search.trim() || undefined,
+  });
 
   const templates = templatesData?.items || [];
 

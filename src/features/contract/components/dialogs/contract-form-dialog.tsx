@@ -32,6 +32,7 @@ import {
   useCheckContractComplianceQuery,
 } from "../../api/contract-api";
 import { useGetEmployeesQuery } from "@/features/employee/api/employee-api";
+import { useGetCompaniesQuery } from "@/features/organization/api";
 import {
   CONTRACT_TYPE_LABELS,
   SIGNING_FORM_LABELS,
@@ -101,16 +102,21 @@ export function ContractFormDialog({
   const [signerAName, setSignerAName] = useState("Nguyễn Văn Giám Đốc");
   const [signerARole, setSignerARole] = useState("Tổng Giám đốc (Đại diện pháp luật)");
 
+  // Companies fallback
+  const { data: companiesData } = useGetCompaniesQuery({ size: 50 }, { skip: !open });
+  const companies = companiesData?.items || [];
+  const effectiveCompanyId = companyId || companies[0]?.id || "";
+
   // Queries
   const { data: employeesData } = useGetEmployeesQuery(
-    { companyId: companyId || undefined, page: 1, size: 100 },
+    { companyId: effectiveCompanyId || undefined, page: 1, size: 100 },
     { skip: !open }
   );
   const employees = employeesData?.items || [];
 
   const { data: templatesData } = useGetContractTemplatesQuery(
-    { companyId, page: 1, size: 50, isActive: true },
-    { skip: !open || !companyId }
+    { companyId: effectiveCompanyId || undefined, page: 1, size: 50, isActive: true },
+    { skip: !open }
   );
   const templates = templatesData?.items || [];
 
@@ -253,7 +259,7 @@ export function ContractFormDialog({
         toast.success("Cập nhật điều khoản hợp đồng thành công!");
       } else {
         await createContract({
-          companyId,
+          companyId: effectiveCompanyId,
           employeeId,
           templateVersionId,
           contractNumber: contractNumber.trim(),

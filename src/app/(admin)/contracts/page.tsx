@@ -76,18 +76,15 @@ export default function ContractsPage() {
     isLoading,
     isFetching,
     refetch,
-  } = useGetContractsQuery(
-    {
-      companyId: companyId || undefined,
-      status: status,
-      contractType: contractType,
-      expiringBefore: expiringBefore,
-      search: debouncedSearch.trim() || undefined,
-      page,
-      size,
-    },
-    { skip: !companyId }
-  );
+  } = useGetContractsQuery({
+    companyId: companyId || undefined,
+    status: status,
+    contractType: contractType,
+    expiringBefore: expiringBefore,
+    search: debouncedSearch.trim() || undefined,
+    page,
+    size,
+  });
 
   const contracts = contractsData?.items || [];
   const totalElements = contractsData?.pagination?.total || 0;
