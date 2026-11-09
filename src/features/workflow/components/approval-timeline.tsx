@@ -236,18 +236,18 @@ export function ApprovalTimeline({
                       {step.decision ? (
                         <span
                           className={cn(
-                            "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border shrink-0",
+                            "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border shrink-0",
                             DECISION_CONFIG[step.decision]?.className
                           )}
                         >
                           {DECISION_CONFIG[step.decision]?.label}
                         </span>
                       ) : isCurrent ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 shrink-0">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border-transparent bg-amber-600 text-white shrink-0">
                           Chờ phê duyệt
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border bg-muted text-muted-foreground shrink-0">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border-transparent bg-slate-500 text-white shrink-0">
                           Chưa tới lượt
                         </span>
                       )}

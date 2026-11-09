@@ -17,9 +17,9 @@ interface ContractStatusBadgeProps {
 
 export function ContractStatusBadge({ status, className }: ContractStatusBadgeProps) {
   const color = CONTRACT_STATUS_COLORS[status] || {
-    bg: "bg-slate-100 dark:bg-slate-800",
-    text: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-200 dark:border-slate-700",
+    bg: "bg-slate-600",
+    text: "text-white",
+    border: "border-transparent",
   };
   const label = CONTRACT_STATUS_LABELS[status] || status;
 
@@ -33,7 +33,7 @@ export function ContractStatusBadge({ status, className }: ContractStatusBadgePr
         className
       )}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-75" />
+      <span className="h-1.5 w-1.5 rounded-full bg-white opacity-85" />
       {label}
     </span>
   );
@@ -47,7 +47,7 @@ interface ContractTypeBadgeProps {
 export function ContractTypeBadge({ type, className }: ContractTypeBadgeProps) {
   const label = CONTRACT_TYPE_LABELS[type] || type;
   return (
-    <Badge variant="outline" className={cn("text-xs font-normal text-slate-700 dark:text-slate-300", className)}>
+    <Badge className={cn("bg-slate-700 text-white border-transparent text-xs font-medium", className)}>
       {label}
     </Badge>
   );
@@ -60,13 +60,13 @@ interface SignerStatusBadgeProps {
 
 export function SignerStatusBadge({ status, className }: SignerStatusBadgeProps) {
   const color = SIGNER_STATUS_COLORS[status] || {
-    bg: "bg-slate-100 dark:bg-slate-800",
-    text: "text-slate-600 dark:text-slate-400",
+    bg: "bg-slate-500",
+    text: "text-white",
   };
   const label = SIGNER_STATUS_LABELS[status] || status;
 
   return (
-    <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", color.bg, color.text, className)}>
+    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium", color.bg, color.text, className)}>
       {label}
     </span>
   );

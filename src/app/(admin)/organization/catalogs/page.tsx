@@ -428,10 +428,9 @@ export default function OrganizationCatalogsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={c.status === "ACTIVE" ? "default" : "secondary"}
-                          className={`text-2xs ${c.status === "ACTIVE" ? "bg-emerald-600" : ""}`}
+                          className={`text-xs font-medium text-white border-transparent ${c.status === "ACTIVE" ? "bg-emerald-600" : "bg-slate-600"}`}
                         >
-                          {c.status}
+                          {c.status === "ACTIVE" ? "Hoạt động" : "Tạm ngưng"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
@@ -601,10 +600,9 @@ export default function OrganizationCatalogsPage() {
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge
-                            variant={b.isActive ? "default" : "secondary"}
-                            className={`text-2xs ${b.isActive ? "bg-emerald-600" : ""}`}
+                            className={`text-xs font-medium text-white border-transparent ${b.isActive ? "bg-emerald-600" : "bg-slate-600"}`}
                           >
-                            {b.isActive ? "Hoạt động" : "Ngưng"}
+                            {b.isActive ? "Hoạt động" : "Tạm ngưng"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-center">

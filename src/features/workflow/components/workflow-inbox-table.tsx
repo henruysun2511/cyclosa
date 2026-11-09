@@ -161,7 +161,7 @@ export function WorkflowInboxTable({
 
                     {/* Loại chứng từ */}
                     <TableCell>
-                      <Badge variant="outline" className="text-[11px] font-normal py-0">
+                      <Badge className="bg-blue-600 text-white border-transparent text-xs font-medium">
                         {REQUEST_TYPE_MAP[item.requestType] || item.requestType}
                       </Badge>
                     </TableCell>
@@ -201,7 +201,7 @@ export function WorkflowInboxTable({
                     <TableCell>
                       <span
                         className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border",
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
                           statusConfig.className
                         )}
                       >

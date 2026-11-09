@@ -21,23 +21,23 @@ export const EMPLOYEE_STATUS_VARIANTS: Record<
 > = {
   ACTIVE: {
     label: "Chính thức",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
+    className: "bg-emerald-600 text-white border-transparent",
   },
   PROBATION: {
     label: "Thử việc",
-    className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+    className: "bg-amber-600 text-white border-transparent",
   },
   ON_LEAVE: {
     label: "Nghỉ chế độ",
-    className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+    className: "bg-blue-600 text-white border-transparent",
   },
   SUSPENDED: {
     label: "Tạm đình chỉ",
-    className: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800",
+    className: "bg-orange-600 text-white border-transparent",
   },
   TERMINATED: {
     label: "Đã thôi việc",
-    className: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800",
+    className: "bg-rose-600 text-white border-transparent",
   },
 };
 

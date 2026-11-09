@@ -836,8 +836,7 @@ export default function ContractDetailPage({ params }: PageProps) {
                       {signer.status === "SIGNED" ? (
                         <div className="space-y-0.5">
                           <Badge
-                            variant="outline"
-                            className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px]"
+                            className="bg-emerald-600 text-white border-transparent text-xs font-medium"
                           >
                             Đã ký số
                           </Badge>
@@ -849,8 +848,7 @@ export default function ContractDetailPage({ params }: PageProps) {
                         </div>
                       ) : (
                         <Badge
-                          variant="outline"
-                          className="text-[10px] text-muted-foreground"
+                          className="bg-amber-600 text-white border-transparent text-xs font-medium"
                         >
                           Chờ ký
                         </Badge>
@@ -1119,7 +1117,7 @@ export default function ContractDetailPage({ params }: PageProps) {
                         <span className="font-bold text-sm text-foreground">
                           {signer.signerName}
                         </span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="bg-slate-700 text-white border-transparent text-xs font-medium">
                           {signer.side === "PARTY_A"
                             ? "Bên A (Người sử dụng lao động)"
                             : "Bên B (Người lao động)"}

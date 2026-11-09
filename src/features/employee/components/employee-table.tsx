@@ -197,8 +197,7 @@ export function EmployeeTable({
                     {/* Trạng thái */}
                     <TableCell>
                       <Badge
-                        variant="outline"
-                        className={`text-xs font-normal whitespace-nowrap ${statusCfg.className}`}
+                        className={`text-xs font-medium text-white border-transparent whitespace-nowrap ${statusCfg.className}`}
                       >
                         {statusCfg.label}
                       </Badge>

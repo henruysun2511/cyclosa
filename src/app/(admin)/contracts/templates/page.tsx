@@ -226,17 +226,17 @@ export default function ContractTemplatesPage() {
                       </Link>
                     </TableCell>
                     <TableCell className="text-xs">
-                      <Badge variant="outline">
+                      <Badge className="bg-slate-700 text-white border-transparent text-xs font-medium">
                         {TEMPLATE_KIND_LABELS[tpl.kind] || tpl.kind}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       {tpl.isActive ? (
-                        <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
+                        <Badge className="bg-emerald-600 text-white border-transparent text-xs font-medium">
                           Hoạt động
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge className="bg-slate-600 text-white border-transparent text-xs font-medium">
                           Đã ẩn
                         </Badge>
                       )}

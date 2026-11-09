@@ -18,13 +18,13 @@ export const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
 };
 
 export const CONTRACT_STATUS_COLORS: Record<ContractStatus, { bg: string; text: string; border: string }> = {
-  DRAFT: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-700 dark:text-slate-300", border: "border-slate-200 dark:border-slate-700" },
-  PENDING_APPROVAL: { bg: "bg-amber-50 dark:bg-amber-950/40", text: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-800" },
-  APPROVED: { bg: "bg-blue-50 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-800" },
-  IN_SIGNING: { bg: "bg-purple-50 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-400", border: "border-purple-200 dark:border-purple-800" },
-  ACTIVE: { bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800" },
-  EXPIRED: { bg: "bg-orange-50 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-400", border: "border-orange-200 dark:border-orange-800" },
-  TERMINATED: { bg: "bg-rose-50 dark:bg-rose-950/40", text: "text-rose-700 dark:text-rose-400", border: "border-rose-200 dark:border-rose-800" },
+  DRAFT: { bg: "bg-slate-600", text: "text-white", border: "border-transparent" },
+  PENDING_APPROVAL: { bg: "bg-amber-600", text: "text-white", border: "border-transparent" },
+  APPROVED: { bg: "bg-blue-600", text: "text-white", border: "border-transparent" },
+  IN_SIGNING: { bg: "bg-purple-600", text: "text-white", border: "border-transparent" },
+  ACTIVE: { bg: "bg-emerald-600", text: "text-white", border: "border-transparent" },
+  EXPIRED: { bg: "bg-orange-600", text: "text-white", border: "border-transparent" },
+  TERMINATED: { bg: "bg-rose-600", text: "text-white", border: "border-transparent" },
 };
 
 export const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
@@ -62,12 +62,12 @@ export const SIGNER_STATUS_LABELS: Record<SignerStatus, string> = {
 };
 
 export const SIGNER_STATUS_COLORS: Record<SignerStatus, { bg: string; text: string }> = {
-  WAITING: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
-  NOTIFIED: { bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-300" },
-  SIGNED: { bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300" },
-  REJECTED: { bg: "bg-rose-100 dark:bg-rose-900/40", text: "text-rose-700 dark:text-rose-300" },
-  EXPIRED: { bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-300" },
-  CANCELLED: { bg: "bg-gray-100 dark:bg-gray-800", text: "text-gray-500 dark:text-gray-400" },
+  WAITING: { bg: "bg-slate-500", text: "text-white" },
+  NOTIFIED: { bg: "bg-blue-600", text: "text-white" },
+  SIGNED: { bg: "bg-emerald-600", text: "text-white" },
+  REJECTED: { bg: "bg-rose-600", text: "text-white" },
+  EXPIRED: { bg: "bg-amber-600", text: "text-white" },
+  CANCELLED: { bg: "bg-gray-600", text: "text-white" },
 };
 
 export const CERTIFICATE_VALIDITY_LABELS: Record<CertificateValidity, string> = {

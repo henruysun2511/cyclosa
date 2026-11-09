@@ -70,15 +70,15 @@ export const DECISION_CONFIG: Record<
 > = {
   APPROVED: {
     label: "Đã duyệt",
-    className: "text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+    className: "bg-emerald-600 text-white border-transparent",
   },
   REJECTED: {
     label: "Từ chối",
-    className: "text-red-700 bg-red-50 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800",
+    className: "bg-red-600 text-white border-transparent",
   },
   SKIPPED: {
     label: "Bỏ qua",
-    className: "text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    className: "bg-slate-500 text-white border-transparent",
   },
 };
 
@@ -88,19 +88,19 @@ export const OVERALL_STATUS_CONFIG: Record<
 > = {
   PENDING: {
     label: "Chờ phê duyệt",
-    className: "text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+    className: "bg-amber-600 text-white border-transparent",
   },
   APPROVED: {
     label: "Đã hoàn tất",
-    className: "text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+    className: "bg-emerald-600 text-white border-transparent",
   },
   REJECTED: {
     label: "Đã từ chối",
-    className: "text-red-700 bg-red-50 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800",
+    className: "bg-red-600 text-white border-transparent",
   },
   CANCELLED: {
     label: "Đã hủy",
-    className: "text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    className: "bg-slate-600 text-white border-transparent",
   },
 };
 

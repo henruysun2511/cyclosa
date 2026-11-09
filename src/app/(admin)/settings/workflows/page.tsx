@@ -290,14 +290,14 @@ export default function WorkflowDefinitionsPage() {
                     </TableCell>
 
                     <TableCell>
-                      <Badge variant="outline" className="text-[11px] font-normal py-0">
+                      <Badge className="bg-blue-600 text-white border-transparent text-xs font-medium">
                         {REQUEST_TYPE_MAP[item.requestType as keyof typeof REQUEST_TYPE_MAP] || item.requestType}
                       </Badge>
                     </TableCell>
 
                     <TableCell className="text-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary font-mono">
-                        {item.stepCount} cấp
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-600 text-white font-mono">
+                        {item.stepCount} cấp duyệt
                       </span>
                     </TableCell>
 

@@ -16,9 +16,8 @@ export function UserStatusBadge({ status, className }: UserStatusBadgeProps) {
     case "ACTIVE":
       return (
         <Badge
-          variant="outline"
           className={cn(
-            "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 gap-1 text-[11px] font-medium py-0.5",
+            "bg-emerald-600 text-white border-transparent gap-1 text-xs font-medium py-0.5",
             className
           )}
         >
@@ -29,9 +28,8 @@ export function UserStatusBadge({ status, className }: UserStatusBadgeProps) {
     case "PENDING_ACTIVATION":
       return (
         <Badge
-          variant="outline"
           className={cn(
-            "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 gap-1 text-[11px] font-medium py-0.5",
+            "bg-amber-600 text-white border-transparent gap-1 text-xs font-medium py-0.5",
             className
           )}
         >
@@ -42,9 +40,8 @@ export function UserStatusBadge({ status, className }: UserStatusBadgeProps) {
     case "LOCKED":
       return (
         <Badge
-          variant="outline"
           className={cn(
-            "bg-destructive/10 text-destructive border-destructive/30 gap-1 text-[11px] font-medium py-0.5",
+            "bg-red-600 text-white border-transparent gap-1 text-xs font-medium py-0.5",
             className
           )}
         >
@@ -54,7 +51,7 @@ export function UserStatusBadge({ status, className }: UserStatusBadgeProps) {
       );
     default:
       return (
-        <Badge variant="outline" className={cn("text-[11px] font-medium", className)}>
+        <Badge className={cn("bg-slate-600 text-white border-transparent text-xs font-medium", className)}>
           {status}
         </Badge>
       );
