@@ -103,14 +103,14 @@ export function ContractFormDialog({
 
   // Queries
   const { data: employeesData } = useGetEmployeesQuery(
-    { page: 1, size: 100 },
+    { companyId: companyId || undefined, page: 1, size: 100 },
     { skip: !open }
   );
   const employees = employeesData?.items || [];
 
   const { data: templatesData } = useGetContractTemplatesQuery(
-    { page: 1, size: 50, isActive: true },
-    { skip: !open }
+    { companyId, page: 1, size: 50, isActive: true },
+    { skip: !open || !companyId }
   );
   const templates = templatesData?.items || [];
 
@@ -335,8 +335,9 @@ export function ContractFormDialog({
                   <SelectTrigger className="w-full h-9 text-xs">
                     <SelectValue placeholder="Chọn nhân viên ký kết...">
                       {(val: string) => {
+                        if (!val) return "Chọn nhân viên ký kết...";
                         const emp = employees.find((e) => e.id === val);
-                        return emp ? `${emp.employeeCode} - ${emp.fullName}` : val;
+                        return emp ? `${emp.employeeCode} - ${emp.fullName}` : "Chọn nhân viên ký kết...";
                       }}
                     </SelectValue>
                   </SelectTrigger>
@@ -367,8 +368,8 @@ export function ContractFormDialog({
                       <SelectValue placeholder="Mẫu mặc định hệ thống">
                         {(val: string) => {
                           if (!val || val === "default") return "Mẫu mặc định hệ thống";
-                          const tpl = templates.find((t) => t.activeVersionId === val);
-                          return tpl ? `${tpl.templateCode} - ${tpl.name}` : val;
+                          const tpl = templates.find((t) => t.activeVersionId === val || t.id === val);
+                          return tpl ? `${tpl.templateCode} - ${tpl.name}` : "Mẫu mặc định hệ thống";
                         }}
                       </SelectValue>
                     </SelectTrigger>
@@ -413,7 +414,7 @@ export function ContractFormDialog({
                 >
                   <SelectTrigger className="w-full h-9 text-xs">
                     <SelectValue placeholder="Chọn loại hợp đồng">
-                      {(val: string) => CONTRACT_TYPE_LABELS[val as ContractType] || val}
+                      {(val: string) => (val ? CONTRACT_TYPE_LABELS[val as ContractType] || val : "Chọn loại hợp đồng")}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -435,7 +436,7 @@ export function ContractFormDialog({
                 >
                   <SelectTrigger className="w-full h-9 text-xs">
                     <SelectValue placeholder="Chọn hình thức ký">
-                      {(val: string) => SIGNING_FORM_LABELS[val as SigningForm] || val}
+                      {(val: string) => (val ? SIGNING_FORM_LABELS[val as SigningForm] || val : "Chọn hình thức ký")}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -556,7 +557,9 @@ export function ContractFormDialog({
                       {(val: string) =>
                         val === "BANK_TRANSFER"
                           ? "Chuyển khoản ngân hàng"
-                          : "Tiền mặt trực tiếp"
+                          : val === "CASH"
+                          ? "Tiền mặt trực tiếp"
+                          : "Chọn hình thức chi trả"
                       }
                     </SelectValue>
                   </SelectTrigger>

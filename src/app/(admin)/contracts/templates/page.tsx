@@ -63,6 +63,7 @@ export default function ContractTemplatesPage() {
     refetch,
   } = useGetContractTemplatesQuery(
     {
+      companyId: selectedCompanyId,
       page: 0,
       size: 50,
       kind: kindFilter !== "all" ? kindFilter : undefined,
@@ -122,6 +123,31 @@ export default function ContractTemplatesPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
+          </div>
+
+          {/* Dropdown Công ty */}
+          <div className="flex items-center gap-2 w-full sm:w-64">
+            <Select
+              value={selectedCompanyId}
+              onValueChange={(val) => val && setSelectedCompanyId(val)}
+            >
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Chọn công ty...">
+                  {(val: string) => {
+                    if (!val) return "Chọn công ty...";
+                    const c = companies.find((i) => i.id === val);
+                    return c ? (c.code ? `${c.name} (${c.code})` : c.name) : "Chọn công ty...";
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id} label={c.name}>
+                    {c.name} {c.code ? `(${c.code})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-64">

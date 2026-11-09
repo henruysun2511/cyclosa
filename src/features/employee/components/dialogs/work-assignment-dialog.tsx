@@ -25,8 +25,8 @@ import { useCreateWorkAssignmentMutation } from "../../api/employee-api";
 import {
   useGetDepartmentsQuery,
   useGetBranchesByCompanyQuery,
-  useGetJobTitlesQuery,
-  useGetJobLevelsQuery,
+  useGetAllJobTitlesQuery,
+  useGetAllJobLevelsQuery,
 } from "@/features/organization/api";
 import {
   EMPLOYMENT_TYPE_OPTIONS,
@@ -60,14 +60,12 @@ export function WorkAssignmentDialog({
   const { data: branches = [] } = useGetBranchesByCompanyQuery(companyId, {
     skip: !companyId || !open,
   });
-  const { data: titleData } = useGetJobTitlesQuery(
-    { companyId, size: 100 },
-    { skip: !companyId || !open }
-  );
-  const { data: levelData } = useGetJobLevelsQuery(
-    { companyId, size: 100 },
-    { skip: !companyId || !open }
-  );
+  const { data: jobTitles = [] } = useGetAllJobTitlesQuery(companyId, {
+    skip: !companyId || !open,
+  });
+  const { data: jobLevels = [] } = useGetAllJobLevelsQuery(companyId, {
+    skip: !companyId || !open,
+  });
 
   // Form states
   const [departmentId, setDepartmentId] = useState("");
@@ -147,8 +145,9 @@ export function WorkAssignmentDialog({
                 <SelectTrigger className="w-full h-9 text-xs">
                   <SelectValue placeholder="Chọn lý do">
                     {(val: string) => {
+                      if (!val) return "Chọn lý do";
                       const r = WORK_CHANGE_REASONS.find((i) => i.value === val);
-                      return r ? r.label : val;
+                      return r ? r.label : "Chọn lý do";
                     }}
                   </SelectValue>
                 </SelectTrigger>
@@ -172,8 +171,9 @@ export function WorkAssignmentDialog({
               <SelectTrigger className="w-full h-9 text-xs">
                 <SelectValue placeholder="Chọn phòng ban công tác...">
                   {(val: string) => {
+                    if (!val) return "Chọn phòng ban công tác...";
                     const d = deptData?.items?.find((i) => i.id === val);
-                    return d ? `${d.name} (${d.code})` : val;
+                    return d ? `${d.name} (${d.code})` : "Chọn phòng ban công tác...";
                   }}
                 </SelectValue>
               </SelectTrigger>
@@ -196,8 +196,9 @@ export function WorkAssignmentDialog({
               <SelectTrigger className="w-full h-9 text-xs">
                 <SelectValue placeholder="Chọn chi nhánh làm việc...">
                   {(val: string) => {
+                    if (!val) return "Chọn chi nhánh làm việc...";
                     const b = branches.find((i) => i.id === val);
-                    return b ? `${b.name} (${b.code})` : val;
+                    return b ? `${b.name} (${b.code})` : "Chọn chi nhánh làm việc...";
                   }}
                 </SelectValue>
               </SelectTrigger>
@@ -221,13 +222,14 @@ export function WorkAssignmentDialog({
                 <SelectTrigger className="w-full h-9 text-xs">
                   <SelectValue placeholder="Chọn chức danh...">
                     {(val: string) => {
-                      const t = titleData?.items?.find((i) => i.id === val);
-                      return t ? `${t.name} (${t.code})` : val;
+                      if (!val) return "Chọn chức danh...";
+                      const t = jobTitles.find((i) => i.id === val);
+                      return t ? `${t.name} (${t.code})` : "Chọn chức danh...";
                     }}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {titleData?.items?.map((t) => (
+                  {jobTitles.map((t) => (
                     <SelectItem key={t.id} value={t.id} label={t.name}>
                       {t.name} ({t.code})
                     </SelectItem>
@@ -244,13 +246,14 @@ export function WorkAssignmentDialog({
                 <SelectTrigger className="w-full h-9 text-xs">
                   <SelectValue placeholder="Chọn cấp bậc...">
                     {(val: string) => {
-                      const l = levelData?.items?.find((i) => i.id === val);
-                      return l ? `${l.name} (Bậc ${l.rankOrder})` : val;
+                      if (!val) return "Chọn cấp bậc...";
+                      const l = jobLevels.find((i) => i.id === val);
+                      return l ? `${l.name} (Bậc ${l.rankOrder})` : "Chọn cấp bậc...";
                     }}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {levelData?.items?.map((l) => (
+                  {jobLevels.map((l) => (
                     <SelectItem key={l.id} value={l.id} label={l.name}>
                       {l.name} (Bậc {l.rankOrder})
                     </SelectItem>

@@ -103,7 +103,7 @@ export function StatusChangeDialog({
             >
               <SelectTrigger className="w-full h-9 text-xs">
                 <SelectValue placeholder="Chọn trạng thái">
-                  {(val: string) => EMPLOYEE_STATUS_LABELS[val] || val}
+                  {(val: string) => (val ? EMPLOYEE_STATUS_LABELS[val] || val : "Chọn trạng thái")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>

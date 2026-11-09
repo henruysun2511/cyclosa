@@ -91,9 +91,9 @@ export function ProbationEvaluationDialog({
                 <SelectValue placeholder="Chọn kết quả" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="PASSED">Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức (Passed)</SelectItem>
-                <SelectItem value="EXTENDED">Gia hạn thời gian thử việc tối đa theo quy định (Extended)</SelectItem>
-                <SelectItem value="FAILED">Không đạt yêu cầu - Chấm dứt thử việc (Failed)</SelectItem>
+                <SelectItem value="PASSED" label="Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức (Passed)">Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức (Passed)</SelectItem>
+                <SelectItem value="EXTENDED" label="Gia hạn thời gian thử việc tối đa theo quy định (Extended)">Gia hạn thời gian thử việc tối đa theo quy định (Extended)</SelectItem>
+                <SelectItem value="FAILED" label="Không đạt yêu cầu - Chấm dứt thử việc (Failed)">Không đạt yêu cầu - Chấm dứt thử việc (Failed)</SelectItem>
               </SelectContent>
             </Select>
           </div>

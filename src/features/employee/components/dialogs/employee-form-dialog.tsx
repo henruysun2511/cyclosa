@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -32,10 +32,11 @@ import {
   useUpdateEmployeeMutation,
 } from "../../api/employee-api";
 import {
+  useGetCompaniesQuery,
   useGetDepartmentsQuery,
   useGetBranchesByCompanyQuery,
-  useGetJobTitlesQuery,
-  useGetJobLevelsQuery,
+  useGetAllJobTitlesQuery,
+  useGetAllJobLevelsQuery,
 } from "@/features/organization/api";
 import {
   GENDER_OPTIONS,
@@ -66,22 +67,38 @@ export function EmployeeFormDialog({
   const [updateEmployee, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
   const isSubmitting = isCreating || isUpdating;
 
+  // Danh mục công ty
+  const { data: companiesData } = useGetCompaniesQuery({ size: 50 }, { skip: !open });
+  const companies = companiesData?.items || [];
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState(companyId);
+
+  useEffect(() => {
+    if (open) {
+      if (companyId) {
+        setSelectedCompanyId(companyId);
+      } else if (companies.length > 0) {
+        setSelectedCompanyId(companies[0].id);
+      }
+    }
+  }, [open, companyId, companies]);
+
+  const effectiveCompanyId = selectedCompanyId || companyId || (companies[0]?.id ?? "");
+
   // Danh mục 3 chiều khi tạo mới
   const { data: deptData } = useGetDepartmentsQuery(
-    { companyId, size: 100 },
-    { skip: !companyId || !open }
+    { companyId: effectiveCompanyId, size: 100 },
+    { skip: !effectiveCompanyId || !open }
   );
-  const { data: branches = [] } = useGetBranchesByCompanyQuery(companyId, {
-    skip: !companyId || !open,
+  const { data: branches = [] } = useGetBranchesByCompanyQuery(effectiveCompanyId, {
+    skip: !effectiveCompanyId || !open,
   });
-  const { data: titleData } = useGetJobTitlesQuery(
-    { companyId, size: 100 },
-    { skip: !companyId || !open }
-  );
-  const { data: levelData } = useGetJobLevelsQuery(
-    { companyId, size: 100 },
-    { skip: !companyId || !open }
-  );
+  const { data: jobTitles = [] } = useGetAllJobTitlesQuery(effectiveCompanyId, {
+    skip: !effectiveCompanyId || !open,
+  });
+  const { data: jobLevels = [] } = useGetAllJobLevelsQuery(effectiveCompanyId, {
+    skip: !effectiveCompanyId || !open,
+  });
 
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
@@ -186,7 +203,7 @@ export function EmployeeFormDialog({
         }
 
         await createEmployee({
-          companyId,
+          companyId: effectiveCompanyId,
           departmentId: values.departmentId,
           branchId: values.branchId,
           jobTitleId: values.jobTitleId,
@@ -298,7 +315,7 @@ export function EmployeeFormDialog({
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="Chọn giới tính">
-                          {(val: string) => GENDER_LABELS[val] || val}
+                          {(val: string) => (val ? GENDER_LABELS[val] || val : "Chọn giới tính")}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -363,6 +380,42 @@ export function EmployeeFormDialog({
                 2. Phân bổ tổ chức 3 chiều (Tổ chức - Không gian - Chức danh)
               </h3>
 
+              {/* Ô chọn Công ty */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">
+                  Công ty / Pháp nhân trực thuộc <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={effectiveCompanyId}
+                  onValueChange={(val) => {
+                    if (val) {
+                      setSelectedCompanyId(val);
+                      form.setValue("departmentId", "");
+                      form.setValue("branchId", "");
+                      form.setValue("jobTitleId", "");
+                      form.setValue("jobLevelId", "");
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full h-9 text-xs">
+                    <SelectValue placeholder="Chọn công ty tiếp nhận...">
+                      {(val: string) => {
+                        if (!val) return "Chọn công ty tiếp nhận...";
+                        const c = companies.find((i) => i.id === val);
+                        return c ? `${c.name} (${c.code || "Cty"})` : "Chọn công ty tiếp nhận...";
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((c) => (
+                      <SelectItem key={c.id} value={c.id} label={c.name}>
+                        {c.name} {c.code ? `(${c.code})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">
                   Chiều 1: Phòng ban trực thuộc <span className="text-destructive">*</span>
@@ -375,8 +428,9 @@ export function EmployeeFormDialog({
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="Chọn phòng ban công tác...">
                           {(val: string) => {
+                            if (!val) return "Chọn phòng ban công tác...";
                             const d = deptData?.items?.find((i) => i.id === val);
-                            return d ? `${d.name} (${d.code})` : val;
+                            return d ? `${d.name} (${d.code})` : "Chọn phòng ban công tác...";
                           }}
                         </SelectValue>
                       </SelectTrigger>
@@ -404,8 +458,9 @@ export function EmployeeFormDialog({
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="Chọn chi nhánh làm việc...">
                           {(val: string) => {
+                            if (!val) return "Chọn chi nhánh làm việc...";
                             const b = branches.find((i) => i.id === val);
-                            return b ? `${b.name} (${b.code})` : val;
+                            return b ? `${b.name} (${b.code})` : "Chọn chi nhánh làm việc...";
                           }}
                         </SelectValue>
                       </SelectTrigger>
@@ -434,13 +489,14 @@ export function EmployeeFormDialog({
                         <SelectTrigger className="w-full h-9 text-xs">
                           <SelectValue placeholder="Chọn chức danh...">
                             {(val: string) => {
-                              const t = titleData?.items?.find((i) => i.id === val);
-                              return t ? `${t.name} (${t.code})` : val;
+                              if (!val) return "Chọn chức danh...";
+                              const t = jobTitles.find((i) => i.id === val);
+                              return t ? `${t.name} (${t.code})` : "Chọn chức danh...";
                             }}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {titleData?.items?.map((t) => (
+                          {jobTitles.map((t) => (
                             <SelectItem key={t.id} value={t.id} label={t.name}>
                               {t.name} ({t.code})
                             </SelectItem>
@@ -463,13 +519,14 @@ export function EmployeeFormDialog({
                         <SelectTrigger className="w-full h-9 text-xs">
                           <SelectValue placeholder="Chọn cấp bậc...">
                             {(val: string) => {
-                              const l = levelData?.items?.find((i) => i.id === val);
-                              return l ? `${l.name} (Bậc ${l.rankOrder})` : val;
+                              if (!val) return "Chọn cấp bậc...";
+                              const l = jobLevels.find((i) => i.id === val);
+                              return l ? `${l.name} (Bậc ${l.rankOrder})` : "Chọn cấp bậc...";
                             }}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {levelData?.items?.map((l) => (
+                          {jobLevels.map((l) => (
                             <SelectItem key={l.id} value={l.id} label={l.name}>
                               {l.name} (Bậc {l.rankOrder})
                             </SelectItem>
@@ -490,7 +547,7 @@ export function EmployeeFormDialog({
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="Chọn loại hình">
-                          {(val: string) => EMPLOYMENT_TYPE_LABELS[val] || val}
+                          {(val: string) => (val ? EMPLOYMENT_TYPE_LABELS[val] || val : "Chọn loại hình")}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>

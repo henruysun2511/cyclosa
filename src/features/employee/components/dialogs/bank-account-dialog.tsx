@@ -130,7 +130,7 @@ export function BankAccountDialog({
               </SelectTrigger>
               <SelectContent>
                 {POPULAR_BANKS.map((b) => (
-                  <SelectItem key={b} value={b}>
+                  <SelectItem key={b} value={b} label={b}>
                     {b}
                   </SelectItem>
                 ))}

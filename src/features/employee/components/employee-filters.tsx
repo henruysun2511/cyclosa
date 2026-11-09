@@ -87,8 +87,9 @@ export function EmployeeFilters({
               <SelectTrigger className="w-full h-8 text-xs bg-background">
                 <SelectValue placeholder="Chọn công ty...">
                   {(val: string) => {
+                    if (!val) return "Chọn công ty...";
                     const c = companies.find((i) => i.id === val);
-                    return c ? (c.code ? `${c.name} (${c.code})` : c.name) : val;
+                    return c ? (c.code ? `${c.name} (${c.code})` : c.name) : "Chọn công ty...";
                   }}
                 </SelectValue>
               </SelectTrigger>
@@ -115,7 +116,7 @@ export function EmployeeFilters({
                   {(val: string) => {
                     if (!val || val === "all") return "Tất cả phòng ban";
                     const d = departments.find((i) => i.id === val);
-                    return d ? (d.code ? `${d.name} (${d.code})` : d.name) : val;
+                    return d ? (d.code ? `${d.name} (${d.code})` : d.name) : "Tất cả phòng ban";
                   }}
                 </SelectValue>
               </SelectTrigger>

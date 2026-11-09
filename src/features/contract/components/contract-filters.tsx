@@ -80,8 +80,9 @@ export function ContractFilters({
               <SelectTrigger className="w-full h-8 text-xs bg-background">
                 <SelectValue placeholder="Chọn công ty...">
                   {(val: string) => {
+                    if (!val) return "Chọn công ty...";
                     const c = companies.find((i) => i.id === val);
-                    return c ? (c.code ? `${c.name} (${c.code})` : c.name) : val;
+                    return c ? (c.code ? `${c.name} (${c.code})` : c.name) : "Chọn công ty...";
                   }}
                 </SelectValue>
               </SelectTrigger>

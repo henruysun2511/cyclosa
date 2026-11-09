@@ -159,11 +159,11 @@ export function DependentDialog({
                   <SelectValue placeholder="Chọn quan hệ" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CHILD">Con ruột / Con nuôi (Child)</SelectItem>
-                  <SelectItem value="SPOUSE">Vợ / Chồng (Spouse)</SelectItem>
-                  <SelectItem value="PARENT">Bố / Mẹ (Parent)</SelectItem>
-                  <SelectItem value="SIBLING">Anh / Chị / Em ruột</SelectItem>
-                  <SelectItem value="OTHER">Thân nhân khác</SelectItem>
+                  <SelectItem value="CHILD" label="Con ruột / Con nuôi (Child)">Con ruột / Con nuôi (Child)</SelectItem>
+                  <SelectItem value="SPOUSE" label="Vợ / Chồng (Spouse)">Vợ / Chồng (Spouse)</SelectItem>
+                  <SelectItem value="PARENT" label="Bố / Mẹ (Parent)">Bố / Mẹ (Parent)</SelectItem>
+                  <SelectItem value="SIBLING" label="Anh / Chị / Em ruột">Anh / Chị / Em ruột</SelectItem>
+                  <SelectItem value="OTHER" label="Thân nhân khác">Thân nhân khác</SelectItem>
                 </SelectContent>
               </Select>
             </div>

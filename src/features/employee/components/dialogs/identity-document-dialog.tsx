@@ -130,8 +130,12 @@ export function IdentityDocumentDialog({
                 <SelectValue placeholder="Chọn loại giấy tờ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CITIZEN_ID">Căn cước công dân (CCCD)</SelectItem>
-                <SelectItem value="PASSPORT">Hộ chiếu (Passport)</SelectItem>
+                <SelectItem value="CITIZEN_ID" label="Căn cước công dân (CCCD)">
+                  Căn cước công dân (CCCD)
+                </SelectItem>
+                <SelectItem value="PASSPORT" label="Hộ chiếu (Passport)">
+                  Hộ chiếu (Passport)
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
