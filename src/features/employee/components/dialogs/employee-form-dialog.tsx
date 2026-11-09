@@ -27,6 +27,7 @@ import {
   employeeFormSchema,
   type EmployeeFormValues,
 } from "../../schemas/employee.schema";
+import { AvatarUploader } from "@/features/media/components/avatar-uploader";
 import {
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
@@ -254,6 +255,29 @@ export function EmployeeFormDialog({
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b pb-1">
               1. Thông tin lý lịch cá nhân
             </h3>
+
+            {/* Tải ảnh đại diện / ảnh chân dung lên Cloudinary */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 p-3 bg-muted/20 border border-border rounded-lg">
+              <Controller
+                control={form.control}
+                name="portraitUrl"
+                render={({ field }) => (
+                  <AvatarUploader
+                    value={field.value}
+                    fallbackText={`${form.watch("lastName")?.[0] || ""}${form.watch("firstName")?.[0] || "NV"}`.toUpperCase()}
+                    folder="cyclosa/avatars"
+                    onChange={(url) => field.onChange(url || "")}
+                  />
+                )}
+              />
+              <div className="space-y-1 text-center sm:text-left">
+                <Label className="text-xs font-semibold text-foreground">Ảnh thẻ chân dung nhân sự</Label>
+                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  Nhấn vào biểu tượng máy ảnh để tải ảnh lên Cloudinary (hỗ trợ .jpg, .png, .webp, tối đa 5MB).
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">
@@ -618,14 +642,7 @@ export function EmployeeFormDialog({
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Đường dẫn ảnh thẻ chân dung (URL)</Label>
-              <Input
-                placeholder="https://res.cloudinary.com/.../avatar.jpg"
-                {...form.register("portraitUrl")}
-                className="h-9 text-xs"
-              />
-            </div>
+
           </div>
 
           <DialogFooter className="pt-4 border-t gap-2">
