@@ -11,13 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { UserPlus, Building2, MapPin, Briefcase, Award, ShieldAlert, CreditCard } from "lucide-react";
 import { useCreateEmployeeMutation } from "../../api/employee-api";
@@ -143,7 +136,7 @@ export function EmployeeCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl w-[92vw] max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary font-bold text-lg">
             <UserPlus className="h-5 w-5" />
@@ -179,16 +172,15 @@ export function EmployeeCreateDialog({
               </div>
               <div>
                 <Label className="text-xs">Giới tính</Label>
-                <Select value={gender} onValueChange={(v) => v && setGender(v as Gender)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MALE">Nam</SelectItem>
-                    <SelectItem value="FEMALE">Nữ</SelectItem>
-                    <SelectItem value="OTHER">Khác</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as Gender)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                >
+                  <option value="MALE">Nam</option>
+                  <option value="FEMALE">Nữ</option>
+                  <option value="OTHER">Khác</option>
+                </select>
               </div>
             </div>
 
@@ -248,18 +240,19 @@ export function EmployeeCreateDialog({
                   <Building2 className="h-3.5 w-3.5 text-primary" />
                   Chiều 1: Phòng ban trực thuộc *
                 </Label>
-                <Select value={departmentId} onValueChange={(v) => setDepartmentId(v || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn phòng ban..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name} ({d.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={departmentId}
+                  onChange={(e) => setDepartmentId(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  required
+                >
+                  <option value="">-- Chọn phòng ban --</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.code})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -267,18 +260,19 @@ export function EmployeeCreateDialog({
                   <MapPin className="h-3.5 w-3.5 text-primary" />
                   Chiều 2: Chi nhánh làm việc (Chấm công GPS) *
                 </Label>
-                <Select value={branchId} onValueChange={(v) => setBranchId(v || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn chi nhánh..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name} ({b.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={branchId}
+                  onChange={(e) => setBranchId(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  required
+                >
+                  <option value="">-- Chọn chi nhánh --</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.code})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -288,18 +282,19 @@ export function EmployeeCreateDialog({
                   <Briefcase className="h-3.5 w-3.5 text-primary" />
                   Chiều 3: Chức danh công việc *
                 </Label>
-                <Select value={jobTitleId} onValueChange={(v) => setJobTitleId(v || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn chức danh..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jobTitles.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={jobTitleId}
+                  onChange={(e) => setJobTitleId(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  required
+                >
+                  <option value="">-- Chọn chức danh --</option>
+                  {jobTitles.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -307,33 +302,33 @@ export function EmployeeCreateDialog({
                   <Award className="h-3.5 w-3.5 text-primary" />
                   Cấp bậc chuyên môn *
                 </Label>
-                <Select value={jobLevelId} onValueChange={(v) => setJobLevelId(v || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn cấp bậc..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jobLevels.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.name} (Bậc {l.rankOrder})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={jobLevelId}
+                  onChange={(e) => setJobLevelId(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  required
+                >
+                  <option value="">-- Chọn cấp bậc --</option>
+                  {jobLevels.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name} (Bậc {l.rankOrder})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <Label className="text-xs">Loại hình lao động</Label>
-                <Select value={employmentType} onValueChange={(v) => v && setEmploymentType(v as EmploymentType)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FULL_TIME">Toàn thời gian</SelectItem>
-                    <SelectItem value="PART_TIME">Bán thời gian</SelectItem>
-                    <SelectItem value="INTERN">Thực tập sinh</SelectItem>
-                    <SelectItem value="CONTRACTOR">Cộng tác viên</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={employmentType}
+                  onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                >
+                  <option value="FULL_TIME">Toàn thời gian</option>
+                  <option value="PART_TIME">Bán thời gian</option>
+                  <option value="INTERN">Thực tập sinh</option>
+                  <option value="CONTRACTOR">Cộng tác viên</option>
+                </select>
               </div>
             </div>
 
@@ -350,24 +345,24 @@ export function EmployeeCreateDialog({
 
               <div>
                 <Label className="text-xs">Thời gian thử việc</Label>
-                <Select value={hasProbation ? probationMonths : "0"} onValueChange={(v) => {
-                  if (!v || v === "0") {
-                    setHasProbation(false);
-                  } else {
-                    setHasProbation(true);
-                    setProbationMonths(v);
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Không thử việc (Chính thức)</SelectItem>
-                    <SelectItem value="1">1 Tháng (30 ngày)</SelectItem>
-                    <SelectItem value="2">2 Tháng (60 ngày)</SelectItem>
-                    <SelectItem value="3">3 Tháng (90 ngày)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={hasProbation ? probationMonths : "0"}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v || v === "0") {
+                      setHasProbation(false);
+                    } else {
+                      setHasProbation(true);
+                      setProbationMonths(v);
+                    }
+                  }}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                >
+                  <option value="0">Không thử việc (Chính thức)</option>
+                  <option value="1">1 Tháng (30 ngày)</option>
+                  <option value="2">2 Tháng (60 ngày)</option>
+                  <option value="3">3 Tháng (90 ngày)</option>
+                </select>
               </div>
 
               <div>

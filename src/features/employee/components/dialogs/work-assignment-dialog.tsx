@@ -11,13 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Building2, MapPin, Briefcase, Award } from "lucide-react";
 import { useCreateWorkAssignmentMutation } from "../../api/employee-api";
@@ -96,7 +89,7 @@ export function WorkAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl w-[92vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
@@ -106,7 +99,7 @@ export function WorkAssignmentDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* Ngày hiệu lực & Lý do */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">
                 Ngày bắt đầu có hiệu lực <span className="text-destructive">*</span>
@@ -122,17 +115,16 @@ export function WorkAssignmentDialog({
               <Label className="text-xs font-semibold">
                 Lý do biến động <span className="text-destructive">*</span>
               </Label>
-              <Select value={changeReason} onValueChange={(v) => v && setChangeReason(v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn lý do" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PROMOTION">Bổ nhiệm thăng chức (Promotion)</SelectItem>
-                  <SelectItem value="TRANSFER">Luân chuyển điều động (Transfer)</SelectItem>
-                  <SelectItem value="RESTRUCTURE">Tái cơ cấu phòng ban (Restructure)</SelectItem>
-                  <SelectItem value="HIRE">Tiếp nhận ban đầu (Hire)</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                value={changeReason}
+                onChange={(e) => setChangeReason(e.target.value)}
+              >
+                <option value="PROMOTION">Bổ nhiệm thăng chức (Promotion)</option>
+                <option value="TRANSFER">Luân chuyển điều động (Transfer)</option>
+                <option value="RESTRUCTURE">Tái cơ cấu phòng ban (Restructure)</option>
+                <option value="HIRE">Tiếp nhận ban đầu (Hire)</option>
+              </select>
             </div>
           </div>
 
@@ -142,18 +134,19 @@ export function WorkAssignmentDialog({
               <Building2 className="h-3.5 w-3.5" />
               Chiều 1: Phòng ban trực thuộc mới <span className="text-destructive">*</span>
             </Label>
-            <Select value={departmentId} onValueChange={(v) => v && setDepartmentId(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn phòng ban công tác..." />
-              </SelectTrigger>
-              <SelectContent>
-                {deptData?.items?.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.name} ({d.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value)}
+              required
+            >
+              <option value="">-- Chọn phòng ban công tác --</option>
+              {deptData?.items?.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} ({d.code})
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Chiều 2: Chi nhánh */}
@@ -162,39 +155,41 @@ export function WorkAssignmentDialog({
               <MapPin className="h-3.5 w-3.5" />
               Chiều 2: Chi nhánh / Văn phòng làm việc (GPS) <span className="text-destructive">*</span>
             </Label>
-            <Select value={branchId} onValueChange={(v) => v && setBranchId(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn chi nhánh làm việc..." />
-              </SelectTrigger>
-              <SelectContent>
-                {branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name} ({b.code}) - {b.address}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+              required
+            >
+              <option value="">-- Chọn chi nhánh làm việc --</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.code}) - {b.address}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Chiều 3: Chức danh & Cấp bậc */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold flex items-center gap-1.5 text-amber-700">
                 <Briefcase className="h-3.5 w-3.5" />
                 Chiều 3: Chức danh công việc <span className="text-destructive">*</span>
               </Label>
-              <Select value={jobTitleId} onValueChange={(v) => v && setJobTitleId(v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn chức danh..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {titleData?.items?.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} ({t.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                value={jobTitleId}
+                onChange={(e) => setJobTitleId(e.target.value)}
+                required
+              >
+                <option value="">-- Chọn chức danh --</option>
+                {titleData?.items?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1.5">
@@ -202,38 +197,35 @@ export function WorkAssignmentDialog({
                 <Award className="h-3.5 w-3.5" />
                 Cấp bậc thẩm quyền <span className="text-destructive">*</span>
               </Label>
-              <Select value={jobLevelId} onValueChange={(v) => v && setJobLevelId(v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn cấp bậc..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {levelData?.items?.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.name} (Bậc {l.rankOrder})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                value={jobLevelId}
+                onChange={(e) => setJobLevelId(e.target.value)}
+                required
+              >
+                <option value="">-- Chọn cấp bậc --</option>
+                {levelData?.items?.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name} (Bậc {l.rankOrder})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           {/* Loại hình hợp đồng */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Loại hình lao động</Label>
-            <Select
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               value={employmentType}
-              onValueChange={(val) => val && setEmploymentType(val as EmploymentType)}
+              onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn loại hình" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FULL_TIME">Toàn thời gian chính thức (Full-time)</SelectItem>
-                <SelectItem value="PART_TIME">Bán thời gian (Part-time)</SelectItem>
-                <SelectItem value="INTERN">Thực tập sinh (Intern)</SelectItem>
-                <SelectItem value="CONTRACTOR">Cộng tác viên / Thuê ngoài (Contractor)</SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="FULL_TIME">Toàn thời gian chính thức (Full-time)</option>
+              <option value="PART_TIME">Bán thời gian (Part-time)</option>
+              <option value="INTERN">Thực tập sinh (Intern)</option>
+              <option value="CONTRACTOR">Cộng tác viên / Thuê ngoài (Contractor)</option>
+            </select>
           </div>
 
           <DialogFooter className="pt-4 border-t gap-2">

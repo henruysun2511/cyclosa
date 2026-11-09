@@ -156,7 +156,7 @@ export function EmployeeDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
               <div className="flex items-center gap-3">

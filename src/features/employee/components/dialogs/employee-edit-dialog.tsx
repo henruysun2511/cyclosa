@@ -11,13 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useUpdateEmployeeMutation } from "../../api/employee-api";
 import type { EmployeeDetail, Gender, UpdateEmployeeInput } from "../../types/employee.types";
@@ -96,7 +89,7 @@ export function EmployeeEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl w-[92vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base font-bold">
             Chỉnh sửa lý lịch & thông tin pháp lý nhân sự
@@ -105,7 +98,7 @@ export function EmployeeEditDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* Họ và tên */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">
                 Họ và tên đệm <span className="text-destructive">*</span>
@@ -131,7 +124,7 @@ export function EmployeeEditDialog({
           </div>
 
           {/* Ngày sinh & Giới tính */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">
                 Ngày sinh <span className="text-destructive">*</span>
@@ -145,19 +138,15 @@ export function EmployeeEditDialog({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Giới tính</Label>
-              <Select
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 value={formData.gender}
-                onValueChange={(val) => setFormData({ ...formData, gender: (val || "MALE") as Gender })}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn giới tính" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MALE">Nam</SelectItem>
-                  <SelectItem value="FEMALE">Nữ</SelectItem>
-                  <SelectItem value="OTHER">Khác</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="MALE">Nam</option>
+                <option value="FEMALE">Nữ</option>
+                <option value="OTHER">Khác</option>
+              </select>
             </div>
           </div>
 

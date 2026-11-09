@@ -12,13 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { useChangeEmployeeStatusMutation } from "../../api/employee-api";
@@ -74,7 +67,7 @@ export function StatusChangeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl w-[90vw]">
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-amber-600" />
@@ -87,21 +80,17 @@ export function StatusChangeDialog({
             <Label className="text-xs font-semibold">
               Trạng thái mới <span className="text-destructive">*</span>
             </Label>
-            <Select
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               value={status}
-              onValueChange={(val) => val && setStatus(val as EmployeeStatus)}
+              onChange={(e) => setStatus(e.target.value as EmployeeStatus)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Chính thức (Active) - Đang công tác</SelectItem>
-                <SelectItem value="PROBATION">Thử việc (Probation)</SelectItem>
-                <SelectItem value="ON_LEAVE">Nghỉ chế độ / Nghỉ thai sản (On Leave)</SelectItem>
-                <SelectItem value="SUSPENDED">Tạm đình chỉ / Hoãn HĐLĐ (Suspended)</SelectItem>
-                <SelectItem value="TERMINATED">Thôi việc / Chấm dứt HĐLĐ (Terminated)</SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="ACTIVE">Chính thức (Active) - Đang công tác</option>
+              <option value="PROBATION">Thử việc (Probation)</option>
+              <option value="ON_LEAVE">Nghỉ chế độ / Thai sản (On Leave)</option>
+              <option value="SUSPENDED">Tạm đình chỉ / Hoãn HĐLĐ (Suspended)</option>
+              <option value="TERMINATED">Thôi việc / Chấm dứt HĐLĐ (Terminated)</option>
+            </select>
           </div>
 
           <div className="space-y-1.5">
