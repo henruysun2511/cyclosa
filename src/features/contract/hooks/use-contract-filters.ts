@@ -61,35 +61,35 @@ export function useContractFilters() {
 
   const setSearch = useCallback(
     (term: string) => {
-      updateFilters({ search: term, page: "1" });
+      updateFilters({ search: term, page: null });
     },
     [updateFilters]
   );
 
   const setCompanyId = useCallback(
     (id: string) => {
-      updateFilters({ companyId: id, page: "1" });
+      updateFilters({ companyId: id, page: null });
     },
     [updateFilters]
   );
 
   const setStatus = useCallback(
     (newStatus: string) => {
-      updateFilters({ status: newStatus, page: "1" });
+      updateFilters({ status: newStatus, page: null });
     },
     [updateFilters]
   );
 
   const setContractType = useCallback(
     (newType: string) => {
-      updateFilters({ type: newType, page: "1" });
+      updateFilters({ type: newType, page: null });
     },
     [updateFilters]
   );
 
   const setExpiringFilter = useCallback(
     (newExp: string) => {
-      updateFilters({ expiring: newExp, page: "1" });
+      updateFilters({ expiring: newExp, page: null });
     },
     [updateFilters]
   );
@@ -103,7 +103,7 @@ export function useContractFilters() {
 
   const setSize = useCallback(
     (newSize: number) => {
-      updateFilters({ size: String(newSize), page: "1" });
+      updateFilters({ size: String(newSize), page: null });
     },
     [updateFilters]
   );

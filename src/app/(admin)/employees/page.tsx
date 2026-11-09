@@ -221,7 +221,7 @@ export default function EmployeesPage() {
         data={employees}
         pagination={employeePageData?.pagination}
         isLoading={isLoading}
-        onPageChange={setPage}
+        onPageChange={(pageIndex) => setPage(pageIndex + 1)}
         onPageSizeChange={setSize}
         onViewDetail={handleOpenDetail}
         onEdit={handleOpenEdit}

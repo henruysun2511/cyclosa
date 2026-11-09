@@ -6,6 +6,7 @@ export * from "./types/contract.types";
 export * from "./components/contract-stats-cards";
 export * from "./components/contract-status-badge";
 export * from "./components/contract-filters";
+export * from "./components/contract-columns";
 export * from "./components/contract-table";
 export * from "./components/dialogs/contract-form-dialog";
 export * from "./components/dialogs/contract-detail-dialog";

@@ -16,12 +16,16 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./empty-state";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   isLoading?: boolean;
   skeletonRows?: number;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  className?: string;
 }
 
 export function DataTable<TData>({
@@ -29,6 +33,9 @@ export function DataTable<TData>({
   data,
   isLoading = false,
   skeletonRows = 5,
+  emptyTitle = "Không có dữ liệu",
+  emptyDescription = "Chưa có mục nào để hiển thị.",
+  className,
 }: DataTableProps<TData>) {
   const table = useReactTable({
     data,
@@ -37,13 +44,13 @@ export function DataTable<TData>({
   });
 
   return (
-    <div className="rounded-md border">
+    <div className={cn("rounded-lg border bg-card overflow-hidden shadow-2xs", className)}>
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted/40">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className="text-xs font-semibold">
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -60,7 +67,7 @@ export function DataTable<TData>({
             Array.from({ length: skeletonRows }).map((_, i) => (
               <TableRow key={i}>
                 {columns.map((_, j) => (
-                  <TableCell key={j}>
+                  <TableCell key={j} className="py-3">
                     <Skeleton className="h-5 w-full" />
                   </TableCell>
                 ))}
@@ -71,9 +78,10 @@ export function DataTable<TData>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                className="hover:bg-muted/30 transition-colors"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className="py-3 text-sm">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -83,8 +91,8 @@ export function DataTable<TData>({
             <TableRow>
               <TableCell colSpan={columns.length} className="h-48 text-center">
                 <EmptyState
-                  title="Không có dữ liệu"
-                  description="Chưa có mục nào để hiển thị."
+                  title={emptyTitle}
+                  description={emptyDescription}
                 />
               </TableCell>
             </TableRow>

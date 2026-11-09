@@ -43,7 +43,7 @@ export function useEmployeeFilters() {
 
   const setKeyword = useCallback(
     (term: string) => {
-      updateFilters({ keyword: term, page: "1" });
+      updateFilters({ keyword: term, page: null });
     },
     [updateFilters]
   );
@@ -51,21 +51,21 @@ export function useEmployeeFilters() {
   const setCompanyId = useCallback(
     (id: string) => {
       // Khi đổi công ty thì xóa phòng ban và quay về page 1
-      updateFilters({ companyId: id, departmentId: null, page: "1" });
+      updateFilters({ companyId: id, departmentId: null, page: null });
     },
     [updateFilters]
   );
 
   const setDepartmentId = useCallback(
     (deptId: string) => {
-      updateFilters({ departmentId: deptId, page: "1" });
+      updateFilters({ departmentId: deptId, page: null });
     },
     [updateFilters]
   );
 
   const setStatus = useCallback(
     (newStatus: string) => {
-      updateFilters({ status: newStatus, page: "1" });
+      updateFilters({ status: newStatus, page: null });
     },
     [updateFilters]
   );
@@ -79,7 +79,7 @@ export function useEmployeeFilters() {
 
   const setSize = useCallback(
     (newSize: number) => {
-      updateFilters({ size: String(newSize), page: "1" });
+      updateFilters({ size: String(newSize), page: null });
     },
     [updateFilters]
   );
