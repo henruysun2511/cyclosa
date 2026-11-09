@@ -131,7 +131,7 @@ export default function ApprovalsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/settings/workflows">
+          <Link href="/workflows">
             <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
               <GitFork className="w-3.5 h-3.5 text-primary" />
               Cấu hình quy trình
@@ -156,7 +156,7 @@ export default function ApprovalsPage() {
         stats={stats}
         activeTab={tab}
         onSelectTab={setTab}
-        onOpenDefinitions={() => router.push("/settings/workflows")}
+        onOpenDefinitions={() => router.push("/workflows")}
       />
 
       {/* 3. Navigation Tabs */}

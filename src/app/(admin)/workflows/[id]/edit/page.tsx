@@ -43,7 +43,7 @@ export default function EditWorkflowDefinitionPage({
       }).unwrap();
 
       toast.success("Cập nhật quy trình phê duyệt thành công!");
-      router.push("/settings/workflows");
+      router.push("/workflows");
     } catch (err: any) {
       toast.error(err?.data?.message || "Không thể cập nhật quy trình phê duyệt.");
     }
@@ -78,7 +78,7 @@ export default function EditWorkflowDefinitionPage({
             Trang chủ
           </Link>
           <span>/</span>
-          <Link href="/settings/workflows" className="hover:text-primary transition-colors">
+          <Link href="/workflows" className="hover:text-primary transition-colors">
             Quy trình phê duyệt
           </Link>
           <span>/</span>

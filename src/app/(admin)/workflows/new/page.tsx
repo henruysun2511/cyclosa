@@ -34,7 +34,7 @@ export default function NewWorkflowDefinitionPage() {
       }).unwrap();
 
       toast.success("Tạo mới quy trình phê duyệt thành công!");
-      router.push("/settings/workflows");
+      router.push("/workflows");
     } catch (err: any) {
       toast.error(err?.data?.message || "Không thể tạo quy trình phê duyệt.");
     }
@@ -53,7 +53,7 @@ export default function NewWorkflowDefinitionPage() {
             Trang chủ
           </Link>
           <span>/</span>
-          <Link href="/settings/workflows" className="hover:text-primary transition-colors">
+          <Link href="/workflows" className="hover:text-primary transition-colors">
             Quy trình phê duyệt
           </Link>
           <span>/</span>

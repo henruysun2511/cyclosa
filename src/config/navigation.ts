@@ -94,7 +94,7 @@ export const navigationConfig: NavGroup[] = [
       },
       {
         title: "Quy trình phê duyệt",
-        href: "/settings/workflows",
+        href: "/workflows",
         icon: GitFork,
       },
     ],

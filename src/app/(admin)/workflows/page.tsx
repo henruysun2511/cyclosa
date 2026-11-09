@@ -147,7 +147,7 @@ export default function WorkflowDefinitionsPage() {
             Làm mới
           </Button>
 
-          <Link href="/settings/workflows/new">
+          <Link href="/workflows/new">
             <Button size="sm" className="h-9 gap-1.5 text-xs shadow-xs">
               <Plus className="w-4 h-4" />
               Thêm quy trình mới
@@ -284,7 +284,7 @@ export default function WorkflowDefinitionsPage() {
                   <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
                     <TableCell>
                       <Link
-                        href={`/settings/workflows/${item.id}/edit`}
+                        href={`/workflows/${item.id}/edit`}
                         className="font-semibold text-xs text-foreground hover:text-primary transition-colors block"
                       >
                         {item.name}
@@ -348,7 +348,7 @@ export default function WorkflowDefinitionsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-36 text-xs">
                           <DropdownMenuItem
-                            onClick={() => router.push(`/settings/workflows/${item.id}/edit`)}
+                            onClick={() => router.push(`/workflows/${item.id}/edit`)}
                             className="cursor-pointer"
                           >
                             <Edit className="w-3.5 h-3.5 mr-2" />
