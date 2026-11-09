@@ -485,12 +485,23 @@ export function ContractTemplateEditor({
                   disabled={isEdit}
                 >
                   <SelectTrigger id="companyId" className="h-9 text-xs">
-                    <SelectValue placeholder="Chọn công ty..." />
+                    <SelectValue placeholder="Chọn công ty...">
+                      {(val: string) => {
+                        if (!val) return "Chọn công ty...";
+                        const c = companies.find((i) => i.id === val);
+                        return c ? (c.code ? `${c.name} (${c.code})` : c.name) : "Chọn công ty...";
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {companies.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs">
-                        {c.name} ({c.code})
+                      <SelectItem
+                        key={c.id}
+                        value={c.id}
+                        label={c.code ? `${c.name} (${c.code})` : c.name}
+                        className="text-xs"
+                      >
+                        {c.name} {c.code ? `(${c.code})` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -547,11 +558,20 @@ export function ContractTemplateEditor({
                   onValueChange={handleKindChange}
                 >
                   <SelectTrigger id="kind" className="h-9 text-xs">
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn loại mẫu biểu...">
+                      {(val: string) =>
+                        val ? TEMPLATE_KIND_LABELS[val as TemplateKind] || val : "Chọn loại mẫu biểu..."
+                      }
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(TEMPLATE_KIND_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key} className="text-xs">
+                      <SelectItem
+                        key={key}
+                        value={key}
+                        label={label}
+                        className="text-xs"
+                      >
                         {label}
                       </SelectItem>
                     ))}
@@ -569,14 +589,28 @@ export function ContractTemplateEditor({
                   onValueChange={(val) => setContractType(val as ContractType | "ALL")}
                 >
                   <SelectTrigger id="contractType" className="h-9 text-xs">
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn loại hợp đồng...">
+                      {(val: string) => {
+                        if (!val || val === "ALL") return "Áp dụng chung cho tất cả loại HĐ";
+                        return CONTRACT_TYPE_LABELS[val as ContractType] || val;
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL" className="text-xs">
+                    <SelectItem
+                      value="ALL"
+                      label="Áp dụng chung cho tất cả loại HĐ"
+                      className="text-xs"
+                    >
                       Áp dụng chung cho tất cả loại HĐ
                     </SelectItem>
                     {Object.entries(CONTRACT_TYPE_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key} className="text-xs">
+                      <SelectItem
+                        key={key}
+                        value={key}
+                        label={label}
+                        className="text-xs"
+                      >
                         {label}
                       </SelectItem>
                     ))}
@@ -594,13 +628,27 @@ export function ContractTemplateEditor({
                   onValueChange={(val) => setFormat(val as TemplateFormat)}
                 >
                   <SelectTrigger id="format" className="h-9 text-xs">
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn định dạng...">
+                      {(val: string) => {
+                        if (val === "HTML") return "HTML / Handlebars động (Khuyến nghị)";
+                        if (val === "DOCX") return "Microsoft Word (.docx)";
+                        return val || "Chọn định dạng...";
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HTML" className="text-xs">
+                    <SelectItem
+                      value="HTML"
+                      label="HTML / Handlebars động (Khuyến nghị)"
+                      className="text-xs"
+                    >
                       HTML / Handlebars động (Khuyến nghị)
                     </SelectItem>
-                    <SelectItem value="DOCX" className="text-xs">
+                    <SelectItem
+                      value="DOCX"
+                      label="Microsoft Word (.docx)"
+                      className="text-xs"
+                    >
                       Microsoft Word (.docx)
                     </SelectItem>
                   </SelectContent>
