@@ -49,6 +49,7 @@ import {
   TEMPLATE_KIND_LABELS,
   CONTRACT_TYPE_LABELS,
 } from "../../constants/contract.constants";
+import { TEMPLATE_PRESETS } from "../../constants/contract-template-presets";
 import type {
   ContractTemplate,
   TemplateKind,
@@ -64,101 +65,8 @@ interface ContractTemplateEditorProps {
   onSaveSuccess?: (templateId: string) => void;
 }
 
-const DEFAULT_SAMPLE_DATA = JSON.stringify(
-  {
-    company_name: "TẬP ĐOÀN CÔNG NGHỆ CYCLOSA",
-    company_address: "Tầng 12 & 14, Tòa nhà Keangnam Landmark 72, Mễ Trì, Nam Từ Liêm, Hà Nội",
-    company_tax_code: "0108999888",
-    representative_name: "Ông Lê Hoàng Nam",
-    representative_title: "Tổng Giám Đốc",
-    employee_name: "NGUYỄN VĂN AN",
-    employee_code: "NV00125",
-    dob: "15/08/1996",
-    gender: "Nam",
-    id_card_no: "001096001234",
-    id_card_date: "10/05/2021",
-    id_card_place: "Cục CSQLHC về TTXH",
-    permanent_address: "Số 18, Ngõ 42 Phố Triều Khúc, Quận Thanh Xuân, TP. Hà Nội",
-    current_address: "Phòng 1002, Tòa Roman Plaza, Tố Hữu, Nam Từ Liêm, Hà Nội",
-    phone: "0901 234 567",
-    email: "an.nguyen@cyclosa.vn",
-    contract_number: "HĐLĐ-2026-00125",
-    job_title: "Kỹ sư giải pháp đám mây cao cấp (Cloud Solution Architect)",
-    department_name: "Trung tâm Nghiên cứu & Phát triển Sản phẩm (R&D)",
-    start_date: "01/11/2026",
-    end_date: "31/10/2028",
-    sign_date: "25/10/2026",
-    base_salary: "35,000,000 VNĐ",
-    salary_in_words: "Ba mươi lăm triệu đồng chẵn",
-    work_location: "Trụ sở chính CYCLOSA, Keangnam Landmark 72, Hà Nội",
-    working_time_description: "Từ Thứ Hai đến Thứ Sáu (8h30 - 17h30), nghỉ Thứ Bảy và Chủ Nhật",
-    probation_salary_rate: "85%",
-  },
-  null,
-  2
-);
-
-const DEFAULT_TEMPLATE_HTML = `
-<div style="font-family: 'Times New Roman', Times, serif; line-height: 1.6; color: #111; max-width: 780px; margin: 0 auto; padding: 24px;">
-  <div style="text-align: center; margin-bottom: 24px;">
-    <h4 style="margin: 0; font-size: 14px; text-transform: uppercase; font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
-    <p style="margin: 4px 0; font-size: 13px; font-weight: bold;">Độc lập - Tự do - Hạnh phúc</p>
-    <p style="margin: 0; font-size: 12px;">-----------------------</p>
-    <p style="margin: 8px 0 0 0; font-size: 12px; font-style: italic;">Số: {{contract_number}} / CYCLOSA-HR</p>
-    <h2 style="margin-top: 24px; margin-bottom: 4px; text-transform: uppercase; font-size: 20px; font-weight: bold; color: #1e3a8a;">HỢP ĐỒNG LAO ĐỘNG</h2>
-    <p style="margin: 0; font-size: 12px; font-style: italic;">(Ban hành theo Bộ luật Lao động số 45/2019/QH14)</p>
-  </div>
-
-  <p style="font-size: 13px;">Hôm nay, ngày {{sign_date}}, tại trụ sở Công ty, chúng tôi gồm các bên:</p>
-
-  <div style="background-color: #f8fafc; border-left: 3px solid #1e3a8a; padding: 12px; margin-bottom: 16px;">
-    <h4 style="margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #1e3a8a; font-weight: bold;">BÊN A: NGƯỜI SỬ DỤNG LAO ĐỘNG</h4>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Tên doanh nghiệp:</strong> {{company_name}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Địa chỉ trụ sở:</strong> {{company_address}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Mã số doanh nghiệp / MST:</strong> {{company_tax_code}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Đại diện bởi:</strong> {{representative_name}} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Chức vụ:</strong> {{representative_title}}</p>
-  </div>
-
-  <div style="background-color: #f8fafc; border-left: 3px solid #1e3a8a; padding: 12px; margin-bottom: 20px;">
-    <h4 style="margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #1e3a8a; font-weight: bold;">BÊN B: NGƯỜI LAO ĐỘNG</h4>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Họ và tên:</strong> {{employee_name}} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Mã nhân viên:</strong> {{employee_code}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Ngày sinh:</strong> {{dob}} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Giới tính:</strong> {{gender}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Số CCCD:</strong> {{id_card_no}} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Cấp ngày:</strong> {{id_card_date}} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Nơi cấp:</strong> {{id_card_place}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Địa chỉ thường trú:</strong> {{permanent_address}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Nơi ở hiện tại:</strong> {{current_address}}</p>
-    <p style="margin: 3px 0; font-size: 13px;"><strong>Điện thoại:</strong> {{phone}} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Email cá nhân:</strong> {{email}}</p>
-  </div>
-
-  <h4 style="font-size: 14px; color: #1e3a8a; margin-top: 16px; margin-bottom: 6px; font-weight: bold;">ĐIỀU 1: THỜI HẠN VÀ CÔNG VIỆC HỢP ĐỒNG</h4>
-  <p style="font-size: 13px; margin: 4px 0;">1. Loại hợp đồng lao động: Theo thỏa thuận quy định.</p>
-  <p style="font-size: 13px; margin: 4px 0;">2. Thời hạn hợp đồng: Từ ngày <strong>{{start_date}}</strong> đến ngày <strong>{{end_date}}</strong>.</p>
-  <p style="font-size: 13px; margin: 4px 0;">3. Bộ phận làm việc: {{department_name}}.</p>
-  <p style="font-size: 13px; margin: 4px 0;">4. Chức danh chuyên môn: <strong>{{job_title}}</strong>.</p>
-  <p style="font-size: 13px; margin: 4px 0;">5. Địa điểm làm việc: {{work_location}}.</p>
-
-  <h4 style="font-size: 14px; color: #1e3a8a; margin-top: 16px; margin-bottom: 6px; font-weight: bold;">ĐIỀU 2: CHẾ ĐỘ LƯƠNG VÀ ĐÃI NGỘ</h4>
-  <p style="font-size: 13px; margin: 4px 0;">1. Mức lương cơ bản thỏa thuận: <strong>{{base_salary}}</strong> / tháng (Bằng chữ: <em>{{salary_in_words}}</em>).</p>
-  <p style="font-size: 13px; margin: 4px 0;">2. Thời giờ làm việc: {{working_time_description}}.</p>
-  <p style="font-size: 13px; margin: 4px 0;">3. Hình thức trả lương: Chuyển khoản qua tài khoản ngân hàng định kỳ vào ngày 05 hàng tháng.</p>
-
-  <h4 style="font-size: 14px; color: #1e3a8a; margin-top: 16px; margin-bottom: 6px; font-weight: bold;">ĐIỀU 3: HIỆU LỰC THI HÀNH & KÝ KẾT</h4>
-  <p style="font-size: 13px; margin: 4px 0;">Hợp đồng được lập dưới dạng chứng từ điện tử có giá trị pháp lý tương đương bản giấy theo Luật Giao dịch Điện tử số 20/2023/QH15.</p>
-
-  <div style="margin-top: 45px; display: flex; justify-content: space-between; page-break-inside: avoid;">
-    <div style="text-align: center; width: 45%;">
-      <p style="margin: 0; font-size: 13px; font-weight: bold;">ĐẠI DIỆN NGƯỜI LAO ĐỘNG</p>
-      <p style="margin: 4px 0 60px 0; font-size: 12px; font-style: italic;">(Ký điện tử / Ký tên)</p>
-      <p style="margin: 0; font-size: 13px; font-weight: bold;">{{employee_name}}</p>
-    </div>
-    <div style="text-align: center; width: 45%;">
-      <p style="margin: 0; font-size: 13px; font-weight: bold;">ĐẠI DIỆN BÊN SỬ DỤNG LAO ĐỘNG</p>
-      <p style="margin: 4px 0 60px 0; font-size: 12px; font-style: italic;">(Ký điện tử / Đóng dấu)</p>
-      <p style="margin: 0; font-size: 13px; font-weight: bold;">{{representative_name}}</p>
-      <p style="margin: 2px 0 0 0; font-size: 12px; font-style: italic;">{{representative_title}}</p>
-    </div>
-  </div>
-</div>
-`.trim();
+const DEFAULT_SAMPLE_DATA = JSON.stringify(TEMPLATE_PRESETS.LABOR_CONTRACT.sampleData, null, 2);
+const DEFAULT_TEMPLATE_HTML = TEMPLATE_PRESETS.LABOR_CONTRACT.html;
 
 function renderTemplateLocally(template: string, data: Record<string, unknown>): string {
   if (!template) return "";
@@ -252,12 +160,48 @@ export function ContractTemplateEditor({
       if (initialData.activeVersion?.sampleDataJson) {
         setSampleDataJson(initialData.activeVersion.sampleDataJson);
       }
-    } else if (!companyId && companies.length > 0) {
-      setCompanyId(companies[0].id);
-      // Auto generate code if empty
-      setTemplateCode(`HDLD-TPL-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`);
+    } else {
+      const preset = TEMPLATE_PRESETS[kind] || TEMPLATE_PRESETS.LABOR_CONTRACT;
+      if (!name) setName(preset.defaultTitle);
+      if (!templateCode) {
+        setTemplateCode(`${preset.defaultCodePrefix}-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`);
+      }
+      if (!companyId && companies.length > 0) {
+        setCompanyId(companies[0].id);
+      }
+      if (!contentRaw || contentRaw === DEFAULT_TEMPLATE_HTML) {
+        setContentRaw(preset.html);
+      }
+      if (!sampleDataJson || sampleDataJson === DEFAULT_SAMPLE_DATA) {
+        setSampleDataJson(JSON.stringify(preset.sampleData, null, 2));
+      }
     }
-  }, [initialData, companies, companyId]);
+  }, [initialData, companies]);
+
+  // Handle template kind change with preset auto-switch
+  const handleKindChange = (val: string) => {
+    const newKind = val as TemplateKind;
+    setKind(newKind);
+    const preset = TEMPLATE_PRESETS[newKind];
+    if (preset && !isEdit) {
+      setName(preset.defaultTitle);
+      setTemplateCode(`${preset.defaultCodePrefix}-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`);
+      setContentRaw(preset.html);
+      setSampleDataJson(JSON.stringify(preset.sampleData, null, 2));
+      setPreviewHtml(null);
+      toast.info(`Đã nạp bộ mẫu chuẩn: ${preset.defaultTitle}`);
+    }
+  };
+
+  // Re-apply standard preset for current kind
+  const handleApplyPreset = () => {
+    const preset = TEMPLATE_PRESETS[kind];
+    if (!preset) return;
+    setContentRaw(preset.html);
+    setSampleDataJson(JSON.stringify(preset.sampleData, null, 2));
+    setPreviewHtml(null);
+    toast.success(`Đã nạp lại mẫu chuẩn: ${preset.defaultTitle}`);
+  };
 
   // Insert token into textarea at cursor position
   const handleInsertToken = (token: string) => {
@@ -584,12 +528,23 @@ export function ContractTemplateEditor({
 
               {/* Loại biểu mẫu */}
               <div className="space-y-1.5">
-                <Label htmlFor="kind" className="text-xs font-medium">
-                  Phân loại mẫu biểu <span className="text-rose-500">*</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="kind" className="text-xs font-medium">
+                    Phân loại mẫu biểu <span className="text-rose-500">*</span>
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={handleApplyPreset}
+                    className="text-[11px] text-primary hover:underline font-medium inline-flex items-center gap-1"
+                    title="Nạp lại mã HTML và dữ liệu JSON chuẩn theo loại biểu mẫu đang chọn"
+                  >
+                    <RefreshCw className="w-2.5 h-2.5" />
+                    <span>Nạp mẫu chuẩn</span>
+                  </button>
+                </div>
                 <Select
                   value={kind}
-                  onValueChange={(val) => setKind(val as TemplateKind)}
+                  onValueChange={handleKindChange}
                 >
                   <SelectTrigger id="kind" className="h-9 text-xs">
                     <SelectValue />

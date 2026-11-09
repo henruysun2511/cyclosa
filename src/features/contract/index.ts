@@ -1,5 +1,6 @@
 export * from "./api/contract-api";
 export * from "./constants/contract.constants";
+export * from "./constants/contract-template-presets";
 export * from "./hooks/use-contract-filters";
 export * from "./schemas/contract.schema";
 export * from "./types/contract.types";
