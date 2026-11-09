@@ -15,6 +15,7 @@ export * from "./components/dialogs/contract-signing-dialog";
 export * from "./components/dialogs/contract-appendix-dialog";
 export * from "./components/dialogs/contract-template-dialog";
 export * from "./components/dialogs/contract-terminate-dialog";
+export * from "./components/forms/contract-form";
 export * from "./components/templates/contract-template-editor";
 export * from "./components/templates/template-variable-picker";
 

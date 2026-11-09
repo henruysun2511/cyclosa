@@ -481,7 +481,7 @@ export function ContractTemplateEditor({
                 </Label>
                 <Select
                   value={companyId}
-                  onValueChange={setCompanyId}
+                  onValueChange={(val) => setCompanyId(val || "")}
                   disabled={isEdit}
                 >
                   <SelectTrigger id="companyId" className="h-9 text-xs">
@@ -555,7 +555,9 @@ export function ContractTemplateEditor({
                 </div>
                 <Select
                   value={kind}
-                  onValueChange={handleKindChange}
+                  onValueChange={(val) => {
+                    if (val) handleKindChange(val as TemplateKind);
+                  }}
                 >
                   <SelectTrigger id="kind" className="h-9 text-xs">
                     <SelectValue placeholder="Chọn loại mẫu biểu...">

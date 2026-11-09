@@ -484,3 +484,4 @@ export const TEMPLATE_PRESETS: Record<TemplateKind, TemplatePreset> = {
 `.trim(),
   },
 };
+

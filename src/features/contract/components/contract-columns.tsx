@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Eye,
@@ -52,13 +53,12 @@ export function getContractColumns({
       cell: ({ row }) => {
         const item = row.original;
         return (
-          <button
-            type="button"
-            onClick={() => onViewDetail(item.id)}
-            className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
+          <Link
+            href={`/contracts/${item.id}`}
+            className="font-mono text-xs font-semibold text-primary hover:underline"
           >
             {item.contractNumber}
-          </button>
+          </Link>
         );
       },
     },

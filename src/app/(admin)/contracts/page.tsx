@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FileText, Plus, FileCode, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,14 +14,12 @@ import {
   ContractStatsCards,
   ContractFilters,
   ContractTable,
-  ContractFormDialog,
-  ContractDetailDialog,
   ContractSigningDialog,
   ContractAppendixDialog,
 } from "@/features/contract";
-import type { ContractDetail } from "@/features/contract/types/contract.types";
 
 export default function ContractsPage() {
+  const router = useRouter();
   const { can } = usePermission();
   const canManage = can(PERMISSIONS.EMPLOYEE.CREATE);
 
@@ -47,11 +46,7 @@ export default function ContractsPage() {
     resetFilters,
   } = useContractFilters();
 
-  // Dialog states
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingContract, setEditingContract] = useState<ContractDetail | null>(null);
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  // Quick action dialog states
   const [signingContract, setSigningContract] = useState<{ id: string; number: string } | null>(
     null
   );
@@ -100,21 +95,15 @@ export default function ContractsPage() {
   }).length;
 
   const handleOpenCreate = () => {
-    setEditingContract(null);
-    setIsFormOpen(true);
+    router.push(companyId ? `/contracts/new?companyId=${companyId}` : "/contracts/new");
   };
 
   const handleOpenEdit = (id: string) => {
-    const item = contracts.find((c) => c.id === id);
-    if (item) {
-      setEditingContract(item as unknown as ContractDetail);
-      setIsFormOpen(true);
-    }
+    router.push(`/contracts/${id}/edit`);
   };
 
   const handleOpenDetail = (id: string) => {
-    setSelectedContractId(id);
-    setIsDetailOpen(true);
+    router.push(`/contracts/${id}`);
   };
 
   const handleOpenSign = (contract: { id: string; number: string }) => {
@@ -163,10 +152,12 @@ export default function ContractsPage() {
           </Button>
 
           {canManage && (
-            <Button size="sm" onClick={handleOpenCreate} className="h-9 gap-1.5 shadow-xs">
-              <Plus className="w-4 h-4" />
-              Soạn thảo hợp đồng
-            </Button>
+            <Link href={companyId ? `/contracts/new?companyId=${companyId}` : "/contracts/new"}>
+              <Button size="sm" className="h-9 gap-1.5 shadow-xs">
+                <Plus className="w-4 h-4" />
+                Soạn thảo hợp đồng
+              </Button>
+            </Link>
           )}
         </div>
       </div>
@@ -209,24 +200,7 @@ export default function ContractsPage() {
         canManage={canManage}
       />
 
-      {/* 5. Dialog CRUD Hợp nhất (Rule 11.2) */}
-      <ContractFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        companyId={companyId}
-        contract={editingContract}
-        onSuccess={() => refetch()}
-      />
-
-      {/* 6. Dialog Xem Chi tiết Hợp đồng */}
-      <ContractDetailDialog
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-        contractId={selectedContractId || ""}
-        onSuccess={() => refetch()}
-      />
-
-      {/* 7. Dialog Ký số OTP điện tử */}
+      {/* 5. Dialog Ký số OTP điện tử (Thao tác nhanh từ bảng) */}
       {signingContract && (
         <ContractSigningDialog
           open={Boolean(signingContract)}
@@ -237,7 +211,7 @@ export default function ContractsPage() {
         />
       )}
 
-      {/* 8. Dialog Phụ lục Hợp đồng */}
+      {/* 6. Dialog Phụ lục Hợp đồng (Thao tác nhanh từ bảng) */}
       {appendixContract && (
         <ContractAppendixDialog
           open={Boolean(appendixContract)}
