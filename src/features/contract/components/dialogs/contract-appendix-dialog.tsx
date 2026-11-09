@@ -14,6 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   useCreateContractAppendixMutation,
   useUpdateContractAppendixMutation,
   useSubmitAppendixApprovalMutation,
@@ -215,20 +222,38 @@ export function ContractAppendixDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="appendixType">Phân loại phụ lục</Label>
-            <select
-              id="appendixType"
+          <div className="space-y-1.5">
+            <Label htmlFor="appendixType" className="text-xs font-semibold">Phân loại phụ lục</Label>
+            <Select
               value={appendixType}
-              onChange={(e) => setAppendixType(e.target.value)}
+              onValueChange={(val) => val && setAppendixType(val)}
               disabled={!isDraft}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
             >
-              <option value="ADJUST_SALARY">Điều chỉnh mức lương / Thu nhập</option>
-              <option value="CHANGE_JOB_TITLE">Bổ nhiệm / Thay đổi chức danh & phòng ban</option>
-              <option value="CHANGE_WORK_LOCATION">Thay đổi địa điểm làm việc</option>
-              <option value="OTHER_TERMS">Sửa đổi các điều khoản thỏa thuận khác</option>
-            </select>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Chọn phân loại phụ lục">
+                  {(val: string) => {
+                    if (val === "ADJUST_SALARY") return "Điều chỉnh mức lương / Thu nhập";
+                    if (val === "CHANGE_JOB_TITLE") return "Bổ nhiệm / Thay đổi chức danh & phòng ban";
+                    if (val === "CHANGE_WORK_LOCATION") return "Thay đổi địa điểm làm việc";
+                    return "Sửa đổi các điều khoản thỏa thuận khác";
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ADJUST_SALARY" label="Điều chỉnh mức lương / Thu nhập">
+                  Điều chỉnh mức lương / Thu nhập
+                </SelectItem>
+                <SelectItem value="CHANGE_JOB_TITLE" label="Bổ nhiệm / Thay đổi chức danh & phòng ban">
+                  Bổ nhiệm / Thay đổi chức danh & phòng ban
+                </SelectItem>
+                <SelectItem value="CHANGE_WORK_LOCATION" label="Thay đổi địa điểm làm việc">
+                  Thay đổi địa điểm làm việc
+                </SelectItem>
+                <SelectItem value="OTHER_TERMS" label="Sửa đổi các điều khoản thỏa thuận khác">
+                  Sửa đổi các điều khoản thỏa thuận khác
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-[11px] text-amber-600 dark:text-amber-400">
               * Chú ý: Theo Bộ luật Lao động 2019, phụ lục hợp đồng không được sửa đổi thời hạn của hợp đồng lao động.
             </p>

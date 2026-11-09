@@ -15,6 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   useCreateContractTemplateMutation,
   useUpdateContractTemplateMutation,
   useCreateTemplateVersionMutation,
@@ -295,18 +302,23 @@ export function ContractTemplateDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="kind">Phân loại mẫu</Label>
-              <select
-                id="kind"
+              <Select
                 value={kind}
-                onChange={(e) => setKind(e.target.value as TemplateKind)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                onValueChange={(val) => val && setKind(val as TemplateKind)}
               >
-                {Object.entries(TEMPLATE_KIND_LABELS).map(([k, label]) => (
-                  <option key={k} value={k}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-9 text-xs">
+                  <SelectValue placeholder="Chọn phân loại mẫu">
+                    {(val: string) => TEMPLATE_KIND_LABELS[val as TemplateKind] || val}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TEMPLATE_KIND_LABELS).map(([k, label]) => (
+                    <SelectItem key={k} value={k} label={label}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

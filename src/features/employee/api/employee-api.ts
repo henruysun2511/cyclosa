@@ -21,10 +21,17 @@ export const employeeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // 3.1 Nhóm Hồ sơ nhân viên chính (Employee Profiles)
     getEmployees: builder.query<PageData<EmployeeSummary>, EmployeeFilterParams>({
-      query: (params = {}) => ({
-        url: `/employees?${buildQueryString(params)}`,
-        method: "GET",
-      }),
+      query: (params = {}) => {
+        const queryParams: Record<string, unknown> = {
+          ...params,
+          // Chuẩn hóa 1-based page từ UI sang 0-based page cho Spring Boot
+          page: params.page ? Math.max(0, params.page - 1) : 0,
+        };
+        return {
+          url: `/employees?${buildQueryString(queryParams)}`,
+          method: "GET",
+        };
+      },
       transformResponse: (res: ApiResponse<PageData<EmployeeSummary>>) => res.data,
       providesTags: (result) =>
         result

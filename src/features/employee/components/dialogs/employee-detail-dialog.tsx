@@ -46,7 +46,7 @@ import type {
   EmergencyContact,
 } from "../../types/employee.types";
 
-import { EmployeeEditDialog } from "./employee-edit-dialog";
+import { EmployeeFormDialog } from "./employee-form-dialog";
 import { WorkAssignmentDialog } from "./work-assignment-dialog";
 import { IdentityDocumentDialog } from "./identity-document-dialog";
 import { BankAccountDialog } from "./bank-account-dialog";
@@ -731,10 +731,11 @@ export function EmployeeDetailDialog({
       {/* Sub Dialogs */}
       {employee && (
         <>
-          <EmployeeEditDialog
+          <EmployeeFormDialog
             open={openEditProfile}
             onOpenChange={setOpenEditProfile}
             employee={employee}
+            companyId={employee.companyId}
             onSuccess={() => {
               refetch();
               onSuccess?.();

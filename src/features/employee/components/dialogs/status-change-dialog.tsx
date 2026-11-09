@@ -6,15 +6,27 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useChangeEmployeeStatusMutation } from "../../api/employee-api";
+import {
+  EMPLOYEE_STATUS_OPTIONS,
+  EMPLOYEE_STATUS_LABELS,
+} from "../../constants/employee.constants";
 import type { EmployeeStatus } from "../../types/employee.types";
 
 interface StatusChangeDialogProps {
@@ -60,19 +72,24 @@ export function StatusChangeDialog({
       toast.success("Thay đổi trạng thái làm việc của nhân sự thành công!");
       onOpenChange(false);
       onSuccess?.();
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Không thể chuyển trạng thái làm việc!");
+    } catch (err: unknown) {
+      const error = err as { data?: { message?: string } };
+      toast.error(error?.data?.message || "Không thể chuyển trạng thái làm việc!");
     }
   };
+
+  const statusOptions = EMPLOYEE_STATUS_OPTIONS.filter((o) => o.value !== "ALL");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl w-[90vw]">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-600" />
+          <DialogTitle className="text-base font-bold">
             Thay đổi trạng thái làm việc nhân sự
           </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Cập nhật tình trạng công tác thực tế của nhân sự theo quyết định nhân sự hoặc quy định BHXH.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -80,17 +97,23 @@ export function StatusChangeDialog({
             <Label className="text-xs font-semibold">
               Trạng thái mới <span className="text-destructive">*</span>
             </Label>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            <Select
               value={status}
-              onChange={(e) => setStatus(e.target.value as EmployeeStatus)}
+              onValueChange={(val) => val && setStatus(val as EmployeeStatus)}
             >
-              <option value="ACTIVE">Chính thức (Active) - Đang công tác</option>
-              <option value="PROBATION">Thử việc (Probation)</option>
-              <option value="ON_LEAVE">Nghỉ chế độ / Thai sản (On Leave)</option>
-              <option value="SUSPENDED">Tạm đình chỉ / Hoãn HĐLĐ (Suspended)</option>
-              <option value="TERMINATED">Thôi việc / Chấm dứt HĐLĐ (Terminated)</option>
-            </select>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Chọn trạng thái">
+                  {(val: string) => EMPLOYEE_STATUS_LABELS[val] || val}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} label={opt.label}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
@@ -102,6 +125,7 @@ export function StatusChangeDialog({
               value={effectiveFrom}
               onChange={(e) => setEffectiveFrom(e.target.value)}
               required
+              className="h-9 text-xs"
             />
           </div>
 
@@ -112,6 +136,7 @@ export function StatusChangeDialog({
               placeholder="Ghi rõ lý do điều chỉnh trạng thái (ví dụ: Nghỉ sinh theo chế độ BHXH 6 tháng, Thôi việc theo nguyện vọng cá nhân...)"
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              className="text-xs"
             />
           </div>
 
@@ -125,7 +150,14 @@ export function StatusChangeDialog({
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Đang xử lý..." : "Xác nhận chuyển trạng thái"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Xác nhận chuyển trạng thái"
+              )}
             </Button>
           </DialogFooter>
         </form>
@@ -133,4 +165,3 @@ export function StatusChangeDialog({
     </Dialog>
   );
 }
-

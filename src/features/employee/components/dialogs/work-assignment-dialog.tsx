@@ -6,13 +6,21 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Building2, MapPin, Briefcase, Award } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useCreateWorkAssignmentMutation } from "../../api/employee-api";
 import {
   useGetDepartmentsQuery,
@@ -20,6 +28,11 @@ import {
   useGetJobTitlesQuery,
   useGetJobLevelsQuery,
 } from "@/features/organization/api";
+import {
+  EMPLOYMENT_TYPE_OPTIONS,
+  EMPLOYMENT_TYPE_LABELS,
+  WORK_CHANGE_REASONS,
+} from "../../constants/employee.constants";
 import type { EmploymentType } from "../../types/employee.types";
 
 interface WorkAssignmentDialogProps {
@@ -40,10 +53,21 @@ export function WorkAssignmentDialog({
   const [createAssignment, { isLoading }] = useCreateWorkAssignmentMutation();
 
   // Danh mục 3 chiều
-  const { data: deptData } = useGetDepartmentsQuery({ companyId, size: 100 }, { skip: !companyId || !open });
-  const { data: branches = [] } = useGetBranchesByCompanyQuery(companyId, { skip: !companyId || !open });
-  const { data: titleData } = useGetJobTitlesQuery({ companyId, size: 100 }, { skip: !companyId || !open });
-  const { data: levelData } = useGetJobLevelsQuery({ companyId, size: 100 }, { skip: !companyId || !open });
+  const { data: deptData } = useGetDepartmentsQuery(
+    { companyId, size: 100 },
+    { skip: !companyId || !open }
+  );
+  const { data: branches = [] } = useGetBranchesByCompanyQuery(companyId, {
+    skip: !companyId || !open,
+  });
+  const { data: titleData } = useGetJobTitlesQuery(
+    { companyId, size: 100 },
+    { skip: !companyId || !open }
+  );
+  const { data: levelData } = useGetJobLevelsQuery(
+    { companyId, size: 100 },
+    { skip: !companyId || !open }
+  );
 
   // Form states
   const [departmentId, setDepartmentId] = useState("");
@@ -82,8 +106,9 @@ export function WorkAssignmentDialog({
       toast.success("Bổ nhiệm / Luân chuyển công tác thành công!");
       onOpenChange(false);
       onSuccess?.();
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Không thể thực hiện luân chuyển công tác!");
+    } catch (err: unknown) {
+      const error = err as { data?: { message?: string } };
+      toast.error(error?.data?.message || "Không thể thực hiện luân chuyển công tác!");
     }
   };
 
@@ -91,10 +116,12 @@ export function WorkAssignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl w-[92vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
+          <DialogTitle className="text-base font-bold">
             Bổ nhiệm & Luân chuyển công tác 3 chiều
           </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Điều chuyển nhân sự giữa các phòng ban, chi nhánh văn phòng hoặc thăng tiến chức danh cấp bậc.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -109,123 +136,150 @@ export function WorkAssignmentDialog({
                 value={effectiveFrom}
                 onChange={(e) => setEffectiveFrom(e.target.value)}
                 required
+                className="h-9 text-xs"
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">
                 Lý do biến động <span className="text-destructive">*</span>
               </Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                value={changeReason}
-                onChange={(e) => setChangeReason(e.target.value)}
-              >
-                <option value="PROMOTION">Bổ nhiệm thăng chức (Promotion)</option>
-                <option value="TRANSFER">Luân chuyển điều động (Transfer)</option>
-                <option value="RESTRUCTURE">Tái cơ cấu phòng ban (Restructure)</option>
-                <option value="HIRE">Tiếp nhận ban đầu (Hire)</option>
-              </select>
+              <Select value={changeReason} onValueChange={(v) => v && setChangeReason(v)}>
+                <SelectTrigger className="w-full h-9 text-xs">
+                  <SelectValue placeholder="Chọn lý do">
+                    {(val: string) => {
+                      const r = WORK_CHANGE_REASONS.find((i) => i.value === val);
+                      return r ? r.label : val;
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {WORK_CHANGE_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value} label={r.label}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Chiều 1: Phòng ban */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold flex items-center gap-1.5 text-blue-700">
-              <Building2 className="h-3.5 w-3.5" />
+            <Label className="text-xs font-semibold">
               Chiều 1: Phòng ban trực thuộc mới <span className="text-destructive">*</span>
             </Label>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-              required
-            >
-              <option value="">-- Chọn phòng ban công tác --</option>
-              {deptData?.items?.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} ({d.code})
-                </option>
-              ))}
-            </select>
+            <Select value={departmentId} onValueChange={(v) => v && setDepartmentId(v)}>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Chọn phòng ban công tác...">
+                  {(val: string) => {
+                    const d = deptData?.items?.find((i) => i.id === val);
+                    return d ? `${d.name} (${d.code})` : val;
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {deptData?.items?.map((d) => (
+                  <SelectItem key={d.id} value={d.id} label={d.name}>
+                    {d.name} ({d.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Chiều 2: Chi nhánh */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold flex items-center gap-1.5 text-emerald-700">
-              <MapPin className="h-3.5 w-3.5" />
+            <Label className="text-xs font-semibold">
               Chiều 2: Chi nhánh / Văn phòng làm việc (GPS) <span className="text-destructive">*</span>
             </Label>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-              value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-              required
-            >
-              <option value="">-- Chọn chi nhánh làm việc --</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.code}) - {b.address}
-                </option>
-              ))}
-            </select>
+            <Select value={branchId} onValueChange={(v) => v && setBranchId(v)}>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Chọn chi nhánh làm việc...">
+                  {(val: string) => {
+                    const b = branches.find((i) => i.id === val);
+                    return b ? `${b.name} (${b.code})` : val;
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map((b) => (
+                  <SelectItem key={b.id} value={b.id} label={b.name}>
+                    {b.name} ({b.code}) - {b.address}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Chiều 3: Chức danh & Cấp bậc */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold flex items-center gap-1.5 text-amber-700">
-                <Briefcase className="h-3.5 w-3.5" />
+              <Label className="text-xs font-semibold">
                 Chiều 3: Chức danh công việc <span className="text-destructive">*</span>
               </Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                value={jobTitleId}
-                onChange={(e) => setJobTitleId(e.target.value)}
-                required
-              >
-                <option value="">-- Chọn chức danh --</option>
-                {titleData?.items?.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.code})
-                  </option>
-                ))}
-              </select>
+              <Select value={jobTitleId} onValueChange={(v) => v && setJobTitleId(v)}>
+                <SelectTrigger className="w-full h-9 text-xs">
+                  <SelectValue placeholder="Chọn chức danh...">
+                    {(val: string) => {
+                      const t = titleData?.items?.find((i) => i.id === val);
+                      return t ? `${t.name} (${t.code})` : val;
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {titleData?.items?.map((t) => (
+                    <SelectItem key={t.id} value={t.id} label={t.name}>
+                      {t.name} ({t.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold flex items-center gap-1.5 text-amber-700">
-                <Award className="h-3.5 w-3.5" />
+              <Label className="text-xs font-semibold">
                 Cấp bậc thẩm quyền <span className="text-destructive">*</span>
               </Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                value={jobLevelId}
-                onChange={(e) => setJobLevelId(e.target.value)}
-                required
-              >
-                <option value="">-- Chọn cấp bậc --</option>
-                {levelData?.items?.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name} (Bậc {l.rankOrder})
-                  </option>
-                ))}
-              </select>
+              <Select value={jobLevelId} onValueChange={(v) => v && setJobLevelId(v)}>
+                <SelectTrigger className="w-full h-9 text-xs">
+                  <SelectValue placeholder="Chọn cấp bậc...">
+                    {(val: string) => {
+                      const l = levelData?.items?.find((i) => i.id === val);
+                      return l ? `${l.name} (Bậc ${l.rankOrder})` : val;
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {levelData?.items?.map((l) => (
+                    <SelectItem key={l.id} value={l.id} label={l.name}>
+                      {l.name} (Bậc {l.rankOrder})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Loại hình hợp đồng */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Loại hình lao động</Label>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            <Select
               value={employmentType}
-              onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
+              onValueChange={(val) => val && setEmploymentType(val as EmploymentType)}
             >
-              <option value="FULL_TIME">Toàn thời gian chính thức (Full-time)</option>
-              <option value="PART_TIME">Bán thời gian (Part-time)</option>
-              <option value="INTERN">Thực tập sinh (Intern)</option>
-              <option value="CONTRACTOR">Cộng tác viên / Thuê ngoài (Contractor)</option>
-            </select>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Chọn loại hình">
+                  {(val: string) => EMPLOYMENT_TYPE_LABELS[val] || val}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {EMPLOYMENT_TYPE_OPTIONS.map((e) => (
+                  <SelectItem key={e.value} value={e.value} label={e.label}>
+                    {e.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter className="pt-4 border-t gap-2">
@@ -238,7 +292,14 @@ export function WorkAssignmentDialog({
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Đang xử lý..." : "Xác nhận Điều chuyển"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Xác nhận Điều chuyển"
+              )}
             </Button>
           </DialogFooter>
         </form>
@@ -246,4 +307,3 @@ export function WorkAssignmentDialog({
     </Dialog>
   );
 }
-

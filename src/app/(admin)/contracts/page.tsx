@@ -1,338 +1,254 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  FileText,
-  Plus,
-  Search,
-  Filter,
-  Eye,
-  FileSignature,
-  Building2,
-  Calendar,
-  AlertTriangle,
-  SlidersHorizontal,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { FileText, Plus, FileCode, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import Link from "next/link";
+import { usePermission } from "@/features/authorization/hooks/use-permission";
+import { PERMISSIONS } from "@/features/authorization/constants/permission.constants";
 import { useGetCompaniesQuery } from "@/features/organization/api";
-import { useGetContractsQuery } from "@/features/contract/api/contract-api";
-import { ContractStatsCards } from "@/features/contract/components/contract-stats-cards";
 import {
-  ContractStatusBadge,
-  ContractTypeBadge,
-} from "@/features/contract/components/contract-status-badge";
-import {
-  CONTRACT_STATUS_LABELS,
-  CONTRACT_TYPE_LABELS,
-} from "@/features/contract/constants/contract.constants";
-import { ContractCreateDialog } from "@/features/contract/components/dialogs/contract-create-dialog";
-import { ContractDetailDialog } from "@/features/contract/components/dialogs/contract-detail-dialog";
-import { ContractSigningDialog } from "@/features/contract/components/dialogs/contract-signing-dialog";
-import type {
-  ContractStatus,
-  ContractType,
-  ContractSummary,
-} from "@/features/contract/types/contract.types";
+  useGetContractsQuery,
+  useContractFilters,
+  ContractStatsCards,
+  ContractFilters,
+  ContractTable,
+  ContractFormDialog,
+  ContractDetailDialog,
+  ContractSigningDialog,
+  ContractAppendixDialog,
+} from "@/features/contract";
+import type { ContractDetail } from "@/features/contract/types/contract.types";
 
 export default function ContractsPage() {
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [search, setSearch] = useState<string>("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [expiringFilter, setExpiringFilter] = useState<string>("all");
-  const [page, setPage] = useState<number>(0);
+  const { can } = usePermission();
+  const canManage = can(PERMISSIONS.EMPLOYEE.CREATE);
 
-  // Modals
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // Hook quản lý bộ lọc và phân trang URL Search Params (Rule 7.2 & 4.2)
+  const {
+    search,
+    debouncedSearch,
+    companyId,
+    status,
+    statusParam,
+    contractType,
+    typeParam,
+    expiringFilter,
+    expiringBefore,
+    page,
+    size,
+    setSearch,
+    setCompanyId,
+    setStatus,
+    setContractType,
+    setExpiringFilter,
+    setPage,
+    setSize,
+    resetFilters,
+  } = useContractFilters();
+
+  // Dialog states
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingContract, setEditingContract] = useState<ContractDetail | null>(null);
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [signingContract, setSigningContract] = useState<{ id: string; number: string } | null>(
     null
   );
+  const [appendixContract, setAppendixContract] = useState<{ id: string; number: string } | null>(
+    null
+  );
 
-  // Companies
+  // Nạp danh sách công ty
   const { data: companiesData } = useGetCompaniesQuery({ size: 50 });
   const companies = companiesData?.items || [];
 
-  React.useEffect(() => {
-    if (!selectedCompanyId && companies.length > 0) {
-      setSelectedCompanyId(companies[0].id);
+  // Tự động chọn công ty đầu tiên lên URL nếu chưa có
+  useEffect(() => {
+    if (!companyId && companies.length > 0) {
+      setCompanyId(companies[0].id);
     }
-  }, [companies, selectedCompanyId]);
+  }, [companies, companyId, setCompanyId]);
 
-  // Expiring filter calculation
-  let expiringBefore: string | undefined = undefined;
-  if (expiringFilter === "30") {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    expiringBefore = d.toISOString().split("T")[0];
-  } else if (expiringFilter === "60") {
-    const d = new Date();
-    d.setDate(d.getDate() + 60);
-    expiringBefore = d.toISOString().split("T")[0];
-  }
-
-  // Contracts
+  // Nạp danh sách hợp đồng
   const {
     data: contractsData,
     isLoading,
+    isFetching,
     refetch,
   } = useGetContractsQuery(
     {
-      companyId: selectedCompanyId || undefined,
-      status: selectedStatus !== "all" && selectedStatus !== "EXPIRING" ? (selectedStatus as ContractStatus) : undefined,
-      contractType: selectedType !== "all" ? (selectedType as ContractType) : undefined,
-      expiringBefore: selectedStatus === "EXPIRING" ? expiringBefore || new Date(Date.now() + 60*24*60*60*1000).toISOString().split("T")[0] : expiringBefore,
-      search: search.trim() || undefined,
+      companyId: companyId || undefined,
+      status: status,
+      contractType: contractType,
+      expiringBefore: expiringBefore,
+      search: debouncedSearch.trim() || undefined,
       page,
-      size: 20,
+      size,
     },
-    { skip: !selectedCompanyId }
+    { skip: !companyId }
   );
 
   const contracts = contractsData?.items || [];
+  const totalElements = contractsData?.pagination?.total || 0;
 
-  const handleOpenDetail = (contractId: string) => {
-    setSelectedContractId(contractId);
+  // Thống kê nhanh từ danh sách
+  const activeCount = contracts.filter((c) => c.status === "ACTIVE").length;
+  const inSigningCount = contracts.filter((c) => c.status === "IN_SIGNING").length;
+  const draftCount = contracts.filter((c) => c.status === "DRAFT").length;
+  const expiringCount = contracts.filter((c) => {
+    if (!c.endDate || c.status !== "ACTIVE") return false;
+    const diff = (new Date(c.endDate).getTime() - Date.now()) / (1000 * 3600 * 24);
+    return diff > 0 && diff <= 60;
+  }).length;
+
+  const handleOpenCreate = () => {
+    setEditingContract(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (id: string) => {
+    const item = contracts.find((c) => c.id === id);
+    if (item) {
+      setEditingContract(item as unknown as ContractDetail);
+      setIsFormOpen(true);
+    }
+  };
+
+  const handleOpenDetail = (id: string) => {
+    setSelectedContractId(id);
     setIsDetailOpen(true);
   };
 
-  const handleOpenSigning = (contract: ContractSummary, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSigningContract({ id: contract.id, number: contract.contractNumber });
+  const handleOpenSign = (contract: { id: string; number: string }) => {
+    setSigningContract(contract);
+  };
+
+  const handleOpenAddAppendix = (id: string) => {
+    const item = contracts.find((c) => c.id === id);
+    if (item) {
+      setAppendixContract({ id: item.id, number: item.contractNumber });
+    }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Top Header */}
+      {/* 1. Top Header & Nút Điều hướng */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FileText className="w-6 h-6 text-primary" />
             Quản lý Hợp đồng Lao động & Ký điện tử
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Quản lý toàn diện vòng đời hợp đồng lao động, phụ lục điều chỉnh và tiến độ ký số E-Contract.
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Quản trị vòng đời hợp đồng lao động, đối soát Bộ luật Lao động 2019 và luồng ký số OTP.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link href="/contracts/templates">
-            <Button variant="outline" className="gap-2">
-              <SlidersHorizontal className="w-4 h-4" />
-              Biểu mẫu HĐ
+            <Button variant="outline" size="sm" className="h-9 gap-1.5">
+              <FileCode className="w-4 h-4 text-primary" />
+              Mẫu hợp đồng
             </Button>
           </Link>
-          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Soạn thảo hợp đồng
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="h-9 gap-1.5"
+            title="Làm mới dữ liệu từ máy chủ"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            Làm mới
           </Button>
+
+          {canManage && (
+            <Button size="sm" onClick={handleOpenCreate} className="h-9 gap-1.5 shadow-xs">
+              <Plus className="w-4 h-4" />
+              Soạn thảo hợp đồng
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
+      {/* 2. Thẻ KPI Thống kê nhanh */}
       <ContractStatsCards
         contracts={contracts}
-        selectedStatus={selectedStatus}
-        onFilterStatus={(st) => setSelectedStatus(st || "all")}
+        onFilterStatus={(st) => setStatus(st || "all")}
+        selectedStatus={statusParam}
       />
 
-      {/* Filter Bar */}
-      <Card>
-        <CardContent className="p-4 flex flex-col md:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Tìm theo số HĐ, họ tên hoặc mã nhân viên..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+      {/* 3. Thanh Lọc Chuẩn Select (Rule 11.8) */}
+      <ContractFilters
+        search={search}
+        onSearchChange={setSearch}
+        companies={companies}
+        selectedCompanyId={companyId}
+        onCompanyChange={setCompanyId}
+        selectedStatus={statusParam}
+        onStatusChange={setStatus}
+        selectedType={typeParam}
+        onTypeChange={setContractType}
+        expiringFilter={expiringFilter}
+        onExpiringChange={setExpiringFilter}
+        onReset={resetFilters}
+      />
 
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            {/* Trạng thái */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              {Object.entries(CONTRACT_STATUS_LABELS).map(([k, label]) => (
-                <option key={k} value={k}>
-                  {label}
-                </option>
-              ))}
-            </select>
+      {/* 4. Bảng Dữ liệu Chuẩn shadcn Table + DataPagination */}
+      <ContractTable
+        data={contracts}
+        pagination={contractsData?.pagination}
+        isLoading={isLoading}
+        onPageChange={setPage}
+        onPageSizeChange={setSize}
+        onViewDetail={handleOpenDetail}
+        onEdit={handleOpenEdit}
+        onSign={handleOpenSign}
+        onAddAppendix={handleOpenAddAppendix}
+        canManage={canManage}
+      />
 
-            {/* Loại HĐ */}
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            >
-              <option value="all">Tất cả loại HĐ</option>
-              {Object.entries(CONTRACT_TYPE_LABELS).map(([k, label]) => (
-                <option key={k} value={k}>
-                  {label}
-                </option>
-              ))}
-            </select>
+      {/* 5. Dialog CRUD Hợp nhất (Rule 11.2) */}
+      <ContractFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        companyId={companyId}
+        contract={editingContract}
+        onSuccess={() => refetch()}
+      />
 
-            {/* Hạn HĐ */}
-            <select
-              value={expiringFilter}
-              onChange={(e) => setExpiringFilter(e.target.value)}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            >
-              <option value="all">Mọi thời hạn</option>
-              <option value="30">Sắp hết hạn trong 30 ngày</option>
-              <option value="60">Sắp hết hạn trong 60 ngày</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* 6. Dialog Xem Chi tiết Hợp đồng */}
+      <ContractDetailDialog
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        contractId={selectedContractId || ""}
+        onSuccess={() => refetch()}
+      />
 
-      {/* Contracts Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-36">Số hợp đồng</TableHead>
-                <TableHead>Nhân viên</TableHead>
-                <TableHead>Loại hợp đồng</TableHead>
-                <TableHead>Thời hạn</TableHead>
-                <TableHead className="text-right">Lương cơ bản</TableHead>
-                <TableHead className="w-32 text-center">Trạng thái</TableHead>
-                <TableHead className="w-32 text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                    Đang tải danh sách hợp đồng...
-                  </TableCell>
-                </TableRow>
-              ) : contracts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                    Không tìm thấy hợp đồng lao động nào phù hợp.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                contracts.map((contract) => (
-                  <TableRow
-                    key={contract.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleOpenDetail(contract.id)}
-                  >
-                    <TableCell className="font-mono text-xs font-semibold">
-                      {contract.contractNumber}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <span className="font-medium text-sm text-foreground">
-                          {contract.employeeName}
-                        </span>
-                        <p className="text-xs text-muted-foreground">
-                          {contract.employeeCode}
-                          {contract.jobTitleName && ` • ${contract.jobTitleName}`}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <ContractTypeBadge type={contract.contractType} />
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="flex items-center gap-1 font-mono">
-                        <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>{contract.startDate}</span>
-                        <span>→</span>
-                        <span>{contract.endDate || "Không xác định"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-xs font-mono">
-                      {Number(contract.baseSalary).toLocaleString("vi-VN")} đ
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <ContractStatusBadge status={contract.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {contract.status === "IN_SIGNING" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-purple-600 gap-1 text-xs"
-                            onClick={(e) => handleOpenSigning(contract, e)}
-                          >
-                            <FileSignature className="w-3.5 h-3.5" />
-                            Ký số
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                          onClick={() => handleOpenDetail(contract.id)}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          Xem
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Dialogs */}
-      {isCreateOpen && (
-        <ContractCreateDialog
-          open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
-          companyId={selectedCompanyId}
-          onSuccess={() => refetch()}
-        />
-      )}
-
-      {isDetailOpen && selectedContractId && (
-        <ContractDetailDialog
-          open={isDetailOpen}
-          onOpenChange={setIsDetailOpen}
-          contractId={selectedContractId}
-          onSuccess={() => refetch()}
-        />
-      )}
-
+      {/* 7. Dialog Ký số OTP điện tử */}
       {signingContract && (
         <ContractSigningDialog
           open={Boolean(signingContract)}
-          onOpenChange={(op) => !op && setSigningContract(null)}
+          onOpenChange={(open) => !open && setSigningContract(null)}
           contractId={signingContract.id}
           contractNumber={signingContract.number}
-          isSelfSigning={true}
+          onSuccess={() => refetch()}
+        />
+      )}
+
+      {/* 8. Dialog Phụ lục Hợp đồng */}
+      {appendixContract && (
+        <ContractAppendixDialog
+          open={Boolean(appendixContract)}
+          onOpenChange={(open) => !open && setAppendixContract(null)}
+          contractId={appendixContract.id}
+          contractNumber={appendixContract.number}
           onSuccess={() => refetch()}
         />
       )}
     </div>
   );
 }
-

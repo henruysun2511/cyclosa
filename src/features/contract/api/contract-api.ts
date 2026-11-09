@@ -36,10 +36,17 @@ export const contractApi = baseApi.injectEndpoints({
       PageData<ContractTemplate>,
       { [key: string]: unknown; page?: number; size?: number; kind?: string; isActive?: boolean; search?: string }
     >({
-      query: (params = {}) => ({
-        url: `/contract-templates?${buildQueryString(params)}`,
-        method: "GET",
-      }),
+      query: (params = {}) => {
+        const queryParams: Record<string, unknown> = {
+          ...params,
+          // Chuẩn hóa 1-based page từ UI sang 0-based page cho Spring Boot
+          page: params.page ? Math.max(0, params.page - 1) : 0,
+        };
+        return {
+          url: `/contract-templates?${buildQueryString(queryParams)}`,
+          method: "GET",
+        };
+      },
       transformResponse: (res: ApiResponse<PageData<ContractTemplate>>) => res.data,
       providesTags: (result) =>
         result
@@ -138,10 +145,17 @@ export const contractApi = baseApi.injectEndpoints({
     // ═══════════════════════════════════════════════════════════════════════════
 
     getContracts: builder.query<PageData<ContractSummary>, ContractFilterParams>({
-      query: (params = {}) => ({
-        url: `/contracts?${buildQueryString(params)}`,
-        method: "GET",
-      }),
+      query: (params = {}) => {
+        const queryParams: Record<string, unknown> = {
+          ...params,
+          // Chuẩn hóa 1-based page từ UI sang 0-based page cho Spring Boot
+          page: params.page ? Math.max(0, params.page - 1) : 0,
+        };
+        return {
+          url: `/contracts?${buildQueryString(queryParams)}`,
+          method: "GET",
+        };
+      },
       transformResponse: (res: ApiResponse<PageData<ContractSummary>>) => res.data,
       providesTags: (result) =>
         result

@@ -17,6 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -117,19 +124,30 @@ export default function ContractTemplatesPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <select
+          <div className="flex items-center gap-2 w-full sm:w-64">
+            <Select
               value={kindFilter}
-              onChange={(e) => setKindFilter(e.target.value)}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              onValueChange={(val) => val && setKindFilter(val)}
             >
-              <option value="all">Tất cả phân loại</option>
-              {Object.entries(TEMPLATE_KIND_LABELS).map(([k, label]) => (
-                <option key={k} value={k}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue placeholder="Tất cả phân loại">
+                  {(val: string) => {
+                    if (!val || val === "all") return "Tất cả phân loại";
+                    return TEMPLATE_KIND_LABELS[val as TemplateKind] || val;
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" label="Tất cả phân loại">
+                  Tất cả phân loại
+                </SelectItem>
+                {Object.entries(TEMPLATE_KIND_LABELS).map(([k, label]) => (
+                  <SelectItem key={k} value={k} label={label}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
