@@ -1,4 +1,4 @@
-﻿# CYCLOSA - PowerShell Script to migrate database from Neon Cloud to Local PostgreSQL
+# CYCLOSA - PowerShell Script to migrate database from Neon Cloud to Local PostgreSQL
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "========================================================" -ForegroundColor Cyan
