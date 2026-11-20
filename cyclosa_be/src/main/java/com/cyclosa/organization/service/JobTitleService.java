@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,16 +37,22 @@ public class JobTitleService {
     private final JobTitleMapper jobTitleMapper;
 
     public PageData<JobTitleResponse> getJobTitles(JobTitleFilterRequest filter) {
-        verifyCompanyExists(filter.getCompanyId());
+        UUID companyId = filter.getCompanyId() != null ? filter.getCompanyId() : resolveCurrentCompanyId();
+        if (companyId != null) {
+            verifyCompanyExists(companyId);
+        }
         String kw = PageableUtils.normalizeKeyword(filter.getKeyword());
         Pageable pageable = filter.toPageable("createdAt", ALLOWED_SORT_FIELDS);
-        Page<JobTitle> page = jobTitleRepository.search(filter.getCompanyId(), kw, pageable);
+        Page<JobTitle> page = jobTitleRepository.search(companyId, kw, pageable);
         return PageData.of(page, jobTitleMapper::toResponse);
     }
 
     public List<JobTitleResponse> getAllJobTitlesByCompany(UUID companyId) {
-        verifyCompanyExists(companyId);
-        return jobTitleRepository.findAllByCompanyId(companyId).stream()
+        UUID targetCompanyId = companyId != null ? companyId : resolveCurrentCompanyId();
+        if (targetCompanyId != null) {
+            verifyCompanyExists(targetCompanyId);
+        }
+        return jobTitleRepository.findAllByCompanyId(targetCompanyId).stream()
                 .map(jobTitleMapper::toResponse)
                 .toList();
     }
@@ -95,9 +102,21 @@ public class JobTitleService {
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.JOB_TITLE_NOT_FOUND));
     }
 
+    public Optional<JobTitle> findJobTitleEntityById(UUID id) {
+        return jobTitleRepository.findById(id);
+    }
+
     private void verifyCompanyExists(UUID companyId) {
         if (!companyRepository.existsById(companyId)) {
             throw new AppException(OrganizationErrorCode.COMPANY_NOT_FOUND);
         }
+    }
+
+    private UUID resolveCurrentCompanyId() {
+        return com.cyclosa.common.util.SecurityUtils.getCurrentUserCompanyIdOptional()
+                .orElseGet(() -> companyRepository.findAll().stream()
+                        .findFirst()
+                        .map(c -> c.getId())
+                        .orElse(null));
     }
 }

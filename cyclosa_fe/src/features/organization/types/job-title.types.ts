@@ -23,6 +23,6 @@ export interface UpdateJobTitleInput {
 }
 
 export interface JobTitleFilterParams extends BaseFilterParams {
-  companyId: string;
+  companyId?: string;
 }
 

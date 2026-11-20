@@ -7,8 +7,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard>
-      <AdminLayout activeMenuItem="Products">{children}</AdminLayout>
+    <AuthGuard requireAdmin>
+      <AdminLayout activeMenuItem="Dashboard">{children}</AdminLayout>
     </AuthGuard>
   );
 }

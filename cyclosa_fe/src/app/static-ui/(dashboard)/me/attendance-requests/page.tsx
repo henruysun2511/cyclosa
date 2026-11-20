@@ -115,11 +115,9 @@ export default function ATT10Page() {
             <span>/</span>
             <span className="text-foreground font-medium">{"Đơn giải trình của tôi"}</span>
           </nav>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            {"Đơn giải trình của tôi"}
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● Đang hoạt động</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Đơn giải trình của tôi
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Thông tin chi tiết, tiến trình phê duyệt đa cấp và nhật ký luân chuyển hồ sơ.</p>
         </div>
 
         {/* Action Buttons */}

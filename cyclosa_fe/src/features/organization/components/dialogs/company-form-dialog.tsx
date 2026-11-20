@@ -46,6 +46,7 @@ export function CompanyFormDialog({
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [status, setStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
 
   const [createCompany, { isLoading: isCreating }] = useCreateCompanyMutation();
@@ -60,6 +61,7 @@ export function CompanyFormDialog({
       setAddress(company.address || "");
       setPhone(company.phone || "");
       setEmail(company.email || "");
+      setLogoUrl(company.logoUrl || "");
       setStatus(company.status);
     } else {
       setCode("");
@@ -68,6 +70,7 @@ export function CompanyFormDialog({
       setAddress("");
       setPhone("");
       setEmail("");
+      setLogoUrl("");
       setStatus("ACTIVE");
     }
   }, [company, open]);
@@ -93,6 +96,7 @@ export function CompanyFormDialog({
             address: address.trim() || undefined,
             phone: phone.trim() || undefined,
             email: email.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
             status,
           },
         }).unwrap();
@@ -105,6 +109,7 @@ export function CompanyFormDialog({
           address: address.trim() || undefined,
           phone: phone.trim() || undefined,
           email: email.trim() || undefined,
+          logoUrl: logoUrl.trim() || undefined,
         }).unwrap();
         toast.success("Tạo mới công ty thành công!");
       }
@@ -194,21 +199,31 @@ export function CompanyFormDialog({
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="company-logo">Đường dẫn Logo (URL)</Label>
+            <Input
+              id="company-logo"
+              placeholder="https://example.com/logo.png"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+            />
+          </div>
+
           {isEditing && (
             <div className="space-y-1.5">
               <Label htmlFor="company-status">Trạng thái hoạt động</Label>
               <Select value={status} onValueChange={(val) => val && setStatus(val as "ACTIVE" | "INACTIVE")}>
                 <SelectTrigger id="company-status">
-                  <SelectValue>
-                    {(val: string) => (val === "ACTIVE" ? "Hoạt động (ACTIVE)" : "Tạm ngưng (INACTIVE)")}
+                  <SelectValue placeholder="Chọn trạng thái">
+                    {(val: string) => (val === "ACTIVE" ? "Đang hoạt động" : "Tạm ngưng")}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE" label="Hoạt động (ACTIVE)">
-                    Hoạt động (ACTIVE)
+                  <SelectItem value="ACTIVE" label="Đang hoạt động">
+                    Đang hoạt động
                   </SelectItem>
-                  <SelectItem value="INACTIVE" label="Tạm ngưng (INACTIVE)">
-                    Tạm ngưng (INACTIVE)
+                  <SelectItem value="INACTIVE" label="Tạm ngưng">
+                    Tạm ngưng
                   </SelectItem>
                 </SelectContent>
               </Select>

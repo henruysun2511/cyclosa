@@ -108,5 +108,19 @@ public class Employee extends BaseEntity {
     public String getFullName() {
         return (lastName + " " + firstName).trim();
     }
+
+    public com.cyclosa.organization.entity.Department getCurrentDepartment() {
+        if (workAssignments != null && !workAssignments.isEmpty()) {
+            return workAssignments.get(0).getDepartment();
+        }
+        return null;
+    }
+
+    public com.cyclosa.organization.entity.JobTitle getCurrentJobTitle() {
+        if (workAssignments != null && !workAssignments.isEmpty()) {
+            return workAssignments.get(0).getJobTitle();
+        }
+        return null;
+    }
 }
 

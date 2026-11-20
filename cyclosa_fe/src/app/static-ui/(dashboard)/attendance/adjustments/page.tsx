@@ -115,13 +115,9 @@ export default function ATT13Page() {
             <span>/</span>
             <span className="text-foreground font-medium">{"Bản ghi điều chỉnh công"}</span>
           </nav>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            {"Bản ghi điều chỉnh công"}
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● Đang hoạt động</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Bản ghi điều chỉnh công
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {"Truy vết các điều chỉnh phát sinh từ đơn giải trình đã duyệt"}
-          </p>
         </div>
 
         {/* Action Buttons */}

@@ -115,13 +115,9 @@ export default function ATT07Page() {
             <span>/</span>
             <span className="text-foreground font-medium">{"Công theo ngày"}</span>
           </nav>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            {"Công theo ngày"}
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● Đang hoạt động</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Bảng công theo ngày
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {"Kết quả công đã tính của nhân viên/đơn vị"}
-          </p>
         </div>
 
         {/* Action Buttons */}

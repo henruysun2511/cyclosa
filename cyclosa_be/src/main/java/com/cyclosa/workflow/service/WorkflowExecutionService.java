@@ -1,13 +1,17 @@
 package com.cyclosa.workflow.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.repository.UserRepository;
+import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
 import com.cyclosa.common.util.SecurityUtils;
 import com.cyclosa.employee.entity.Employee;
 import com.cyclosa.employee.entity.EmployeeWorkAssignment;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
+import com.cyclosa.notification.enums.NotificationType;
+import com.cyclosa.notification.event.SendNotificationEvent;
 import com.cyclosa.workflow.dto.request.ApproveStepRequest;
 import com.cyclosa.workflow.dto.request.CancelWorkflowRequest;
 import com.cyclosa.workflow.dto.request.RejectStepRequest;
@@ -49,14 +53,15 @@ public class WorkflowExecutionService {
     private final WorkflowDefinitionRepository workflowDefinitionRepository;
     private final WorkflowRequestRepository workflowRequestRepository;
     private final WorkflowRequestStepRepository workflowRequestStepRepository;
-    private final EmployeeRepository employeeRepository;
-    private final UserRepository userRepository;
+    private final EmployeeService employeeService;
+    private final UserService userService;
     private final ApproverResolverService approverResolverService;
     private final ApplicationEventPublisher eventPublisher;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("submittedAt", "createdAt", "title", "requestType");
 
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "WORKFLOW_REQUEST", entityIdExpression = "#result.id", description = "Khởi tạo yêu cầu phê duyệt mới")
     public WorkflowRequestDetailResponse submit(SubmitWorkflowRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
 
@@ -84,7 +89,7 @@ public class WorkflowExecutionService {
         // Xác định requester employee id nếu chưa truyền
         UUID requesterEmpId = request.getRequesterEmployeeId();
         if (requesterEmpId == null) {
-            requesterEmpId = employeeRepository.findByUserId(currentUserId).map(Employee::getId).orElse(null);
+            requesterEmpId = employeeService.findByUserId(currentUserId).map(Employee::getId).orElse(null);
         }
 
         WorkflowRequest req = WorkflowRequest.builder()
@@ -156,15 +161,19 @@ public class WorkflowExecutionService {
         if (!firstCurrentAssigned) {
             log.info("Tất cả các bước đều được bỏ qua theo điều kiện. Tự động hoàn tất phê duyệt.");
             eventPublisher.publishEvent(new WorkflowCompletedEvent(this, req.getId(), req.getRequestType(), req.getReferenceId(), StepDecision.APPROVED, "Tất cả các bước đều thỏa mãn tự động bỏ qua"));
+            notifyRequester(req, StepDecision.APPROVED, "Tự động duyệt bỏ qua");
+        } else {
+            notifyCurrentStepAssignee(req);
         }
 
         return getDetail(req.getId());
     }
 
     @Transactional
+    @Auditable(action = AuditAction.APPROVE, entityType = "WORKFLOW_REQUEST", entityIdExpression = "#requestId", description = "Phê duyệt bước trong quy trình")
     public WorkflowRequestDetailResponse approveStep(UUID requestId, UUID stepId, ApproveStepRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId).orElse(null);
+        Employee currentEmployee = employeeService.findByUserId(currentUserId).orElse(null);
         UUID currentEmpId = currentEmployee != null ? currentEmployee.getId() : null;
 
         WorkflowRequest req = workflowRequestRepository.findById(requestId)
@@ -204,6 +213,7 @@ public class WorkflowExecutionService {
             WorkflowRequestStep nextStep = nextStepOpt.get();
             nextStep.setIsCurrent(true);
             log.info("Chuyển yêu cầu {} sang bước {} ({})", req.getId(), nextStep.getStepOrder(), nextStep.getStepName());
+            notifyCurrentStepAssignee(req);
         } else {
             // Đã hoàn tất bước cuối cùng! Toàn bộ quy trình đã APPROVED!
             log.info("Quy trình phê duyệt {} đã hoàn tất thành công tất cả các bước!", req.getId());
@@ -215,6 +225,7 @@ public class WorkflowExecutionService {
                     StepDecision.APPROVED,
                     request.getComment()
             ));
+            notifyRequester(req, StepDecision.APPROVED, request.getComment());
         }
 
         workflowRequestRepository.save(req);
@@ -222,6 +233,7 @@ public class WorkflowExecutionService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.REJECT, entityType = "WORKFLOW_REQUEST", entityIdExpression = "#requestId", description = "Từ chối bước duyệt trong quy trình")
     public WorkflowRequestDetailResponse rejectStep(UUID requestId, UUID stepId, RejectStepRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
 
@@ -269,12 +281,14 @@ public class WorkflowExecutionService {
                 StepDecision.REJECTED,
                 request.getComment().trim()
         ));
+        notifyRequester(req, StepDecision.REJECTED, request.getComment().trim());
 
         workflowRequestRepository.save(req);
         return getDetail(req.getId());
     }
 
     @Transactional
+    @Auditable(action = AuditAction.DELETE, entityType = "WORKFLOW_REQUEST", entityIdExpression = "#requestId", description = "Người tạo hủy yêu cầu phê duyệt")
     public void cancel(UUID requestId, CancelWorkflowRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
 
@@ -310,7 +324,7 @@ public class WorkflowExecutionService {
     @Transactional(readOnly = true)
     public PageData<WorkflowRequestResponse> getMyInbox(WorkflowInboxFilterRequest filter) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId).orElse(null);
+        Employee currentEmployee = employeeService.findByUserId(currentUserId).orElse(null);
         Pageable pageable = filter.toPageable("createdAt", ALLOWED_SORT_FIELDS);
         if (currentEmployee == null) {
             return PageData.empty(pageable);
@@ -351,7 +365,7 @@ public class WorkflowExecutionService {
     @Transactional(readOnly = true)
     public PageData<WorkflowRequestResponse> getHistory(WorkflowInboxFilterRequest filter) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId).orElse(null);
+        Employee currentEmployee = employeeService.findByUserId(currentUserId).orElse(null);
         Pageable pageable = filter.toPageable("decidedAt", ALLOWED_SORT_FIELDS);
         if (currentEmployee == null) {
             return PageData.empty(pageable);
@@ -391,7 +405,7 @@ public class WorkflowExecutionService {
     @Transactional(readOnly = true)
     public WorkflowStatsResponse getStats() {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId).orElse(null);
+        Employee currentEmployee = employeeService.findByUserId(currentUserId).orElse(null);
 
         long pending = 0;
         long approved = 0;
@@ -434,9 +448,10 @@ public class WorkflowExecutionService {
     }
 
     private WorkflowRequestResponse toResponse(WorkflowRequest r) {
-        String requesterName = userRepository.findById(r.getRequestedByUserId()).map(User::getUsername).orElse("Người dùng");
+        String requesterName = userService.findUserEntityById(r.getRequestedByUserId()).map(User::getUsername).orElse("Người dùng");
         if (r.getRequesterEmployeeId() != null) {
-            requesterName = employeeRepository.findById(r.getRequesterEmployeeId()).map(Employee::getFullName).orElse(requesterName);
+            requesterName = employeeService.getEmployeeFullName(r.getRequesterEmployeeId());
+            if (requesterName.isBlank()) requesterName = "Người dùng";
         }
 
         WorkflowRequestStep currentStep = r.getSteps().stream()
@@ -448,7 +463,8 @@ public class WorkflowExecutionService {
         String currentStepName = currentStep != null ? currentStep.getStepName() : null;
         String currentAssigneeName = null;
         if (currentStep != null) {
-            currentAssigneeName = employeeRepository.findById(currentStep.getAssigneeEmployeeId()).map(Employee::getFullName).orElse(null);
+            currentAssigneeName = employeeService.getEmployeeFullName(currentStep.getAssigneeEmployeeId());
+            if (currentAssigneeName.isBlank()) currentAssigneeName = null;
         }
 
         return WorkflowRequestResponse.builder()
@@ -473,9 +489,10 @@ public class WorkflowExecutionService {
     }
 
     private WorkflowRequestDetailResponse toDetailResponse(WorkflowRequest req) {
-        String requesterName = userRepository.findById(req.getRequestedByUserId()).map(User::getUsername).orElse("Người dùng");
+        String requesterName = userService.findUserEntityById(req.getRequestedByUserId()).map(User::getUsername).orElse("Người dùng");
         if (req.getRequesterEmployeeId() != null) {
-            requesterName = employeeRepository.findById(req.getRequesterEmployeeId()).map(Employee::getFullName).orElse(requesterName);
+            requesterName = employeeService.getEmployeeFullName(req.getRequesterEmployeeId());
+            if (requesterName.isBlank()) requesterName = "Người dùng";
         }
 
         List<WorkflowRequestStepResponse> stepResponses = req.getSteps().stream().map(s -> {
@@ -483,7 +500,7 @@ public class WorkflowExecutionService {
             String assigneeCode = null;
             String jobTitle = null;
 
-            Optional<Employee> empOpt = employeeRepository.findById(s.getAssigneeEmployeeId());
+            Optional<Employee> empOpt = employeeService.findEntityById(s.getAssigneeEmployeeId());
             if (empOpt.isPresent()) {
                 Employee e = empOpt.get();
                 assigneeName = e.getFullName();
@@ -528,6 +545,47 @@ public class WorkflowExecutionService {
                 .cancelReason(req.getCancelReason())
                 .steps(stepResponses)
                 .build();
+    }
+
+    private void notifyCurrentStepAssignee(WorkflowRequest req) {
+        req.getSteps().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getIsCurrent()))
+                .findFirst()
+                .ifPresent(currentStep -> {
+                    UUID assigneeEmpId = currentStep.getAssigneeEmployeeId();
+                    if (assigneeEmpId != null) {
+                        employeeService.findEntityById(assigneeEmpId)
+                                .map(Employee::getUserId)
+                                .ifPresent(userId -> eventPublisher.publishEvent(SendNotificationEvent.ofSingle(
+                                        userId,
+                                        NotificationType.WORKFLOW,
+                                        "Yêu cầu phê duyệt cần xử lý",
+                                        "Bạn được phân công duyệt bước '" + currentStep.getStepName() + "' cho hồ sơ: " + req.getTitle(),
+                                        "/approvals"
+                                )));
+                    }
+                });
+    }
+
+    private void notifyRequester(WorkflowRequest req, StepDecision decision, String comment) {
+        UUID targetUserId = req.getRequestedByUserId();
+        if (targetUserId == null && req.getRequesterEmployeeId() != null) {
+            targetUserId = employeeService.findEntityById(req.getRequesterEmployeeId())
+                    .map(Employee::getUserId)
+                    .orElse(null);
+        }
+
+        if (targetUserId != null) {
+            String statusText = decision == StepDecision.APPROVED ? "đã được phê duyệt" : "đã bị từ chối";
+            String note = comment != null && !comment.isBlank() ? " Ghi chú: " + comment : "";
+            eventPublisher.publishEvent(SendNotificationEvent.ofSingle(
+                    targetUserId,
+                    NotificationType.WORKFLOW,
+                    "Kết quả phê duyệt hồ sơ: " + statusText,
+                    "Hồ sơ '" + req.getTitle() + "' của bạn " + statusText + "." + note,
+                    "/workflows/" + req.getId()
+            ));
+        }
     }
 }
 

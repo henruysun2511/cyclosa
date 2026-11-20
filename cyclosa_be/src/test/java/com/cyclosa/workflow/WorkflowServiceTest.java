@@ -1,10 +1,10 @@
 package com.cyclosa.workflow;
 
 import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.repository.UserRepository;
+import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.employee.entity.Employee;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
 import com.cyclosa.workflow.dto.request.ApproveStepRequest;
 import com.cyclosa.workflow.dto.request.RejectStepRequest;
 import com.cyclosa.workflow.dto.request.SubmitWorkflowRequest;
@@ -58,10 +58,10 @@ class WorkflowServiceTest {
     private WorkflowRequestStepRepository workflowRequestStepRepository;
 
     @Mock
-    private EmployeeRepository employeeRepository;
+    private EmployeeService employeeService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
     private ApproverResolverService approverResolverService;
@@ -148,7 +148,7 @@ class WorkflowServiceTest {
 
         when(workflowDefinitionRepository.findByCompanyIdAndRequestTypeAndIsActiveTrue(companyId, RequestType.CONTRACT))
                 .thenReturn(Optional.of(def));
-        when(employeeRepository.findByUserId(userId))
+        when(employeeService.findByUserId(userId))
                 .thenReturn(Optional.of(Employee.builder().firstName("Van").lastName("Nguyen").build()));
         when(approverResolverService.resolveApprover(any(), any(), any(), any(), any(), any()))
                 .thenReturn(approverId);
@@ -221,7 +221,7 @@ class WorkflowServiceTest {
         step2.setWorkflowRequest(req);
 
         when(workflowRequestRepository.findById(reqId)).thenReturn(Optional.of(req));
-        when(employeeRepository.findByUserId(userId))
+        when(employeeService.findByUserId(userId))
                 .thenReturn(Optional.of(Employee.builder().firstName("A").lastName("B").build()));
 
         ApproveStepRequest approveReq = ApproveStepRequest.builder().comment("Đồng ý").build();

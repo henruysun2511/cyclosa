@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -371,7 +371,7 @@ export default function FloorPlanCanvasEditorPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-4">
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm" className="h-8 text-xs gap-1">
-            <Link href="/workplace/admin/floors">
+            <Link href="/workplace/floors">
               <ArrowLeft className="h-3.5 w-3.5 mr-1" />
               <span>Quản lý tầng</span>
             </Link>

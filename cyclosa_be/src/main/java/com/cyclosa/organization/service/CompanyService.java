@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -85,5 +86,13 @@ public class CompanyService {
     public Company findCompanyOrThrow(UUID id) {
         return companyRepository.findById(id)
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.COMPANY_NOT_FOUND));
+    }
+
+    public Optional<Company> findCompanyEntityById(UUID id) {
+        return companyRepository.findById(id);
+    }
+
+    public boolean existsById(UUID id) {
+        return companyRepository.existsById(id);
     }
 }

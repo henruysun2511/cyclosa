@@ -12,7 +12,8 @@ export const AUTH_COOKIE_EXPIRY = {
 
 export const AUTH_ROUTES = {
   LOGIN: "/login",
-  DEFAULT_AFTER_LOGIN: "/products",
+  DEFAULT_AFTER_LOGIN: "/dashboard/overview",
+  EMPLOYEE_AFTER_LOGIN: "/me",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   ACTIVATE: "/activate",

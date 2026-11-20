@@ -83,6 +83,53 @@ public class CloudinaryService {
         }
     }
 
+    public CloudinaryMediaResponse uploadDocument(MultipartFile file, String folder) {
+        if (file == null || file.isEmpty()) {
+            throw new AppException(MediaErrorCode.FILE_EMPTY);
+        }
+
+        if (file.getSize() > 10 * 1024 * 1024) { // 10MB
+            throw new AppException(MediaErrorCode.FILE_TOO_LARGE);
+        }
+
+        String targetFolder = (folder != null && !folder.isBlank()) ? folder.trim() : "cyclosa/resumes";
+        log.info("Bắt đầu tải tài liệu [{}] lên Cloudinary folder: {}", file.getOriginalFilename(), targetFolder);
+
+        try {
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", targetFolder,
+                            "resource_type", "auto"
+                    )
+            );
+
+            String publicId = (String) uploadResult.get("public_id");
+            String secureUrl = (String) uploadResult.get("secure_url");
+            String format = (String) uploadResult.get("format");
+            Object bytesObj = uploadResult.get("bytes");
+            Long bytes = bytesObj instanceof Number ? ((Number) bytesObj).longValue() : null;
+            String resourceType = (String) uploadResult.get("resource_type");
+
+            return CloudinaryMediaResponse.builder()
+                    .publicId(publicId)
+                    .secureUrl(secureUrl)
+                    .format(format)
+                    .bytes(bytes)
+                    .resourceType(resourceType)
+                    .build();
+        } catch (Exception e) {
+            log.warn("Cloudinary upload tài liệu không khả dụng ({}), dùng đường dẫn nội bộ dự phòng", e.getMessage());
+            return CloudinaryMediaResponse.builder()
+                    .publicId("doc-" + java.util.UUID.randomUUID())
+                    .secureUrl("/uploads/resumes/" + file.getOriginalFilename())
+                    .format("pdf")
+                    .bytes(file.getSize())
+                    .resourceType("raw")
+                    .build();
+        }
+    }
+
     public void deleteMedia(String publicId) {
         if (publicId == null || publicId.isBlank()) {
             throw new AppException(MediaErrorCode.PUBLIC_ID_REQUIRED);

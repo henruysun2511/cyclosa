@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +17,8 @@ import java.util.UUID;
 public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSpecificationExecutor<Employee> {
 
     Optional<Employee> findByCompanyIdAndEmployeeCode(UUID companyId, String employeeCode);
+
+    List<Employee> findAllByCompanyId(UUID companyId);
 
     Optional<Employee> findByUserId(UUID userId);
 
@@ -30,6 +33,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
     boolean existsBySocialInsuranceNumberAndIdNot(String socialInsuranceNumber, UUID id);
 
     boolean existsByUserId(UUID userId);
+
+    boolean existsBySourceApplicationId(UUID sourceApplicationId);
+
+    Optional<Employee> findBySourceApplicationId(UUID sourceApplicationId);
 
     @Query("SELECT e FROM Employee e WHERE (:companyId IS NULL OR e.companyId = :companyId) " +
            "AND (:keyword IS NULL OR :keyword = '' " +

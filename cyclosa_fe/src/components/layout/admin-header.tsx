@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/slices/auth.slice";
 import { useLogoutMutation, useGetMeQuery } from "@/features/auth/api/auth-api";
+import { NotificationBell } from "@/features/notification";
 
 export interface AdminHeaderProps {
   sidebarOpen: boolean;
@@ -48,12 +49,12 @@ export function AdminHeader({
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
       toast.info("Đã vào chế độ toàn màn hình");
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(() => { });
         setIsFullscreen(false);
         toast.info("Đã thoát chế độ toàn màn hình");
       }
@@ -94,7 +95,7 @@ export function AdminHeader({
         </button>
 
         {/* Search input with keyboard shortcut badge */}
-        <div className="relative flex-1 max-w-md hidden sm:block">
+        {/* <div className="relative flex-1 max-w-md hidden sm:block">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-muted-foreground" />
           </div>
@@ -106,65 +107,14 @@ export function AdminHeader({
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <span className="badge-shortcut">CTRL + /</span>
           </div>
-        </div>
+        </div> */}
 
-        {/* Quick Nav Icons */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            title="Ứng dụng nhanh"
-            onClick={() => toast.info("Tính năng đang phát triển")}
-            className="btn-icon-ghost"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-        </div>
+
       </div>
 
       {/* ── Right section ───────────────────────────────────────────── */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* AI Center Dropdown Button */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setAiMenuOpen(!aiMenuOpen)}
-            className="btn-ai"
-          >
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            <span>AI Center</span>
-            <ChevronDown className="h-3.5 w-3.5 opacity-80" />
-          </button>
 
-          {aiMenuOpen && (
-            <div className="filter-dropdown-menu w-56 p-1.5 z-50">
-              <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Trợ lý AI Thông Minh
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  toast.success("Khởi động AI Insights");
-                  setAiMenuOpen(false);
-                }}
-                className="filter-menu-item gap-2"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span>AI Insights & Analytics</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  toast.success("Tạo báo cáo tự động bằng AI");
-                  setAiMenuOpen(false);
-                }}
-                className="filter-menu-item gap-2"
-              >
-                <span className="h-2 w-2 rounded-full bg-slate-400" />
-                <span>Auto-Generate Reports</span>
-              </button>
-            </div>
-          )}
-        </div>
 
         {/* Utility Icon Cluster */}
         <div className="flex items-center gap-1 border-l border-border pl-2 sm:pl-3">
@@ -181,42 +131,7 @@ export function AdminHeader({
             )}
           </button>
 
-          <button
-            type="button"
-            title="Lưới ứng dụng"
-            onClick={() => toast.info("Xem bố cục dạng lưới")}
-            className="btn-icon-ghost hidden sm:flex"
-          >
-            <Grid3X3 className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
-            title="Tin nhắn"
-            onClick={() => toast.info("Bạn có 0 tin nhắn mới")}
-            className="btn-icon-ghost relative"
-          >
-            <MessageSquare className="h-4 w-4" />
-            <span className="header-dot bg-primary" />
-          </button>
-
-          <button
-            type="button"
-            title="Hộp thư"
-            onClick={() => toast.info("Hộp thư đến")}
-            className="btn-icon-ghost hidden sm:flex"
-          >
-            <Mail className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
-            title="Thông báo"
-            onClick={() => toast.info("Không có thông báo mới")}
-            className="btn-icon-ghost relative"
-          >
-            <Bell className="h-4 w-4" />
-          </button>
+          <NotificationBell />
         </div>
 
         {/* User avatar & Account Dropdown */}
@@ -264,8 +179,8 @@ export function AdminHeader({
                         {userProfile?.roles && userProfile.roles.length > 0
                           ? userProfile.roles.join(", ")
                           : authUser.roles && authUser.roles.length > 0
-                          ? authUser.roles.join(", ")
-                          : "Thành viên"}
+                            ? authUser.roles.join(", ")
+                            : "Thành viên"}
                       </span>
                     </div>
                   </div>

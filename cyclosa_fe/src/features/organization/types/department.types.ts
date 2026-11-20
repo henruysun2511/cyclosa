@@ -84,6 +84,6 @@ export interface MoveDepartmentInput {
 }
 
 export interface DepartmentFilterParams extends BaseFilterParams {
-  companyId: string;
+  companyId?: string;
 }
 

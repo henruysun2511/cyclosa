@@ -44,19 +44,50 @@ export default function DocumentOcrVerifyPage() {
   const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
   const [activeField, setActiveField] = useState<string | null>(null);
 
+  const initialValues = {
+    idNumber: "001085002914",
+    fullName: "NGUYỄN VĂN AN",
+    dob: "15/08/1982",
+    gender: "Nam",
+    nationality: "Việt Nam",
+    ethnicity: "Kinh",
+    hometown: "Kim Động, Hưng Yên",
+    residence: "Biệt thự BT05, KĐT Ngoại Giao Đoàn, P. Xuân Tảo, Bắc Từ Liêm, Hà Nội",
+    issueDate: "12/04/2021",
+    issuePlace: "Cục Cảnh sát QLHC về TTXH",
+    expiryDate: "15/08/2042",
+    taxCode: "8029183491",
+  };
+
   // Form extracted fields (Metadata)
-  const [idNumber, setIdNumber] = useState("001085002914");
-  const [fullName, setFullName] = useState("NGUYỄN VĂN AN");
-  const [dob, setDob] = useState("15/08/1982");
-  const [gender, setGender] = useState("Nam");
-  const [nationality, setNationality] = useState("Việt Nam");
-  const [ethnicity, setEthnicity] = useState("Kinh");
-  const [hometown, setHometown] = useState("Kim Động, Hưng Yên");
-  const [residence, setResidence] = useState("Biệt thự BT05, KĐT Ngoại Giao Đoàn, P. Xuân Tảo, Bắc Từ Liêm, Hà Nội");
-  const [issueDate, setIssueDate] = useState("12/04/2021");
-  const [issuePlace, setIssuePlace] = useState("Cục Cảnh sát QLHC về TTXH");
-  const [expiryDate, setExpiryDate] = useState("15/08/2042");
-  const [taxCode, setTaxCode] = useState("8029183491");
+  const [idNumber, setIdNumber] = useState(initialValues.idNumber);
+  const [fullName, setFullName] = useState(initialValues.fullName);
+  const [dob, setDob] = useState(initialValues.dob);
+  const [gender, setGender] = useState(initialValues.gender);
+  const [nationality, setNationality] = useState(initialValues.nationality);
+  const [ethnicity, setEthnicity] = useState(initialValues.ethnicity);
+  const [hometown, setHometown] = useState(initialValues.hometown);
+  const [residence, setResidence] = useState(initialValues.residence);
+  const [issueDate, setIssueDate] = useState(initialValues.issueDate);
+  const [issuePlace, setIssuePlace] = useState(initialValues.issuePlace);
+  const [expiryDate, setExpiryDate] = useState(initialValues.expiryDate);
+  const [taxCode, setTaxCode] = useState(initialValues.taxCode);
+
+  const handleReset = () => {
+    setIdNumber(initialValues.idNumber);
+    setFullName(initialValues.fullName);
+    setDob(initialValues.dob);
+    setGender(initialValues.gender);
+    setNationality(initialValues.nationality);
+    setEthnicity(initialValues.ethnicity);
+    setHometown(initialValues.hometown);
+    setResidence(initialValues.residence);
+    setIssueDate(initialValues.issueDate);
+    setIssuePlace(initialValues.issuePlace);
+    setExpiryDate(initialValues.expiryDate);
+    setTaxCode(initialValues.taxCode);
+    toast.info("Đã khôi phục dữ liệu ban đầu từ ảnh quét OCR");
+  };
 
   const handleConfirmVerification = () => {
     toast.success("Xác thực hồ sơ OCR thành công!", {
@@ -65,124 +96,8 @@ export default function DocumentOcrVerifyPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* ── 1. Header (Phong cách Dashboard: đơn giản, mềm mại, sạch sẽ) ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Đối soát & Kiểm tra hồ sơ OCR
-            </h1>
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold">
-              ● Khớp AI: 99.2%
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Đối chiếu văn bản gốc giả lập và danh sách metadata trích xuất tự động qua AI.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-            <Link href="/documents/ocr-queue">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              <span>Hàng đợi OCR</span>
-            </Link>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toast.error("Đã gửi yêu cầu nhân sự chụp lại CCCD rõ nét hơn")}
-            className="h-8 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
-          >
-            Yêu cầu nộp lại
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={handleConfirmVerification}
-            className="h-8 gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>Xác nhận thông tin</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* ── 2. Thẻ KPI Thống Kê Nhanh (Phong cách Dashboard) ────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border bg-card shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-muted-foreground font-medium block">
-                Độ tin cậy OCR
-              </span>
-              <div className="text-2xl font-bold tracking-tight text-emerald-600 font-mono mt-0.5">
-                99.2%
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">11/11 trường dữ liệu đạt chuẩn</p>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-muted-foreground font-medium block">
-                Loại tài liệu
-              </span>
-              <div className="text-base font-bold tracking-tight text-foreground mt-0.5 truncate max-w-[170px]">
-                CCCD gắn chip
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Mặt trước & Mặt sau</p>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <FileCheck2 className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-muted-foreground font-medium block">
-                Nhân sự sở hữu
-              </span>
-              <div className="text-base font-bold tracking-tight text-foreground mt-0.5">
-                Nguyễn Văn An
-              </div>
-              <p className="text-[11px] text-muted-foreground font-mono mt-0.5">Mã: EMP001</p>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <User className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-muted-foreground font-medium block">
-                Xác thực VNeID
-              </span>
-              <div className="text-base font-bold tracking-tight text-emerald-600 mt-0.5 flex items-center gap-1">
-                <span>Hợp lệ</span>
-                <Badge className="bg-emerald-100 text-emerald-800 text-[10px] px-1 py-0">Định danh Mức 2</Badge>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Cơ sở dữ liệu dân cư</p>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Sparkles className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── 3. Bố Cục 2 Bên (Bên Trái: Ảnh giả lập | Bên Phải: Metadata) ── */}
+    <div className="space-y-4 max-w-7xl mx-auto pb-8">
+      {/* ── Bố Cục 2 Bên (Bên Trái: Trình xem tài liệu & OCR Boxes | Bên Phải: Metadata trích xuất) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ── BÊN TRÁI: ẢNH CĂN CƯỚC CÔNG DÂN & HỒ SƠ GIẢ LẬP BẰNG HTML (6 hoặc 7 cols) ─ */}
         <Card className="lg:col-span-6 xl:col-span-7 border-border bg-card shadow-xs rounded-xl overflow-hidden">
@@ -765,9 +680,7 @@ export default function DocumentOcrVerifyPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  toast.info("Đã khôi phục dữ liệu ban đầu từ ảnh quét");
-                }}
+                onClick={handleReset}
                 className="h-8 text-xs"
               >
                 Đặt lại

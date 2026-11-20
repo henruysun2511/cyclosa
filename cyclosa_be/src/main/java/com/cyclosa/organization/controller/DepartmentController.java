@@ -40,7 +40,7 @@ public class DepartmentController {
     private final DepartmentService departmentService;
 
     @GetMapping
-    @PreAuthorize("@perm.has('org.view')")
+    @PreAuthorize("@perm.has('org.view') or @perm.has('career.view') or @perm.has('succession.view') or @perm.has('employee.view')")
     @RequirePermission("org.view")
     @Operation(summary = "Lấy danh sách phòng ban theo công ty có phân trang", description = "Hỗ trợ tìm kiếm theo mã hoặc tên phòng ban")
     public ResponseEntity<ApiResponse<PageData<DepartmentResponse>>> getDepartments(@ParameterObject @Valid DepartmentFilterRequest filter) {
@@ -49,12 +49,12 @@ public class DepartmentController {
     }
 
     @GetMapping("/tree")
-    @PreAuthorize("@perm.has('org.view')")
+    @PreAuthorize("@perm.has('org.view') or @perm.has('career.view') or @perm.has('succession.view') or @perm.has('employee.view')")
     @RequirePermission("org.view")
     @Operation(summary = "Lấy cây sơ đồ tổ chức (Org Tree) theo mốc ngày hiệu lực chốt cơ cấu")
     public ResponseEntity<ApiResponse<List<DepartmentNodeResponse>>> getDepartmentTree(
-            @Parameter(description = "ID công ty", required = true)
-            @RequestParam UUID companyId,
+            @Parameter(description = "ID công ty")
+            @RequestParam(required = false) UUID companyId,
             @Parameter(description = "Ngày chốt cơ cấu (mặc định hôm nay)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate) {
         List<DepartmentNodeResponse> result = departmentService.getDepartmentTree(companyId, asOfDate);

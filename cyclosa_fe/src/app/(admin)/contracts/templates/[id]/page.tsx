@@ -60,7 +60,7 @@ export default function EditContractTemplatePage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <ContractTemplateEditor
         initialData={template}
         isEdit={true}

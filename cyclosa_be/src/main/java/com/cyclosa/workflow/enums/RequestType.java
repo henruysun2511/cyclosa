@@ -9,6 +9,9 @@ public enum RequestType {
     TRANSFER_REQUEST,
     RESIGNATION,
     PROBATION_EVAL,
-    ORG_SCENARIO
+    ORG_SCENARIO,
+    OVERTIME,
+    LEAVE,
+    SALARY_ADJUSTMENT
 }
 

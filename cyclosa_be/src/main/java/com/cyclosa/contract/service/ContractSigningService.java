@@ -16,7 +16,7 @@ import com.cyclosa.contract.repository.ContractRepository;
 import com.cyclosa.contract.repository.ContractSignerRepository;
 import com.cyclosa.contract.repository.ContractVersionRepository;
 import com.cyclosa.employee.entity.Employee;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class ContractSigningService {
     private final ContractVersionRepository versionRepository;
     private final ContractRepository contractRepository;
     private final ContractAppendixRepository appendixRepository;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
 
     @Transactional
     public void requestOtp(UUID signerId) {
@@ -205,7 +205,7 @@ public class ContractSigningService {
     }
 
     public ContractSigningDto.ContractSignerResponse mapToSignerResponse(ContractSigner s) {
-        Employee emp = employeeRepository.findById(s.getSignerEmployeeId()).orElse(null);
+        Employee emp = employeeService.findEntityById(s.getSignerEmployeeId()).orElse(null);
         return ContractSigningDto.ContractSignerResponse.builder()
                 .id(s.getId())
                 .contractVersionId(s.getContractVersion().getId())

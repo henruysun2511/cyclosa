@@ -1,0 +1,2 @@
+# Module Attendance AI Package
+

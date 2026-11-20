@@ -111,7 +111,7 @@ export default function InterviewCalendarPage() {
               Tuyển dụng
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Lịch phỏng vấn (REC-19)</span>
+            <span className="text-foreground font-medium">Lịch phỏng vấn</span>
           </nav>
         </div>
 

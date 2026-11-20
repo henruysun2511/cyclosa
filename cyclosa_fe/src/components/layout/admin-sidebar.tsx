@@ -140,8 +140,15 @@ export function AdminSidebar({
                 const sectionKey = `${groupIdx}_${itemIdx}`;
                 const hasChildren = Boolean(item.children && item.children.length > 0);
                 const isExpanded = expandedSections[sectionKey] ?? false;
-                const isDirectActive = pathname === item.href;
-                const isChildActive = item.children?.some((c) => pathname?.startsWith(c.href));
+                const isDirectActive =
+                  pathname === item.href ||
+                  (Boolean(item.href) &&
+                    item.href !== "/" &&
+                    item.href !== "/dashboard" &&
+                    pathname?.startsWith(item.href + "/"));
+                const isChildActive = item.children?.some(
+                  (c) => pathname === c.href || (Boolean(c.href) && c.href !== "/" && pathname?.startsWith(c.href + "/"))
+                );
 
                 if (hasChildren) {
                   return (
@@ -173,7 +180,11 @@ export function AdminSidebar({
                       {!collapsed && isExpanded && (
                         <div className="mt-1 ml-4 pl-3 border-l border-slate-200 space-y-0.5 py-0.5">
                           {item.children!.map((child) => {
-                            const active = pathname === child.href;
+                            const active =
+                              pathname === child.href ||
+                              (Boolean(child.href) &&
+                                child.href !== "/" &&
+                                pathname?.startsWith(child.href + "/"));
                             return (
                               <Link
                                 key={child.title}
@@ -214,19 +225,19 @@ export function AdminSidebar({
                     className={cn(
                       "flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium transition-colors select-none no-underline hover:no-underline",
                       isDirectActive
-                        ? "bg-primary text-white font-medium shadow-xs"
+                        ? "bg-primary/10 text-primary font-semibold"
                         : "text-slate-700 hover:text-slate-900 hover:bg-slate-100/80"
                     )}
                   >
                     <div className="flex items-center gap-2.5 overflow-hidden">
-                      <Icon className={cn("h-4 w-4 shrink-0", isDirectActive ? "text-white" : "text-slate-500")} />
+                      <Icon className={cn("h-4 w-4 shrink-0", isDirectActive ? "text-primary" : "text-slate-500")} />
                       {!collapsed && <span className="truncate">{item.title}</span>}
                     </div>
                     {!collapsed && item.badge && (
                       <span
                         className={cn(
                           "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                          isDirectActive ? "bg-white text-primary" : "bg-primary/10 text-primary"
+                          isDirectActive ? "bg-primary text-white" : "bg-primary/10 text-primary"
                         )}
                       >
                         {item.badge}

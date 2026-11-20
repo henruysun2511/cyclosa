@@ -1,5 +1,7 @@
 package com.cyclosa.organization.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
 import com.cyclosa.common.util.PageableUtils;
@@ -53,10 +55,13 @@ public class DepartmentService {
     private final JdbcTemplate jdbcTemplate;
 
     public PageData<DepartmentResponse> getDepartments(DepartmentFilterRequest filter) {
-        verifyCompanyExists(filter.getCompanyId());
+        UUID companyId = filter.getCompanyId() != null ? filter.getCompanyId() : resolveCurrentCompanyId();
+        if (companyId != null) {
+            verifyCompanyExists(companyId);
+        }
         String kw = PageableUtils.normalizeKeyword(filter.getKeyword());
         Pageable pageable = filter.toPageable("createdAt", ALLOWED_SORT_FIELDS);
-        Page<Department> page = departmentRepository.search(filter.getCompanyId(), kw, pageable);
+        Page<Department> page = departmentRepository.search(companyId, kw, pageable);
         LocalDate today = LocalDate.now();
 
         return PageData.of(page, d -> {
@@ -97,12 +102,15 @@ public class DepartmentService {
     }
 
     public List<DepartmentNodeResponse> getDepartmentTree(UUID companyId, LocalDate asOfDate) {
-        verifyCompanyExists(companyId);
+        UUID targetCompanyId = companyId != null ? companyId : resolveCurrentCompanyId();
+        if (targetCompanyId != null) {
+            verifyCompanyExists(targetCompanyId);
+        }
         LocalDate queryDate = asOfDate != null ? asOfDate : LocalDate.now();
 
-        List<DepartmentVersion> activeVersions = versionRepository.findActiveVersionsForCompanyAt(companyId, queryDate);
+        List<DepartmentVersion> activeVersions = versionRepository.findActiveVersionsForCompanyAt(targetCompanyId, queryDate);
         if (activeVersions.isEmpty()) {
-            activeVersions = versionRepository.findLatestVersionsForCompany(companyId);
+            activeVersions = versionRepository.findLatestVersionsForCompany(targetCompanyId);
         }
 
         Map<UUID, String> costCenterNameMap = resolveCostCenterNames(
@@ -110,7 +118,7 @@ public class DepartmentService {
         );
 
         // Đếm số lượng nhân viên thực tế đang công tác theo từng phòng ban
-        Map<UUID, Integer> memberCountMap = getMemberCountsForCompany(companyId, queryDate);
+        Map<UUID, Integer> memberCountMap = getMemberCountsForCompany(targetCompanyId, queryDate);
 
         Map<UUID, DepartmentNodeResponse> nodeMap = new HashMap<>();
         List<DepartmentNodeResponse> rootNodes = new ArrayList<>();
@@ -187,6 +195,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "DEPARTMENT", entityIdExpression = "#result.id", description = "Tạo mới phòng ban")
     public DepartmentResponse createDepartment(CreateDepartmentRequest request) {
         verifyCompanyExists(request.getCompanyId());
 
@@ -227,6 +236,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "DEPARTMENT", entityIdExpression = "#id", description = "Cập nhật thông tin phòng ban")
     public DepartmentResponse updateDepartment(UUID id, UpdateDepartmentRequest request) {
         Department department = findDepartmentOrThrow(id);
 
@@ -376,6 +386,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.DELETE, entityType = "DEPARTMENT", entityIdExpression = "#id", description = "Giải thể phòng ban")
     public void dissolveDepartment(UUID id, LocalDate dissolvedDate) {
         Department department = findDepartmentOrThrow(id);
 
@@ -389,6 +400,7 @@ public class DepartmentService {
         log.info("Đã giải thể phòng ban: id={}, dissolvedDate={}", id, department.getDissolvedDate());
     }
 
+    @Auditable(action = AuditAction.EXPORT, entityType = "DEPARTMENT", description = "Xuất sơ đồ cây tổ chức phòng ban")
     public byte[] exportOrganizationTree(UUID companyId, LocalDate asOfDate) {
         List<DepartmentNodeResponse> tree = getDepartmentTree(companyId, asOfDate);
 
@@ -508,6 +520,14 @@ public class DepartmentService {
         }
     }
 
+    private UUID resolveCurrentCompanyId() {
+        return com.cyclosa.common.util.SecurityUtils.getCurrentUserCompanyIdOptional()
+                .orElseGet(() -> companyRepository.findAll().stream()
+                        .findFirst()
+                        .map(c -> c.getId())
+                        .orElse(null));
+    }
+
     private void verifyCostCenterExists(UUID costCenterId) {
         if (!costCenterRepository.existsById(costCenterId)) {
             throw new AppException(OrganizationErrorCode.COST_CENTER_NOT_FOUND);
@@ -545,5 +565,13 @@ public class DepartmentService {
         }
 
         return departmentMapper.toResponse(dept, version, parentName, costCenterName);
+    }
+
+    public Optional<Department> findDepartmentEntityById(UUID id) {
+        return departmentRepository.findById(id);
+    }
+
+    public Optional<DepartmentVersion> findLatestVersion(UUID departmentId) {
+        return versionRepository.findLatestVersion(departmentId);
     }
 }

@@ -32,6 +32,10 @@ import {
   AUTH_STORAGE_KEYS,
   AUTH_ROUTES,
 } from "../constants/auth.constants";
+import {
+  getDefaultRouteForRoles,
+  resolvePostLoginRoute,
+} from "../utils/role-redirect";
 import { setCredentials } from "@/store/slices/auth.slice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
@@ -39,10 +43,9 @@ import { toast } from "sonner";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl") || AUTH_ROUTES.DEFAULT_AFTER_LOGIN;
 
   const dispatch = useAppDispatch();
-  const { isAuthenticated, isInitialized } = useAppSelector(
+  const { isAuthenticated, isInitialized, user: authUser } = useAppSelector(
     (state) => state.auth
   );
 
@@ -61,9 +64,11 @@ export function LoginForm() {
   // Tự động chuyển hướng nếu người dùng đã có phiên đăng nhập hợp lệ
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
-      router.replace(returnUrl);
+      const explicitReturnUrl = searchParams.get("returnUrl");
+      const targetUrl = resolvePostLoginRoute(authUser?.roles, explicitReturnUrl);
+      router.replace(targetUrl);
     }
-  }, [isInitialized, isAuthenticated, router, returnUrl]);
+  }, [isInitialized, isAuthenticated, router, searchParams, authUser]);
 
   useEffect(() => {
     const savedAccount = localStorage.getItem(AUTH_STORAGE_KEYS.REMEMBER_ACCOUNT);
@@ -93,7 +98,10 @@ export function LoginForm() {
           description: `Chào mừng ${data.username} trở lại hệ thống CYCLOSA.`,
         });
 
-        router.replace(returnUrl);
+        const explicitReturnUrl = searchParams.get("returnUrl");
+        const targetUrl = resolvePostLoginRoute(response.data.roles, explicitReturnUrl);
+
+        router.replace(targetUrl);
       } else {
         toast.error("Đăng nhập không thành công", {
           description: response.message || "Vui lòng kiểm tra lại thông tin.",

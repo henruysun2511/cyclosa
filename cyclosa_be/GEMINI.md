@@ -1,0 +1,13 @@
+# CYCLOSA Backend — Hướng dẫn và Quy chuẩn Bắt buộc cho AI Agent
+
+Mỗi khi thực hiện bất kỳ tác vụ nào (tạo module mới, thêm endpoint, sửa lỗi, refactor) trong thư mục `cyclosa_be`, AI Agent **BẮT BUỘC ĐỌC VÀ TUÂN THỦ NGHIÊM NGẶT** bộ quy chuẩn tại thư mục `rules/`:
+
+1. **Kiến trúc Modular Monolith & Cấu trúc Module:** Đọc [rules/01-kien-truc-modular-monolith-va-cau-truc-module.md](./rules/01-kien-truc-modular-monolith-va-cau-truc-module.md). Không inject Repository của module khác; chỉ gọi Public Service. Dùng Domain Events (`ApplicationEventPublisher`) cho các tác động phụ liên module. Service viết trực tiếp concrete class, không tạo interface thừa.
+2. **REST Controller & ApiResponse:** Đọc [rules/02-quy-chuan-controller-va-api-response.md](./rules/02-quy-chuan-controller-va-api-response.md). `@Tag` Swagger **cấm chứa tiền tố số thứ tự** (như `01.`, `02.`). 100% endpoint trả về `ResponseEntity<ApiResponse<T>>`. Cấm trả về JPA Entity trực tiếp.
+3. **Phân quyền RBAC & DataScope:** Đọc [rules/03-quy-chuan-phan-quyen-rbac-va-datascope.md](./rules/03-quy-chuan-phan-quyen-rbac-va-datascope.md). Cặp đôi `@PreAuthorize("@perm.has('...')")` và `@RequirePermission('...')`. Xử lý 5 cấp độ DataScope (OWN, TEAM, DEPARTMENT, COMPANY, ALL) tại Service. **Bắt buộc đồng bộ quyền mới vào `RolePermissionDataInitializer`**.
+4. **JPA Entity & Multi-tenancy:** Đọc [rules/04-quy-chuan-entity-jpa-va-multi-tenancy.md](./rules/04-quy-chuan-entity-jpa-va-multi-tenancy.md). Kế thừa `BaseEntity`, soft delete với `@SQLDelete` và `@SQLRestriction`. Dùng `JOIN FETCH` chống N+1. Lọc multi-tenancy an toàn: `AND (r.companyId IS NULL OR r.companyId = :companyId)`.
+5. **Ngoại lệ & Mã lỗi Đa hình:** Đọc [rules/05-quy-chuan-ngoai-le-va-ma-loi-da-hinh.md](./rules/05-quy-chuan-ngoai-le-va-ma-loi-da-hinh.md). Mã lỗi riêng của module định nghĩa trong enum implement `ErrorCode`. Ném lỗi qua `AppException`. Cấm ném RuntimeException chung chung hoặc nuốt exception.
+6. **Phân trang & Tìm kiếm:** Đọc [rules/06-quy-chuan-phan-trang-va-tim-kiem.md](./rules/06-quy-chuan-phan-trang-va-tim-kiem.md). Filter DTO kế thừa `BaseFilterRequest`. Danh sách trắng `ALLOWED_SORT_FIELDS`. Trả về `PageData<T>` với phân trang 0-based.
+7. **DTO Validation & MapStruct:** Đọc [rules/07-quy-chuan-dto-validation-va-mapstruct.md](./rules/07-quy-chuan-dto-validation-va-mapstruct.md). Jakarta validation thông điệp 100% Tiếng Việt có dấu. Che giấu trường nhạy cảm ở Response DTO. Dùng MapStruct Spring component model.
+8. **Checklist Kiểm thử (DoD):** Đọc [rules/08-checklist-kiem-thu-va-nghiem-thu-backend.md](./rules/08-checklist-kiem-thu-va-nghiem-thu-backend.md). Trước khi bàn giao, kiểm tra đủ 6 hạng mục và đảm bảo lệnh biên dịch Maven thành công: `./mvnw test-compile`.
+

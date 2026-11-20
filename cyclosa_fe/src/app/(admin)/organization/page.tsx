@@ -40,6 +40,7 @@ import { DepartmentFormDialog } from "@/features/organization/components/dialogs
 import { DepartmentMoveDialog } from "@/features/organization/components/dialogs/department-move-dialog";
 import { DepartmentDetailDialog } from "@/features/organization/components/dialogs/department-detail-dialog";
 import { DepartmentDissolveDialog } from "@/features/organization/components/dialogs/department-dissolve-dialog";
+import { DepartmentEmployeeList } from "@/features/organization";
 import type { Department, DepartmentNode } from "@/features/organization/types/department.types";
 import type { Company } from "@/features/organization/types/company.types";
 import { PermissionGuard } from "@/features/authorization/components/permission-guard";
@@ -330,7 +331,7 @@ export default function OrganizationPage() {
         </div>
 
         {/* ── Filter Bar (asOf Date Picker & Company & View Mode) ───────── */}
-        <div className="table-card p-4">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 flex-1">
               {/* Bộ chọn công ty / pháp nhân */}
@@ -339,7 +340,7 @@ export default function OrganizationPage() {
                   value={selectedCompanyId}
                   onValueChange={(val) => val && updateFilters({ companyId: val })}
                 >
-                  <SelectTrigger className="w-full h-9 text-xs bg-white border-border overflow-hidden min-w-0">
+                  <SelectTrigger className="w-full h-9 text-xs bg-background border-border overflow-hidden min-w-0">
                     <SelectValue placeholder="Chọn công ty / pháp nhân">
                       {(val: string) => {
                         const comp = companies.find((c) => c.id === val);
@@ -390,14 +391,14 @@ export default function OrganizationPage() {
                   type="date"
                   value={asOfDate}
                   onChange={(e) => updateFilters({ asOfDate: e.target.value })}
-                  className="h-9 w-36 text-xs font-mono bg-white border-border"
+                  className="h-9 w-36 text-xs font-mono bg-background border-border"
                   placeholder="Chốt tại ngày"
                 />
                 {asOfDate && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 px-2 text-xs"
+                    className="h-9 px-2 text-xs cursor-pointer"
                     onClick={() => updateFilters({ asOfDate: "" })}
                   >
                     Về hiện tại
@@ -413,17 +414,17 @@ export default function OrganizationPage() {
                     placeholder="Tìm phòng ban, mã đơn vị..."
                     defaultValue={keyword}
                     onChange={(e) => setKeywordDebounced(e.target.value)}
-                    className="pl-8 h-9 text-xs bg-white border-border"
+                    className="pl-8 h-9 text-xs bg-background border-border"
                   />
                 </div>
               )}
             </div>
 
             {/* View Mode Toggle: Tree vs Table */}
-            <div className="flex items-center rounded-md border border-border bg-white p-0.5 shadow-2xs shrink-0">
+            <div className="flex items-center rounded-lg border border-border bg-background p-0.5 shadow-2xs shrink-0">
               <button
                 type="button"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                   viewMode === ORG_VIEW_MODES.TREE
                     ? "bg-primary text-white"
                     : "text-muted-foreground hover:text-foreground"
@@ -435,7 +436,7 @@ export default function OrganizationPage() {
               </button>
               <button
                 type="button"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                   viewMode === ORG_VIEW_MODES.TABLE
                     ? "bg-primary text-white"
                     : "text-muted-foreground hover:text-foreground"
@@ -451,43 +452,48 @@ export default function OrganizationPage() {
 
         {/* ── Main Content Area (2 cột Master-Detail chuẩn CYCLOSA) ────── */}
         {viewMode === ORG_VIEW_MODES.TREE ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Tree Structure (2 cols) */}
-            <div className="lg:col-span-2 table-card p-5">
-              <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
-                <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <span>Cây phả hệ đơn vị phòng ban</span>
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  Click vào đơn vị để xem chi tiết & tác vụ
-                </span>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              {/* Cột trái: Cây phả hệ (2 cols) */}
+              <div className="lg:col-span-2 table-card p-5">
+                <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
+                  <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <span>Cây phả hệ đơn vị phòng ban</span>
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    Click vào đơn vị để xem chi tiết & tác vụ
+                  </span>
+                </div>
+
+                <OrgTreeView
+                  nodes={treeNodes}
+                  isLoading={isTreeLoading}
+                  selectedNodeId={selectedDept?.id}
+                  onSelectNode={(node) => setSelectedDept(nodeToDepartment(node))}
+                  onAddSubDepartment={handleOpenAddSub}
+                  onEdit={handleOpenEdit}
+                  onMove={handleOpenMove}
+                  onDissolve={handleOpenDissolve}
+                  onViewDetail={handleOpenDetail}
+                />
               </div>
 
-              <OrgTreeView
-                nodes={treeNodes}
-                isLoading={isTreeLoading}
-                selectedNodeId={selectedDept?.id}
-                onSelectNode={(node) => setSelectedDept(nodeToDepartment(node))}
-                onAddSubDepartment={handleOpenAddSub}
-                onEdit={handleOpenEdit}
-                onMove={handleOpenMove}
-                onDissolve={handleOpenDissolve}
-                onViewDetail={handleOpenDetail}
-              />
+              {/* Cột phải: Thông tin đơn vị (1 col) */}
+              <div className="lg:col-span-1">
+                <DepartmentDetailPanel
+                  selectedDept={selectedDept}
+                  onEdit={handleOpenEdit}
+                  onMove={handleOpenMove}
+                  onDissolve={handleOpenDissolve}
+                  onAddSubDepartment={handleOpenAddSub}
+                  onViewDetail={handleOpenDetail}
+                />
+              </div>
             </div>
 
-            {/* Department Detail Side Panel (1 col) */}
-            <div className="lg:col-span-1">
-              <DepartmentDetailPanel
-                selectedDept={selectedDept}
-                onEdit={handleOpenEdit}
-                onMove={handleOpenMove}
-                onDissolve={handleOpenDissolve}
-                onAddSubDepartment={handleOpenAddSub}
-                onViewDetail={handleOpenDetail}
-              />
-            </div>
+            {/* Danh sách nhân sự ở dưới cả phần cây phả hệ và thông tin */}
+            <DepartmentEmployeeList department={selectedDept} />
           </div>
         ) : (
           /* Table View */

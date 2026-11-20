@@ -225,6 +225,7 @@ public class EmployeeMapper {
                 .id(eval.getId())
                 .employeeId(eval.getEmployee().getId())
                 .result(eval.getResult())
+                .status(eval.getStatus())
                 .evaluationDate(eval.getEvaluationDate())
                 .evaluatedByEmployeeId(eval.getEvaluatedBy() != null ? eval.getEvaluatedBy().getId() : null)
                 .evaluatedByEmployeeName(eval.getEvaluatedBy() != null ? eval.getEvaluatedBy().getFullName() : null)

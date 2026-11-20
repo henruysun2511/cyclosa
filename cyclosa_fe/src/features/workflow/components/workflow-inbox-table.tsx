@@ -80,53 +80,51 @@ export function WorkflowInboxTable({
     setActionMode(mode);
   };
 
-  if (isLoading) {
-    return (
-      <div className="bg-card rounded-xl border p-4 shadow-sm space-y-3">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!items || items.length === 0) {
-    return (
-      <div className="bg-card rounded-xl border p-12 text-center shadow-sm">
-        <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-        <h3 className="text-sm font-semibold text-foreground">
-          Không có yêu cầu phê duyệt nào
-        </h3>
-        <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-          {activeTab === "inbox"
-            ? "Hộp thư của bạn đang trống. Hiện tại không có yêu cầu nào chờ bạn duyệt."
-            : activeTab === "submitted"
-            ? "Bạn chưa gửi yêu cầu phê duyệt nào hoặc chưa có chứng từ gửi duyệt."
-            : "Chưa có lịch sử phê duyệt nào được ghi nhận."}
-        </p>
-      </div>
-    );
-  }
+  const emptyText =
+    activeTab === "inbox"
+      ? "Hộp thư của bạn đang trống. Hiện tại không có yêu cầu nào chờ bạn duyệt."
+      : activeTab === "submitted"
+      ? "Bạn chưa gửi yêu cầu phê duyệt nào hoặc chưa có chứng từ gửi duyệt."
+      : "Chưa có lịch sử phê duyệt nào được ghi nhận.";
 
   return (
     <>
-      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-muted/50">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+        <Table>
+          <TableHeader className="bg-muted/30">
+            <TableRow>
+              <TableHead className="w-[180px] font-semibold text-xs">Mã hồ sơ</TableHead>
+              <TableHead className="min-w-[220px] font-semibold text-xs">Tiêu đề yêu cầu</TableHead>
+              <TableHead className="w-[160px] font-semibold text-xs">Loại chứng từ</TableHead>
+              <TableHead className="w-[160px] font-semibold text-xs">Người gửi</TableHead>
+              <TableHead className="w-[180px] font-semibold text-xs">Bước hiện tại</TableHead>
+              <TableHead className="w-[140px] font-semibold text-xs">Trạng thái</TableHead>
+              <TableHead className="w-[140px] font-semibold text-xs">Ngày gửi</TableHead>
+              <TableHead className="w-[90px] text-right font-semibold text-xs">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-4 w-48 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-4 w-28 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-5 w-16 bg-muted animate-pulse rounded-full" /></TableCell>
+                  <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell className="text-right"><div className="h-8 w-8 bg-muted animate-pulse rounded ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : !items || items.length === 0 ? (
               <TableRow>
-                <TableHead className="w-[180px] font-semibold text-xs">Mã hồ sơ</TableHead>
-                <TableHead className="min-w-[220px] font-semibold text-xs">Tiêu đề yêu cầu</TableHead>
-                <TableHead className="w-[160px] font-semibold text-xs">Loại chứng từ</TableHead>
-                <TableHead className="w-[160px] font-semibold text-xs">Người gửi</TableHead>
-                <TableHead className="w-[180px] font-semibold text-xs">Bước hiện tại</TableHead>
-                <TableHead className="w-[140px] font-semibold text-xs">Trạng thái</TableHead>
-                <TableHead className="w-[140px] font-semibold text-xs">Ngày gửi</TableHead>
-                <TableHead className="w-[90px] text-right font-semibold text-xs">Thao tác</TableHead>
+                <TableCell colSpan={8} className="h-32 text-center text-xs text-muted-foreground">
+                  {emptyText}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => {
+            ) : (
+              items.map((item) => {
                 const statusConfig = OVERALL_STATUS_CONFIG[item.overallStatus] || {
                   label: item.overallStatus,
                   className: "bg-muted text-muted-foreground",
@@ -137,7 +135,7 @@ export function WorkflowInboxTable({
                 const isMySubmitted = activeTab === "submitted";
 
                 return (
-                  <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
+                  <TableRow key={item.id} className="hover:bg-muted/25 transition-colors">
                     {/* Mã hồ sơ */}
                     <TableCell className="font-mono text-xs font-medium text-foreground">
                       {item.referenceCode || "---"}
@@ -274,10 +272,10 @@ export function WorkflowInboxTable({
                     </TableCell>
                   </TableRow>
                 );
-              })}
-            </TableBody>
+              })
+            )}
+          </TableBody>
           </Table>
-        </div>
 
         {/* Phân trang */}
         {totalPages > 1 && (

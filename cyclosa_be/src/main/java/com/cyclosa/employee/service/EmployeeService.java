@@ -1,9 +1,10 @@
 package com.cyclosa.employee.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.auth.dto.request.CreateUserRequest;
 import com.cyclosa.auth.dto.response.UserResponse;
 import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.repository.UserRepository;
 import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
@@ -25,7 +26,11 @@ import com.cyclosa.organization.entity.Department;
 import com.cyclosa.organization.entity.JobLevel;
 import com.cyclosa.organization.entity.JobTitle;
 import com.cyclosa.organization.exception.OrganizationErrorCode;
-import com.cyclosa.organization.repository.*;
+import com.cyclosa.organization.service.BranchService;
+import com.cyclosa.organization.service.CompanyService;
+import com.cyclosa.organization.service.DepartmentService;
+import com.cyclosa.organization.service.JobLevelService;
+import com.cyclosa.organization.service.JobTitleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -60,14 +65,13 @@ public class EmployeeService {
     private final ProbationEvaluationRepository probationEvaluationRepository;
     private final FaceEnrollmentRepository faceEnrollmentRepository;
 
-    private final CompanyRepository companyRepository;
-    private final DepartmentRepository departmentRepository;
-    private final BranchRepository branchRepository;
-    private final JobTitleRepository jobTitleRepository;
-    private final JobLevelRepository jobLevelRepository;
+    private final CompanyService companyService;
+    private final DepartmentService departmentService;
+    private final BranchService branchService;
+    private final JobTitleService jobTitleService;
+    private final JobLevelService jobLevelService;
 
     private final UserService userService;
-    private final UserRepository userRepository;
     private final EmployeeMapper employeeMapper;
 
     /**
@@ -85,20 +89,21 @@ public class EmployeeService {
      * Tiếp nhận hồ sơ nhân viên mới (Hire / Onboard)
      */
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "EMPLOYEE", entityIdExpression = "#result.id", description = "Tiếp nhận hồ sơ nhân viên mới")
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
-        Company company = companyRepository.findById(request.getCompanyId())
+        Company company = companyService.findCompanyEntityById(request.getCompanyId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.COMPANY_NOT_FOUND));
 
-        Department department = departmentRepository.findById(request.getDepartmentId())
+        Department department = departmentService.findDepartmentEntityById(request.getDepartmentId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.DEPARTMENT_NOT_FOUND));
 
-        Branch branch = branchRepository.findById(request.getBranchId())
+        Branch branch = branchService.findBranchEntityById(request.getBranchId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.BRANCH_NOT_FOUND));
 
-        JobTitle jobTitle = jobTitleRepository.findById(request.getJobTitleId())
+        JobTitle jobTitle = jobTitleService.findJobTitleEntityById(request.getJobTitleId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.JOB_TITLE_NOT_FOUND));
 
-        JobLevel jobLevel = jobLevelRepository.findById(request.getJobLevelId())
+        JobLevel jobLevel = jobLevelService.findJobLevelEntityById(request.getJobLevelId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.JOB_LEVEL_NOT_FOUND));
 
         Employee manager = null;
@@ -297,6 +302,7 @@ public class EmployeeService {
      * Cập nhật thông tin cá nhân & lý lịch của nhân viên
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "EMPLOYEE", entityIdExpression = "#employeeId", description = "Cập nhật thông tin hồ sơ nhân viên")
     public EmployeeDetailResponse updateEmployee(UUID employeeId, UpdateEmployeeRequest request) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(EmployeeErrorCode.EMPLOYEE_NOT_FOUND));
@@ -343,6 +349,7 @@ public class EmployeeService {
      * Nhân viên tự cập nhật một số thông tin cá nhân cơ bản
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "EMPLOYEE", entityIdExpression = "#result.id", description = "Nhân viên tự cập nhật thông tin cá nhân")
     public EmployeeDetailResponse updateMyProfile(UpdateEmployeeRequest request) {
         UUID currentUserId = getCurrentAuthenticatedUserId();
         Employee employee = employeeRepository.findByUserId(currentUserId)
@@ -357,14 +364,38 @@ public class EmployeeService {
         return getEmployeeById(employee.getId());
     }
 
+    public Optional<Employee> findEntityById(UUID id) {
+        return employeeRepository.findById(id);
+    }
+
+    public Employee findEmployeeOrThrow(UUID id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new AppException(EmployeeErrorCode.EMPLOYEE_NOT_FOUND));
+    }
+
+    public Optional<Employee> findByUserId(UUID userId) {
+        return employeeRepository.findByUserId(userId);
+    }
+
+    public boolean existsById(UUID id) {
+        return employeeRepository.existsById(id);
+    }
+
+    public List<Employee> findAllEntities() {
+        return employeeRepository.findAll();
+    }
+
+    public String getEmployeeFullName(UUID id) {
+        return employeeRepository.findById(id).map(Employee::getFullName).orElse("");
+    }
+
     private UUID getCurrentAuthenticatedUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new AppException(EmployeeErrorCode.EMPLOYEE_NOT_FOUND);
         }
         String principal = auth.getName();
-        return userRepository.findByEmailAndDeletedFalse(principal)
-                .or(() -> userRepository.findByUsernameAndDeletedFalse(principal))
+        return userService.findUserEntityByUsernameOrEmail(principal)
                 .map(User::getId)
                 .orElseThrow(() -> new AppException(EmployeeErrorCode.EMPLOYEE_NOT_FOUND));
     }

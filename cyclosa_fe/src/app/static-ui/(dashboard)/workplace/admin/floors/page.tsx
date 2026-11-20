@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -168,7 +168,7 @@ export default function FloorPlanManagementPage() {
           </Button>
 
           <Button asChild size="sm" className="h-8.5 text-xs gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
-            <Link href={`/workplace/admin/floors/${currentFloor.id}/editor`}>
+            <Link href={`/workplace/floors/${currentFloor.id}/editor`}>
               <Plus className="h-3.5 w-3.5" />
               <span>Tạo bản vẽ mới</span>
             </Link>
@@ -435,7 +435,7 @@ export default function FloorPlanManagementPage() {
                   asChild
                   className="w-full text-xs h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-medium gap-1.5"
                 >
-                  <Link href={`/workplace/admin/floors/${currentFloor.id}/editor`}>
+                  <Link href={`/workplace/floors/${currentFloor.id}/editor`}>
                     <SlidersHorizontal className="h-3.5 w-3.5" />
                     <span>Chỉnh sửa trên Canvas 2D Editor</span>
                   </Link>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { AdminSidebar } from "./admin-sidebar";
 import { AdminHeader } from "./admin-header";
+import { FloatingAssistantWidget } from "@/features/ai";
 
 export interface AdminLayoutProps {
   children: React.ReactNode;
@@ -66,9 +67,12 @@ export function AdminLayout({
         />
 
         {/* Scrollable Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
-          <div className="mx-auto max-w-7xl">{children}</div>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl w-full">{children}</div>
         </main>
+
+        {/* Floating AI Assistant Copilot Widget */}
+        <FloatingAssistantWidget />
       </div>
     </div>
   );

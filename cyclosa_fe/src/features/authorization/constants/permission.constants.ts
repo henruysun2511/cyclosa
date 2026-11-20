@@ -42,6 +42,7 @@ export const PERMISSIONS = {
     APPLY: "leave.apply",
     APPROVE: "leave.approve",
     MANAGE: "leave.manage",
+    CONFIG: "leave.config",
   },
 
   // 6. Chấm công & Ca kíp
@@ -72,23 +73,66 @@ export const PERMISSIONS = {
     VIEW: "recruitment.view",
     CREATE: "recruitment.create",
     MANAGE: "recruitment.manage",
+    REQUEST_VIEW: "recruitment.request.view",
+    REQUEST_MANAGE: "recruitment.request.manage",
+    REQUEST_APPROVE: "recruitment.request.approve",
+    OPENING_VIEW: "recruitment.opening.view",
+    OPENING_MANAGE: "recruitment.opening.manage",
+    CANDIDATE_VIEW: "recruitment.candidate.view",
+    CANDIDATE_MANAGE: "recruitment.candidate.manage",
+    APPLICATION_VIEW: "recruitment.application.view",
+    APPLICATION_MANAGE: "recruitment.application.manage",
+    INTERVIEW_VIEW: "recruitment.interview.view",
+    INTERVIEW_MANAGE: "recruitment.interview.manage",
+    SCORECARD_EVALUATE: "recruitment.scorecard.evaluate",
+    OFFER_VIEW: "recruitment.offer.view",
+    OFFER_MANAGE: "recruitment.offer.manage",
+    OPPORTUNITY_VIEW: "recruitment.opportunity.view",
+    OPPORTUNITY_MANAGE: "recruitment.opportunity.manage",
   },
 
   // 10. Đánh giá Hiệu suất & KPI
   PERFORMANCE: {
     VIEW: "performance.view",
-    EVALUATE: "performance.evaluate",
+    MANAGE: "performance.manage",
+    REVIEW: "performance.review",
+    FINALIZE: "performance.finalize",
+    CONFIG: "performance.config",
   },
 
   // 11. Không gian làm việc số & Tài sản
   WORKPLACE: {
     VIEW: "workplace.view",
     MANAGE: "workplace.manage",
+    REPORT: "workplace.report",
   },
 
   // 12. Nhật ký Kiểm toán & Tuân thủ
   AUDIT: {
     VIEW: "audit.view",
+    EXPORT: "audit.export",
+  },
+
+  // 13. Thông báo nội bộ
+  NOTIFICATION: {
+    BROADCAST: "notification.broadcast",
+  },
+
+  // 14. Hội nhập Nhân sự (Onboarding)
+  ONBOARDING: {
+    VIEW: "onboarding.view",
+    MANAGE: "onboarding.manage",
+    IT_HANDLE: "onboarding.it_handle",
+  },
+
+  // 15. Bảng Điều khiển & Phân tích Tập trung (Centralized Dashboards)
+  DASHBOARD: {
+    EXECUTIVE: "dashboard.executive.view",
+    PERSONNEL: "dashboard.personnel.view",
+    ATTENDANCE: "dashboard.attendance.view",
+    RECRUITMENT: "dashboard.recruitment.view",
+    PERFORMANCE: "dashboard.performance.view",
+    WORKPLACE: "dashboard.workplace.view",
   },
 } as const;
 

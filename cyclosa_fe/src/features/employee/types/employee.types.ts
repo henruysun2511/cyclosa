@@ -137,6 +137,7 @@ export interface ProbationEvaluation {
   id: string;
   employeeId: string;
   result: ProbationResult;
+  status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
   evaluationDate: string;
   evaluatedByEmployeeId?: string | null;
   evaluatedByEmployeeName?: string | null;

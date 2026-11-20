@@ -20,105 +20,100 @@ export function WorkflowStatsCards({
 }: WorkflowStatsCardsProps) {
   const cards = [
     {
-      label: "Chờ tôi phê duyệt",
-      subLabel: "Yêu cầu cần xử lý ngay",
-      count: stats?.pendingMyApproval ?? 0,
+      title: "Chờ tôi phê duyệt",
+      value: stats?.pendingMyApproval ?? 0,
+      description: "Yêu cầu cần xử lý ngay",
       icon: Clock,
-      iconBg: "bg-amber-600 text-white",
-      sparkColor: "#D97706",
-      sparkPath: "M0,32 Q25,12 50,22 T100,8",
+      iconBg: "bg-amber-500 text-white",
+      sparkColor: "text-amber-500",
+      sparkline: "M0 25 Q 25 15, 50 20 T 100 5",
       isActive: activeTab === "inbox",
       onClick: () => onSelectTab("inbox"),
     },
     {
-      label: "Tôi đã phê duyệt",
-      subLabel: "Lịch sử đã ra quyết định",
-      count: stats?.approvedByMe ?? 0,
+      title: "Tôi đã phê duyệt",
+      value: stats?.approvedByMe ?? 0,
+      description: "Lịch sử đã ra quyết định",
       icon: CheckCircle2,
       iconBg: "bg-emerald-600 text-white",
-      sparkColor: "#10B981",
-      sparkPath: "M0,35 Q25,38 50,20 T100,6",
+      sparkColor: "text-emerald-500",
+      sparkline: "M0 30 Q 30 10, 60 25 T 100 8",
       isActive: activeTab === "history",
       onClick: () => onSelectTab("history"),
     },
     {
-      label: "Tôi đã gửi",
-      subLabel: "Hồ sơ của tôi đang chờ duyệt",
-      count: stats?.mySubmittedTotal ?? 0,
+      title: "Tôi đã gửi",
+      value: stats?.mySubmittedTotal ?? 0,
+      description: "Hồ sơ của tôi đang chờ duyệt",
       icon: Send,
       iconBg: "bg-blue-600 text-white",
-      sparkColor: "#2563EB",
-      sparkPath: "M0,28 Q30,12 60,26 T100,12",
+      sparkColor: "text-blue-500",
+      sparkline: "M0 20 Q 30 35, 60 15 T 100 10",
       isActive: activeTab === "submitted",
       onClick: () => onSelectTab("submitted"),
     },
     {
-      label: "Quy trình thiết lập",
-      subLabel: "Quy trình đang kích hoạt",
-      count: stats?.totalActiveDefinitions ?? 0,
+      title: "Quy trình thiết lập",
+      value: stats?.totalActiveDefinitions ?? 0,
+      description: "Quy trình đang kích hoạt",
       icon: GitFork,
-      iconBg: "bg-purple-600 text-white",
-      sparkColor: "#9333EA",
-      sparkPath: "M0,24 Q35,8 70,28 T100,10",
+      iconBg: "bg-primary text-white",
+      sparkColor: "text-primary",
+      sparkline: "M0 28 Q 20 8, 50 18 T 100 6",
       isActive: false,
       onClick: onOpenDefinitions,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((item, idx) => {
-        const Icon = item.icon;
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fadeIn">
+      {cards.map((card, idx) => {
+        const Icon = card.icon;
         return (
-          <button
+          <div
             key={idx}
-            type="button"
-            onClick={item.onClick}
+            onClick={card.onClick}
             className={cn(
-              "relative text-left bg-card rounded-xl p-4 border transition-all duration-200 overflow-hidden group shadow-sm hover:shadow-md",
-              item.isActive
+              "relative overflow-hidden rounded-xl border p-4 sm:p-5 shadow-xs transition-all group bg-card hover:border-primary/40 hover:shadow-md cursor-pointer",
+              card.isActive
                 ? "border-primary ring-2 ring-primary/20 bg-primary/[0.02]"
-                : "border-border hover:border-border/80"
+                : "border-border"
             )}
           >
-            {/* Sparkline background */}
-            <div className="absolute right-0 bottom-0 w-32 h-16 pointer-events-none opacity-20 group-hover:opacity-35 transition-opacity">
-              <svg
-                viewBox="0 0 100 40"
-                className="w-full h-full fill-none stroke-current"
-                style={{ color: item.sparkColor }}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d={item.sparkPath} />
-              </svg>
-            </div>
-
-            <div className="flex items-start justify-between relative z-10 mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {item.label}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">{card.title}</p>
+                <div className="text-2xl font-bold tracking-tight text-foreground font-mono mt-0.5">
+                  {card.value}
+                </div>
+              </div>
               <div
                 className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 transition-transform group-hover:scale-105",
-                  item.iconBg
+                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-xs transition-transform group-hover:scale-105",
+                  card.iconBg
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="h-6 w-6 text-white" />
               </div>
             </div>
 
-            <div className="flex items-baseline gap-2 relative z-10">
-              <span className="text-2xl font-bold tracking-tight text-foreground font-mono">
-                {item.count}
-              </span>
+            <div className="mt-3 flex items-center justify-between text-xs border-t border-border/40 pt-2.5">
+              <span className="text-muted-foreground truncate">{card.description}</span>
+              <div className="w-16 h-6 shrink-0 ml-2">
+                <svg className="w-full h-full overflow-visible" viewBox="0 0 100 40">
+                  <path
+                    d={card.sparkline}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className={card.sparkColor}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
             </div>
-
-            <p className="text-xs text-muted-foreground mt-1 relative z-10 truncate">
-              {item.subLabel}
-            </p>
-          </button>
+          </div>
         );
       })}
     </div>

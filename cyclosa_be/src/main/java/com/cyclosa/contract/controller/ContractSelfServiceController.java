@@ -1,7 +1,7 @@
 package com.cyclosa.contract.controller;
 
 import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.repository.UserRepository;
+import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.ApiResponse;
 import com.cyclosa.contract.dto.ContractDto;
@@ -10,7 +10,7 @@ import com.cyclosa.contract.exception.ContractErrorCode;
 import com.cyclosa.contract.service.ContractService;
 import com.cyclosa.contract.service.ContractSigningService;
 import com.cyclosa.employee.entity.Employee;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +33,8 @@ public class ContractSelfServiceController {
 
     private final ContractService contractService;
     private final ContractSigningService signingService;
-    private final UserRepository userRepository;
-    private final EmployeeRepository employeeRepository;
+    private final UserService userService;
+    private final EmployeeService employeeService;
 
     @GetMapping("/me/contracts")
     @Operation(summary = "Xem toàn bộ hợp đồng của chính tôi")
@@ -64,13 +64,12 @@ public class ContractSelfServiceController {
             return null;
         }
         String principal = auth.getName();
-        UUID userId = userRepository.findByEmailAndDeletedFalse(principal)
-                .or(() -> userRepository.findByUsernameAndDeletedFalse(principal))
+        UUID userId = userService.findUserEntityByUsernameOrEmail(principal)
                 .map(User::getId)
                 .orElse(null);
 
         if (userId == null) return null;
-        return employeeRepository.findByUserId(userId).orElse(null);
+        return employeeService.findByUserId(userId).orElse(null);
     }
 }
 

@@ -696,11 +696,22 @@ export function EmployeeDetailDialog({
                       <div className="space-y-2">
                         {employee.probationEvaluations?.map((ev) => (
                           <div key={ev.id} className="p-2.5 rounded bg-slate-50 border text-xs space-y-1">
-                            <div className="flex justify-between font-semibold">
+                            <div className="flex items-center justify-between font-semibold flex-wrap gap-1">
                               <span>Ngày đánh giá: {ev.evaluationDate}</span>
-                              <Badge className={ev.result === "PASSED" ? "bg-emerald-600" : "bg-amber-600"}>
-                                {ev.result}
-                              </Badge>
+                              <div className="flex items-center gap-1.5">
+                                <Badge className={ev.result === "PASSED" ? "bg-emerald-600 text-white" : ev.result === "FAILED" ? "bg-rose-600 text-white" : "bg-amber-600 text-white"}>
+                                  {ev.result === "PASSED" ? "Đạt thử việc" : ev.result === "FAILED" ? "Không đạt" : "Kéo dài"}
+                                </Badge>
+                                {ev.status === "APPROVED" && (
+                                  <Badge className="bg-emerald-700 text-white">Đã duyệt</Badge>
+                                )}
+                                {ev.status === "REJECTED" && (
+                                  <Badge className="bg-rose-700 text-white">Bị từ chối</Badge>
+                                )}
+                                {(!ev.status || ev.status === "PENDING") && (
+                                  <Badge className="bg-amber-600 text-white">Chờ duyệt</Badge>
+                                )}
+                              </div>
                             </div>
                             <div className="text-2xs text-muted-foreground">
                               Đánh giá bởi: {ev.evaluatedByEmployeeName || "---"}

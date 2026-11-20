@@ -1,0 +1,3232 @@
+XÂY DỰNG HỆ THỐNG QUẢN LÝ NGUỒN NHÂN LỰC TOÀN DIỆN CHO CÔNG TY CỔ PHẦN ĐẦU TƯ THƯƠNG MẠI VÀ CÔNG NGHỆ FSI
+Mô tả tổng quan về dự án
+Trong bối cảnh chuyển đổi số đang diễn ra mạnh mẽ ở hầu hết các lĩnh vực, công tác quản trị nguồn nhân lực (Human Resource Management - HRM) tại nhiều doanh nghiệp vẫn còn phụ thuộc lớn vào các phương thức thủ công hoặc các công cụ rời rạc như bảng tính Excel, hồ sơ giấy và email trao đổi nội bộ. Cách làm này bộc lộ nhiều hạn chế: dữ liệu phân tán, khó tổng hợp và đối chiếu; quy trình phê duyệt thiếu minh bạch; tốn nhiều thời gian cho các tác vụ lặp lại; và tiềm ẩn rủi ro về tuân thủ pháp lý do thiếu cơ chế theo dõi thời hạn và cảnh báo tự động.
+Xuất phát từ thực tế đó, đề tài xây dựng Hệ thống Quản trị Nguồn nhân lực (HRM System) nhằm số hóa toàn diện các nghiệp vụ nhân sự cốt lõi, đồng thời tích hợp các công nghệ hiện đại (trí tuệ nhân tạo, xử lý ngôn ngữ tự nhiên, phân tích dữ liệu) để nâng cao hiệu quả vận hành và hỗ trợ ra quyết định cho các cấp quản lý.
+Vai trò trong hệ thống
+Super Admin
+HR / HR Specialist / HR Admin
+Ban Giám đốc / Executive
+Trưởng phòng / Quản lý (Manager)
+Nhân viên (Employee)
+Ứng viên
+IT / Office Admin
+Kế toán
+Chuyên viên pháp chế
+0. Xác thực (Authentication)
+0.1. Tổng quan
+Module Auth chịu trách nhiệm quản lý vòng đời tài khoản người dùng và các nghiệp vụ xác thực, bao gồm tạo và kích hoạt tài khoản, đăng nhập, đăng xuất, làm mới phiên đăng nhập, xác thực JWT và đăng nhập thông qua Google OAuth2.
+Module được thiết kế theo mô hình Stateless JWT kết hợp Redis Cache và Blacklist. Access Token được sử dụng để xác thực các request, Refresh Token được quản lý trên Redis để kiểm soát phiên, trong khi Access Token sau khi logout được đưa vào Redis Blacklist để ngăn việc tiếp tục sử dụng token cũ.
+0.2. Các nhóm nghiệp vụ chính
+Có thể khái quát module Auth thành các nhóm nghiệp vụ sau:
+0.2.1. Quản lý tài khoản
+Quản trị viên có thể tạo tài khoản nhân viên, quản lý trạng thái tài khoản, gửi lại mã kích hoạt và thực hiện khóa hoặc mở khóa tài khoản.
+Nhân viên không tự đăng ký tài khoản. Khi quản trị viên tạo tài khoản, hệ thống lưu tài khoản ở trạng thái PENDING_ACTIVATION, sinh mã kích hoạt có thời hạn 48 giờ và gửi liên kết kích hoạt qua email.
+0.2.2. Kích hoạt tài khoản
+Nhân viên truy cập liên kết được gửi qua email và thực hiện đặt mật khẩu lần đầu.
+Hệ thống kiểm tra token kích hoạt trên Redis, cập nhật tài khoản sang trạng thái ACTIVE, lưu mật khẩu đã băm và xóa token kích hoạt để chống tái sử dụng. Sau khi kích hoạt thành công, hệ thống sinh Access Token và Refresh Token, đồng thời tự động đăng nhập cho người dùng.
+0.2.3. Đăng nhập bằng Email và Mật khẩu
+Người dùng đăng nhập bằng email và mật khẩu. Hệ thống:
+Tìm tài khoản và các vai trò tương ứng.
+Kiểm tra trạng thái tài khoản.
+Đối chiếu mật khẩu bằng BCrypt.
+Sinh Access Token và Refresh Token.
+Lưu Refresh Token trên Redis.
+Cập nhật thời điểm đăng nhập gần nhất.
+Trả thông tin token và thông tin người dùng cho Client.
+Các trường hợp tài khoản không tồn tại, chưa kích hoạt, mật khẩu không đúng hoặc tài khoản bị khóa sẽ được xử lý bằng mã lỗi xác thực tương ứng.
+0.2.4. Xác thực JWT cho mỗi Request
+Các request cần xác thực sẽ được JwtAuthFilter xử lý.
+Hệ thống lấy Bearer Token từ HTTP Header, kiểm tra token có nằm trong Redis Blacklist hay không, sau đó kiểm tra chữ ký và thời hạn JWT. Nếu token hợp lệ, hệ thống trích xuất userId, email và roles để thiết lập Authentication trong SecurityContextHolder trước khi request được chuyển đến Controller.
+0.2.5. Làm mới Access Token
+Khi Access Token cần được làm mới, Client gửi Refresh Token đến endpoint /api/v1/auth/refresh.
+Hệ thống kiểm tra loại token, lấy userId, đối chiếu Refresh Token với giá trị đang lưu trong Redis và kiểm tra tài khoản. Nếu hợp lệ, hệ thống sinh Access Token mới mà không cần người dùng đăng nhập lại.
+0.2.6. Đăng xuất
+Khi người dùng logout, hệ thống lấy thông tin người dùng và thời gian hết hạn của Access Token để xác định TTL còn lại.
+Access Token được đưa vào Redis Blacklist trong khoảng thời gian còn hiệu lực. Đồng thời Refresh Token tương ứng được xóa khỏi Redis để hủy phiên đăng nhập.
+0.2.7. Đăng nhập bằng Google OAuth2
+Người dùng có thể đăng nhập thông qua Google OAuth2.
+Sau khi Google xác thực thành công, backend nhận thông tin định danh và chuyển cho AuthService. Hệ thống tìm tài khoản OAuth tương ứng; nếu chưa tồn tại thì tìm User theo email hoặc tạo User mới, liên kết tài khoản Google và gán vai trò mặc định. Sau đó hệ thống sinh Access Token và Refresh Token rồi chuyển kết quả về Frontend.
+0,3. Các chức năng của module
+STT
+Chức năng
+Mô tả
+1
+Tạo tài khoản nhân viên
+Quản trị viên tạo tài khoản cho nhân viên và gửi thông tin kích hoạt qua email.
+2
+Kích hoạt tài khoản
+Nhân viên sử dụng mã kích hoạt để đặt mật khẩu lần đầu và kích hoạt tài khoản.
+3
+Đăng nhập
+Xác thực người dùng bằng email và mật khẩu, sau đó cấp Access Token và Refresh Token.
+4
+Xác thực JWT
+Kiểm tra Bearer Token trên các request cần bảo mật.
+5
+Làm mới Access Token
+Cấp Access Token mới dựa trên Refresh Token hợp lệ.
+6
+Đăng xuất
+Vô hiệu hóa Access Token và xóa Refresh Token khỏi Redis.
+7
+Đăng nhập Google
+Xác thực người dùng thông qua Google OAuth2.
+8
+Quản lý trạng thái tài khoản
+Hỗ trợ khóa, mở khóa và kiểm tra trạng thái tài khoản.
+9
+Quản lý thông tin người dùng
+Cung cấp thông tin tài khoản và danh sách roles cho các chức năng cần thiết.
+10
+Gửi lại mã kích hoạt
+Cho phép quản trị viên gửi lại liên kết kích hoạt tài khoản.
+1. Quản lý tổ chức (Organization Management)
+1.1. Tổng quan
+Mô hình này được thiết kế để quản lý cơ cấu tổ chức của một doanh nghiệp, đặc biệt là doanh nghiệp có nhiều phòng ban, chi nhánh và chức danh công việc.
+Điểm quan trọng nhất là ba chiều tổ chức, địa lý và vị trí việc làm hoạt động độc lập với nhau. Khi một nhân viên chuyển địa điểm làm việc, bạn không nhất thiết phải chuyển phòng ban hoặc thay đổi chức danh của họ.
+Ví dụ, Nguyễn Văn An có thể thuộc Phòng Backend, làm việc tại chi nhánh Hà Nội và giữ chức danh Lập trình viên Backend cấp bậc Senior. Ba thông tin này được quản lý riêng biệt.
+Nhân sự = Đơn vị tổ chức (Phòng ban) + Địa lý (Chi nhánh) + Vị trí việc làm (Chức danh)
+1.2. Các phân hệ và chức năng 
+1.2.1. Quản lý thông tin doanh nghiệp
+Cho phép người quản trị tạo và cập nhật thông tin của các công ty hoặc pháp nhân được quản lý trong hệ thống, bao gồm tên, mã công ty, mã số thuế, địa chỉ và thông tin liên hệ.
+Mỗi công ty có thể thiết lập cơ cấu tổ chức, vùng miền, chức danh và trung tâm chi phí riêng.
+1.2.2. Quản lý cơ cấu phòng ban
+Cho phép doanh nghiệp xây dựng sơ đồ tổ chức theo nhiều cấp, từ khối, ban, phòng đến các tổ, nhóm trực thuộc. Mỗi đơn vị có thể được chỉ định người quản lý và liên kết với một trung tâm chi phí. 
+ 
+Khi doanh nghiệp tái cơ cấu, người quản trị có thể chuyển một phòng ban sang đơn vị khác. Trước khi thực hiện, hệ thống hiển thị số lượng nhân viên và các đơn vị trực thuộc bị ảnh hưởng, giúp người quản trị đánh giá tác động của việc thay đổi.
+Hệ thống cũng lưu lại lịch sử thay đổi để tra cứu cơ cấu tổ chức tại những thời điểm trước đây, đồng thời ngăn việc xóa các phòng ban vẫn còn nhân viên hoặc đơn vị trực thuộc.
+Các chức năng chính
+Quản lý phòng ban: Tạo mới, chỉnh sửa, xem chi tiết và xóa các đơn vị khi đáp ứng điều kiện.
+Phân công người quản lý: Chỉ định người đứng đầu từng đơn vị.
+Điều chuyển phòng ban: Chuyển một đơn vị cùng các đơn vị trực thuộc sang bộ phận quản lý khác.
+Xem trước tác động: Thống kê số nhân viên và đơn vị trực thuộc bị ảnh hưởng trước khi điều chuyển.
+Tra cứu lịch sử: Xem lại các thay đổi về tên, vị trí trong sơ đồ tổ chức và cơ cấu phòng ban tại một thời điểm trong quá khứ.
+Hệ thống không cho phép điều chuyển một đơn vị vào chính nó hoặc vào đơn vị cấp dưới của nó. Đồng thời, không được xóa đơn vị khi vẫn còn phòng ban con hoặc nhân viên đang hoạt động trực thuộc.
+1.2.3. Kế thừa quyền và phạm vi dữ liệu theo cơ cấu tổ chức 
+Chức năng này cho phép người dùng được cấp quyền tại một đơn vị có thể thực hiện quyền đó đối với dữ liệu của đơn vị và toàn bộ các đơn vị cấp dưới trực thuộc.
+Ví dụ, Giám đốc Khối Công nghệ được cấp quyền xem hồ sơ nhân sự trong phạm vi toàn khối. Khi đó, người này có thể xem hồ sơ nhân viên thuộc Phòng Phát triển, Nhóm Backend và Nhóm Frontend mà không cần được cấp quyền riêng cho từng đơn vị.
+Cơ chế này giúp doanh nghiệp quản lý quyền truy cập theo sơ đồ tổ chức, đặc biệt khi có nhiều cấp phòng ban. Khi cơ cấu thay đổi, phạm vi dữ liệu được xác định theo quan hệ trực thuộc mới.
+Cần phân biệt rõ: kế thừa phạm vi dữ liệu không có nghĩa là tự động có mọi quyền. Người được cấp quyền xem chỉ có thể xem dữ liệu trong phạm vi cho phép; quyền chỉnh sửa, xóa hoặc phê duyệt phải được cấp riêng.
+1.2.4. Quản lý vùng miền và chi nhánh
+Cho phép doanh nghiệp thiết lập các vùng hoạt động như miền Bắc, miền Trung, miền Nam hoặc quốc tế, đồng thời quản lý các chi nhánh trực thuộc từng vùng.
+Mỗi chi nhánh lưu trữ thông tin địa chỉ, vị trí địa lý và bán kính chấm công. Khi nhân viên chấm công bằng điện thoại, hệ thống có thể sử dụng vị trí này để kiểm tra nhân viên có đang ở trong phạm vi làm việc được cho phép hay không.
+1.2.5. Quản lý chức danh và cấp bậc
+Cho phép doanh nghiệp xây dựng danh mục chức danh và hệ thống cấp bậc nhân sự thống nhất, phục vụ tuyển dụng, phân công công việc và quản lý lộ trình phát triển nghề nghiệp.
+Ví dụ, cùng một chức danh Lập trình viên Backend có thể được sử dụng tại nhiều phòng ban và chi nhánh, với các cấp bậc khác nhau.
+Nhân viên
+Chức danh
+Cấp bậc
+Nguyễn Văn An
+Backend Developer
+Junior
+Trần Văn Bình
+Backend Developer
+Middle
+Lê Văn Cường
+Backend Developer
+Senior
+Khi nhân viên được thăng cấp hoặc chuyển sang vị trí mới, hệ thống chỉ cần cập nhật thông tin tương ứng mà không làm thay đổi phòng ban hoặc địa điểm làm việc nếu không cần thiết.
+1.2.6. Quản lý trung tâm chi phí
+Cho phép doanh nghiệp thiết lập các trung tâm chi phí để theo dõi ngân sách và phân bổ chi phí nhân sự theo từng bộ phận.
+Ví dụ, Phòng Backend và Phòng Frontend có thể cùng thuộc Trung tâm chi phí Công nghệ. Khi tổng hợp chi phí lương, doanh nghiệp có thể theo dõi chi phí của từng phòng ban và toàn bộ khối Công nghệ.
+1.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Doanh nghiệp
+Quản lý công ty
+Tạo, xem và cập nhật thông tin công ty, pháp nhân.
+2
+Cơ cấu tổ chức
+Quản lý phòng ban
+Tạo, chỉnh sửa, xem và xóa các đơn vị tổ chức theo phân cấp.
+3
+Cơ cấu tổ chức
+Xem sơ đồ tổ chức
+Hiển thị toàn bộ quan hệ cấp trên và cấp dưới của các đơn vị.
+4
+Cơ cấu tổ chức
+Phân công người quản lý
+Chỉ định trưởng phòng hoặc người đứng đầu từng đơn vị.
+5
+Cơ cấu tổ chức
+Điều chuyển phòng ban
+Chuyển một đơn vị cùng các đơn vị trực thuộc sang bộ phận khác.
+6
+Cơ cấu tổ chức
+Xem trước tác động
+Thống kê nhân viên và phòng ban bị ảnh hưởng trước khi điều chuyển.
+7
+Cơ cấu tổ chức
+Tra cứu lịch sử
+Xem lịch sử thay đổi và sơ đồ tổ chức tại thời điểm trong quá khứ.
+8
+Phân quyền theo tổ chức
+Kế thừa phạm vi dữ liệu
+Mở rộng phạm vi dữ liệu được phép truy cập từ đơn vị được cấp quyền xuống toàn bộ đơn vị con trực thuộc.
+9
+Địa lý
+Quản lý vùng miền
+Thiết lập và quản lý các khu vực hoạt động của doanh nghiệp.
+10
+Địa lý
+Quản lý chi nhánh
+Quản lý địa chỉ và vị trí làm việc của các chi nhánh.
+11
+Địa lý
+Cấu hình phạm vi chấm công
+Thiết lập tọa độ và bán kính chấm công tại từng chi nhánh.
+12
+Vị trí việc làm
+Quản lý chức danh
+Xây dựng danh mục chức danh công việc thống nhất.
+13
+Vị trí việc làm
+Quản lý cấp bậc
+Thiết lập cấp bậc và thứ tự thẩm quyền của nhân sự.
+14
+Trung tâm chi phí
+Quản lý trung tâm chi phí
+Thiết lập mã chi phí và liên kết với các phòng ban để phục vụ phân bổ ngân sách.
+1.4. Lợi ích của module
+Module cung cấp cơ sở dữ liệu tổ chức thống nhất cho toàn bộ hệ thống quản trị nhân sự. Doanh nghiệp có thể quản lý cơ cấu nhiều cấp, thực hiện tái cơ cấu có kiểm soát, xác định phạm vi truy cập dữ liệu theo phòng ban và quản lý nhân sự làm việc tại nhiều chi nhánh.
+Thông tin từ module còn được sử dụng bởi các phân hệ Hồ sơ nhân viên, Phân quyền, Chấm công và Tiền lương, giúp hạn chế dữ liệu trùng lặp và bảo đảm tính nhất quán giữa các nghiệp vụ.
+2. Mô phỏng Tái cơ cấu Tổ chức (What-if Org Simulation) 
+2.1. Tổng quan 
+Chức năng Mô phỏng Tái cơ cấu Tổ chức cho phép bộ phận Nhân sự (HR) và Ban Giám đốc xây dựng, đánh giá và so sánh các phương án thay đổi cơ cấu tổ chức trước khi triển khai thực tế.
+Thay vì trực tiếp điều chỉnh sơ đồ tổ chức hiện tại, người dùng có thể tạo các kịch bản giả lập như sáp nhập phòng ban, tách phòng, điều chuyển nhóm nhân sự hoặc thay đổi trung tâm chi phí. Toàn bộ quá trình mô phỏng được thực hiện độc lập, không ảnh hưởng đến dữ liệu tổ chức đang hoạt động.
+2.2. Các phân hệ và chức năng
+2.2.1. Tạo kịch bản tái cơ cấu
+Người dùng có thể tạo nhiều phương án tái cơ cấu trên sơ đồ tổ chức trực quan, sử dụng thao tác kéo thả để sắp xếp và thay đổi các đơn vị.
+Các thay đổi chỉ tồn tại trong kịch bản giả lập. Cơ cấu tổ chức hiện tại vẫn được giữ nguyên.
+2.2.2. Phân tích tác động của từng phương án
+Sau khi người dùng thay đổi cơ cấu trong kịch bản, hệ thống tự động tính toán và hiển thị những ảnh hưởng dự kiến, giúp người quản lý đánh giá trước khi đưa ra quyết định.
+Yếu tố
+Nội dung phân tích
+Nhân sự
+Số lượng nhân viên bị ảnh hưởng, thay đổi phòng ban hoặc người quản lý.
+Chi phí
+Sự thay đổi trong việc phân bổ chi phí giữa các phòng ban và trung tâm chi phí.
+Quy trình phê duyệt
+Những quy trình có thể bị ảnh hưởng khi thay đổi cơ cấu quản lý.
+Quyền hạn
+Những thay đổi về phạm vi quản lý và quyền truy cập dữ liệu của các đơn vị liên quan.
+Ví dụ, khi sáp nhập Phòng Backend và Phòng Frontend, hệ thống có thể xác định số nhân viên thuộc phòng mới, chi phí nhân sự sau sáp nhập và các quy trình phê duyệt cần điều chỉnh.
+2.2.3. So sánh các kịch bản
+Cho phép người dùng xây dựng nhiều phương án tái cơ cấu và so sánh song song để đánh giá sự khác biệt về nhân sự, chi phí, quy trình và quyền hạn.
+Kết quả so sánh giúp HR và Ban Giám đốc lựa chọn phương án phù hợp với mục tiêu tái cơ cấu của doanh nghiệp.
+2.2.4. Phê duyệt và áp dụng chính thức
+Sau khi thống nhất phương án, người có thẩm quyền có thể phê duyệt và sử dụng chức năng Áp dụng chính thức (Apply Scenario) để triển khai những thay đổi từ kịch bản vào cơ cấu tổ chức thực tế.
+Khi áp dụng, hệ thống cập nhật cây tổ chức theo phương án đã được phê duyệt và ghi nhận lịch sử thay đổi, bao gồm nội dung thay đổi, người thực hiện và thời điểm thực hiện, phục vụ việc tra cứu và kiểm toán sau này.
+2.3. Bảng tổng hợp chức năng
+STT
+Chức năng
+Mô tả
+1
+Tạo kịch bản giả lập
+Xây dựng nhiều phương án tái cơ cấu độc lập với dữ liệu thực tế.
+2
+Chỉnh sửa sơ đồ trực quan
+Kéo thả để sáp nhập, tách, điều chuyển phòng ban hoặc nhóm nhân sự.
+3
+Mô phỏng chi phí
+Thay đổi trung tâm chi phí và xem tác động đến phân bổ ngân sách.
+4
+Phân tích tác động
+Thống kê nhân sự, chi phí, quy trình phê duyệt và quyền hạn bị ảnh hưởng.
+5
+So sánh kịch bản
+Đối chiếu kết quả của nhiều phương án trước khi quyết định.
+6
+Phê duyệt phương án
+Xác nhận kịch bản được lựa chọn để triển khai.
+7
+Áp dụng chính thức
+Cập nhật cơ cấu tổ chức thực tế theo phương án đã phê duyệt.
+8
+Lưu lịch sử thay đổi
+Ghi nhận các thay đổi khi triển khai để phục vụ tra cứu và kiểm toán.
+2.4. Lợi ích
+Chức năng Mô phỏng Tái cơ cấu Tổ chức giúp doanh nghiệp đánh giá trước những ảnh hưởng của việc thay đổi cơ cấu, hạn chế rủi ro khi triển khai và hỗ trợ Ban Giám đốc đưa ra quyết định dựa trên dữ liệu. Đồng thời, việc lưu trữ lịch sử giúp quá trình tái cơ cấu minh bạch và có thể truy vết.
+3. Quản lý Phân quyền (Role & Permission Management) 
+3.1. Tổng quan
+Module Quản lý phân quyền cho phép doanh nghiệp kiểm soát những chức năng và dữ liệu mà mỗi người dùng được phép truy cập trong hệ thống quản trị nhân sự.
+Hệ thống phân quyền dựa trên hai yếu tố: quyền thực hiện chức năng và phạm vi dữ liệu. Nhờ đó, những người có cùng quyền hạn vẫn có thể được phép xử lý dữ liệu ở các phạm vi khác nhau, tùy theo vai trò và trách nhiệm trong tổ chức.
+Ví dụ, Trưởng nhóm và Trưởng phòng đều có quyền phê duyệt đơn nghỉ phép. Tuy nhiên, Trưởng nhóm chỉ được duyệt đơn của nhóm mình, còn Trưởng phòng được duyệt đơn của nhân viên thuộc phòng ban mình quản lý.
+3.2. Các phân hệ và chức năng
+3.2.1. Quản lý vai trò
+Cho phép doanh nghiệp xây dựng và quản lý các vai trò phù hợp với cơ cấu tổ chức, chẳng hạn như Quản trị viên, Nhân sự, Trưởng phòng, Trưởng nhóm và Nhân viên.
+Mỗi vai trò được gắn với một tập hợp quyền hạn nhất định. Hệ thống cung cấp các vai trò mặc định và cho phép từng công ty thiết lập thêm các vai trò riêng theo nhu cầu quản lý.
+Ví dụ, vai trò Trưởng phòng có thể được cấp quyền xem hồ sơ nhân viên, phê duyệt đơn nghỉ phép và xem báo cáo nhân sự trong phạm vi phòng ban mình phụ trách.
+3.2.2. Quản lý quyền chức năng
+Cho phép người quản trị xác định những thao tác mà từng vai trò được phép thực hiện đối với các chức năng trong hệ thống.
+Chức năng
+Quyền hạn minh họa
+Hồ sơ nhân viên
+Xem, tạo mới, chỉnh sửa
+Nghỉ phép
+Xem, tạo đơn, phê duyệt
+Chấm công
+Chấm công, xem, phê duyệt
+Tiền lương
+Xem, tính lương
+Hợp đồng
+Xem, ký hợp đồng
+Một vai trò có thể sở hữu nhiều quyền khác nhau. Việc có quyền xem dữ liệu không đồng nghĩa với việc được phép chỉnh sửa hoặc phê duyệt dữ liệu đó.
+3.2.3. Quản lý phạm vi dữ liệu
+Cho phép doanh nghiệp giới hạn phạm vi dữ liệu mà người dùng được phép xem hoặc xử lý. Cùng một quyền chức năng có thể được cấp ở các phạm vi khác nhau.
+Phạm vi phòng ban có thể bao gồm cả các đơn vị cấp dưới trực thuộc theo cơ cấu tổ chức. Ví dụ, Trưởng phòng Phát triển có quyền xem dữ liệu cấp phòng ban thì có thể xem dữ liệu của cả Nhóm Backend và Nhóm Frontend trực thuộc.
+Phạm vi dữ liệu được thiết lập riêng cho từng quyền, không phải một phạm vi chung áp dụng cho tất cả chức năng của người dùng.
+3.2.4. Gán vai trò cho người dùng
+Cho phép người quản trị gán một hoặc nhiều vai trò cho tài khoản người dùng. Khi đăng ký tài khoản, người dùng được gán vai trò Nhân viên mặc định.
+Hệ thống hỗ trợ quản lý vai trò theo từng công ty. Một người dùng có thể giữ vai trò Nhân viên tại một công ty nhưng đồng thời giữ vai trò quản lý tại công ty khác.
+3.2.5. Kiêm nhiệm và tổng hợp quyền hạn
+Khi một người dùng được gán nhiều vai trò, hệ thống tổng hợp các quyền từ tất cả vai trò đó. Nếu nhiều vai trò cùng cấp một quyền chức năng, hệ thống sử dụng phạm vi dữ liệu rộng nhất của quyền đó.
+3.2.6. Kiểm soát truy cập và bảo vệ dữ liệu
+Khi người dùng truy cập một chức năng, hệ thống kiểm tra tài khoản đăng nhập, quyền được cấp và phạm vi dữ liệu tương ứng.
+Nếu không có quyền thực hiện chức năng, hệ thống từ chối yêu cầu. Nếu có quyền, hệ thống chỉ cung cấp dữ liệu thuộc phạm vi được phép, tránh việc người dùng truy cập thông tin của các bộ phận không liên quan. 
+3.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Quản lý vai trò
+Vai trò mặc định
+Cung cấp các vai trò hệ thống như Quản trị viên, Nhân sự và Nhân viên.
+2
+Quản lý vai trò
+Vai trò tùy chỉnh
+Cho phép từng công ty thiết lập vai trò riêng.
+3
+Quản lý quyền
+Phân quyền theo chức năng
+Xác định các thao tác được phép thực hiện trong từng phân hệ.
+4
+Quản lý quyền
+Thiết lập phạm vi dữ liệu
+Giới hạn dữ liệu theo cá nhân, nhóm, phòng ban, công ty hoặc toàn hệ thống.
+5
+Quản lý người dùng
+Gán vai trò
+Gán một hoặc nhiều vai trò cho tài khoản người dùng.
+6
+Quản lý người dùng
+Vai trò theo công ty
+Cho phép người dùng đảm nhiệm các vai trò khác nhau tại từng công ty.
+7
+Tổng hợp quyền
+Gộp quyền khi kiêm nhiệm
+Tổng hợp quyền từ nhiều vai trò và sử dụng phạm vi rộng nhất cho cùng một quyền.
+8
+Kiểm soát truy cập
+Xác thực tài khoản
+Kiểm tra tính hợp lệ của tài khoản trước khi xử lý yêu cầu.
+9
+Kiểm soát truy cập
+Kiểm tra quyền chức năng
+Cho phép hoặc từ chối thao tác theo quyền được cấp.
+10
+Kiểm soát truy cập
+Giới hạn dữ liệu
+Chỉ hiển thị và xử lý dữ liệu thuộc phạm vi được phép truy cập.
+3.4. Lợi ích của module
+Module Quản lý phân quyền giúp doanh nghiệp bảo vệ thông tin nhân sự, phân định rõ trách nhiệm giữa các cấp quản lý và hạn chế truy cập trái phép. Việc kết hợp quyền chức năng với phạm vi dữ liệu giúp hệ thống đáp ứng những cơ cấu tổ chức phức tạp, hỗ trợ nhân sự kiêm nhiệm và doanh nghiệp có nhiều công ty thành viên.
+Module cũng phối hợp với Quản lý cơ cấu tổ chức để xác định nhóm, phòng ban và các đơn vị trực thuộc khi áp dụng quyền truy cập dữ liệu.
+4. Tuyển dụng (Recruitment)
+4.1. Tổng quan
+Module Quản lý tuyển dụng giúp doanh nghiệp quản lý toàn bộ quá trình tuyển dụng, từ khi phát sinh nhu cầu nhân sự, đăng tin, tiếp nhận hồ sơ, phỏng vấn, gửi thư mời nhận việc đến khi ứng viên trở thành nhân viên chính thức.
+Báo cáo dưới đây kết hợp các nghiệp vụ trong tài liệu bạn cung cấp với những chức năng mở rộng bạn vừa đề xuất, bao gồm AI hỗ trợ tuyển dụng, đăng tin đa kênh, cảnh báo câu hỏi không phù hợp và tự động hóa quy trình Offer.
+4.2. Các phân hệ và chức năng
+4.2.1. Quản lý đề xuất tuyển dụng
+Khi có nhu cầu tuyển thêm nhân sự, Trưởng bộ phận tạo đề xuất tuyển dụng, nêu rõ vị trí, số lượng cần tuyển và nhu cầu bổ sung nhân sự.
+Đề xuất được chuyển qua quy trình phê duyệt của doanh nghiệp. Chỉ sau khi được phê duyệt, HR mới tiến hành tuyển dụng theo nhu cầu đã được chấp thuận. Người tạo có thể hủy đề xuất khi đang chờ duyệt.
+Ví dụ, Trưởng phòng Công nghệ đề xuất tuyển thêm ba Lập trình viên Backend để phục vụ dự án mới. Sau khi đề xuất được phê duyệt, HR tạo vị trí tuyển dụng tương ứng và theo dõi tiến độ tuyển đủ ba nhân sự.
+4.2.2. Quản lý vị trí và đăng tin tuyển dụng
+Cho phép HR tạo và quản lý các vị trí đang tuyển, bao gồm số lượng cần tuyển, số lượng đã tuyển, thời hạn tuyển dụng và trạng thái của từng vị trí.
+Đăng tin đa kênh tự động: HR chỉ cần soạn một tin tuyển dụng và lựa chọn các kênh muốn xuất bản, thay vì đăng thủ công từng nơi. Hệ thống quản lý trạng thái, ngày hết hạn và đường dẫn của từng bài đăng. Việc tự động xuất bản phụ thuộc vào khả năng tích hợp và quyền truy cập mà mỗi nền tảng hỗ trợ.
+Trang ứng tuyển riêng theo vị trí (Recruitment Landing Page): Mỗi vị trí có một trang giới thiệu riêng, hiển thị mô tả công việc, yêu cầu, quyền lợi và biểu mẫu ứng tuyển. Ứng viên có thể tải CV và nộp hồ sơ trực tiếp mà không cần gửi email cho HR.
+4.2.3. Quản lý ứng viên và quy trình ứng tuyển
+Cho phép HR tiếp nhận và quản lý hồ sơ ứng viên từ nhiều nguồn như website, LinkedIn, giới thiệu nội bộ hoặc các nền tảng tuyển dụng.
+Mỗi hồ sơ lưu trữ thông tin liên hệ, CV, kỹ năng, kinh nghiệm và lịch sử ứng tuyển. Hệ thống kiểm tra email và số điện thoại để hạn chế tạo hồ sơ trùng lặp trong cùng công ty.
+Ứng viên được theo dõi trên bảng quy trình tuyển dụng (ATS Pipeline), giúp HR nắm rõ mỗi người đang ở giai đoạn nào.
+4.2.4. Sàng lọc và đánh giá hồ sơ bằng AI
+Hệ thống hỗ trợ HR xử lý hồ sơ nhanh hơn thông qua ba chức năng:
+CV Parser: Tự động trích xuất thông tin từ CV như học vấn, kinh nghiệm, kỹ năng và thông tin liên hệ, sau đó điền vào hồ sơ ứng viên để HR kiểm tra.
+CV Review: Đối chiếu nội dung CV với yêu cầu công việc, làm nổi bật những tiêu chí đã đáp ứng và những thông tin còn thiếu hoặc cần xác minh.
+AI tạo câu hỏi phỏng vấn: Dựa trên mô tả công việc (JD) và CV của ứng viên để đề xuất bộ câu hỏi phù hợp với kinh nghiệm, kỹ năng và vị trí ứng tuyển.
+Kết quả do AI tạo ra chỉ mang tính hỗ trợ. HR và người phỏng vấn cần kiểm tra lại thông tin, không sử dụng điểm hoặc nhận xét của AI làm căn cứ duy nhất để loại ứng viên. 
+4.2.5. Quản lý phỏng vấn và đánh giá hội đồng 
+Cho phép HR lên lịch phỏng vấn, phân công người phỏng vấn và chuẩn bị bộ câu hỏi, tiêu chí đánh giá theo từng vòng như HR, chuyên môn, quản lý hoặc mức độ phù hợp với môi trường làm việc.
+Mỗi tiêu chí có thang điểm và trọng số riêng, giúp các thành viên hội đồng đánh giá ứng viên trên cùng một cơ sở.
+Chấm điểm độc lập (Blind Grading): Mỗi người phỏng vấn hoàn thành phiếu đánh giá của mình trước khi được xem nhận xét và điểm số của các thành viên khác, hạn chế việc bị ảnh hưởng bởi ý kiến của người khác.
+Cảnh báo bất đồng (Divergence Alert): Hệ thống phát hiện khi các thành viên hội đồng đưa ra nhận xét trái ngược hoặc có điểm số chênh lệch lớn. HR có thể tổ chức buổi trao đổi để làm rõ nguyên nhân trước khi đưa ra quyết định.
+Phân tích xu hướng đánh giá (Bias Awareness): Hệ thống thống kê lịch sử chấm điểm, giúp HR nhận diện những trường hợp người phỏng vấn thường chấm điểm quá cao hoặc quá thấp để xem xét thêm.
+4.2.6. Cảnh báo câu hỏi phỏng vấn không phù hợp
+Hệ thống hỗ trợ HR và hội đồng phỏng vấn kiểm tra nội dung câu hỏi, phiếu đánh giá (Scorecard) và ghi chú phỏng vấn, nhằm phát hiện những câu hỏi có nguy cơ phân biệt đối xử hoặc không liên quan đến yêu cầu công việc.  
+Chức năng giúp người phỏng vấn tập trung vào năng lực, kinh nghiệm và các yêu cầu thực tế của vị trí. Những cảnh báo cần được xây dựng theo quy định pháp luật áp dụng và được HR xem xét, thay vì mặc định mọi nội dung bị AI đánh dấu đều vi phạm. 
+4.2.7. Quản lý lịch phỏng vấn và nhắc lịch hai chiều
+Bổ sung cơ chế nhắc lịch tự động
+HR có thể tạo lịch phỏng vấn, lựa chọn thời gian, hình thức phỏng vấn và phân công các thành viên hội đồng.
+Hệ thống gửi thông báo đến cả ứng viên và người phỏng vấn. Đặc biệt, trước buổi phỏng vấn 30 phút, người phỏng vấn nhận được thông báo kèm đường dẫn CV, bộ câu hỏi và phiếu đánh giá để chuẩn bị.
+2.8. Quản lý thư mời nhận việc (Offer Management)
+Khi ứng viên vượt qua các vòng đánh giá, HR tạo đề xuất mời nhận việc với mức lương, phụ cấp, ngày bắt đầu dự kiến và thời hạn phản hồi. Offer phải được phê duyệt trước khi gửi cho ứng viên.
+Các chức năng mở rộng của phân hệ Offer bao gồm:
+Phê duyệt theo khung lương (Offer Approval Matrix): Nếu mức lương đề xuất vượt khung của vị trí, hệ thống tự động bổ sung cấp phê duyệt có thẩm quyền cao hơn, hạn chế việc gửi Offer vượt thẩm quyền.
+Tự động tạo thư mời và ký điện tử: Sử dụng mẫu tài liệu có sẵn để điền thông tin ứng viên, chức danh, mức lương và ngày nhận việc. Sau khi được phê duyệt, thư mời có thể được gửi để ký điện tử thông qua hệ thống tích hợp.
+Theo dõi phản hồi và lý do từ chối: HR ghi nhận ứng viên đồng ý hoặc từ chối Offer. Với trường hợp từ chối, hệ thống lưu lý do như mức lương chưa phù hợp, nhận lời mời từ công ty khác hoặc thời gian tuyển dụng kéo dài.
+2.9. Tiếp nhận ứng viên thành nhân viên chính thức
+Khi ứng viên chấp nhận Offer, HR có thể chuyển hồ sơ ứng viên sang hồ sơ nhân viên chính thức.
+Hệ thống sử dụng những thông tin đã có như họ tên, email, số điện thoại, phòng ban và chức danh để hạn chế nhập liệu lại. Đồng thời, số lượng tuyển dụng thành công của vị trí được cập nhật và lịch sử tiếp nhận được ghi nhận.
+2.10. Ngân hàng hồ sơ ứng viên (Talent Pool)
+Cho phép HR lưu trữ hồ sơ những ứng viên tiềm năng chưa được tuyển dụng ở thời điểm hiện tại nhưng có thể phù hợp với các cơ hội sau này.
+HR có thể phân loại ứng viên theo kỹ năng, nguồn ứng tuyển và ghi chú đánh giá, sau đó tìm kiếm lại khi doanh nghiệp mở vị trí tương ứng.
+2.11. Thị trường nhân tài nội bộ (Internal Talent Marketplace)
+Cho phép nhân viên chủ động tìm kiếm và ứng tuyển các vị trí đang mở hoặc dự án ngắn hạn trong nội bộ doanh nghiệp.
+Người quản lý có thể đăng cơ hội, xem xét nhân viên bày tỏ quan tâm, lựa chọn người phù hợp và phân công nhiệm vụ. Khi dự án kết thúc, kết quả và đóng góp của nhân viên được ghi nhận.
+Chức năng giúp doanh nghiệp tận dụng nguồn nhân lực hiện có, tạo thêm cơ hội phát triển nghề nghiệp và hỗ trợ điều chuyển nhân sự nội bộ.
+4.3. Bảng tổng hợp chức năng của module
+Các chức năng được đánh dấu “Mở rộng” là những đề xuất bổ sung vào nghiệp vụ tuyển dụng hiện có, chưa được xác nhận là đã triển khai.
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+Phạm vi
+1
+Nhu cầu tuyển dụng
+Đề xuất tuyển dụng
+Tạo yêu cầu bổ sung nhân sự và trình phê duyệt.
+Tài liệu gốc
+2
+Vị trí tuyển dụng
+Quản lý định biên
+Theo dõi số lượng cần tuyển, đã tuyển và thời hạn tuyển dụng.
+Tài liệu gốc
+3
+Đăng tin
+Quản lý tin đa kênh
+Quản lý tin tuyển dụng trên các kênh và trạng thái xuất bản.
+Tài liệu gốc
+4
+Đăng tin
+Tự động xuất bản đa kênh
+Soạn một lần, đăng lên nhiều nền tảng được tích hợp.
+Mở rộng
+5
+Đăng tin
+Trang ứng tuyển riêng
+Tạo landing page và biểu mẫu nộp CV trực tiếp cho từng vị trí.
+Mở rộng
+6
+Ứng viên
+Quản lý hồ sơ
+Lưu trữ thông tin, CV, kỹ năng và nguồn ứng viên.
+Tài liệu gốc
+7
+Ứng viên
+Theo dõi ATS Pipeline
+Theo dõi ứng viên qua từng giai đoạn tuyển dụng.
+Tài liệu gốc
+8
+Sàng lọc
+CV Parser
+Tự động trích xuất thông tin từ CV.
+Mở rộng
+9
+Sàng lọc
+CV Review
+Hỗ trợ đối chiếu CV với yêu cầu tuyển dụng.
+Mở rộng
+10
+Phỏng vấn
+Bộ câu hỏi chuẩn hóa
+Xây dựng Interview Kit và tiêu chí đánh giá cho từng vòng.
+Tài liệu gốc
+11
+Phỏng vấn
+AI tạo câu hỏi
+Gợi ý câu hỏi dựa trên JD và CV ứng viên.
+Mở rộng
+12
+Phỏng vấn
+Cảnh báo câu hỏi không phù hợp
+Phát hiện nội dung có nguy cơ phân biệt đối xử trong câu hỏi và ghi chú.
+Mở rộng
+13
+Phỏng vấn
+Lập lịch và nhắc lịch
+Lên lịch, phân công hội đồng và nhắc hai chiều trước buổi phỏng vấn.
+Gốc + mở rộng
+14
+Phỏng vấn
+Chấm điểm độc lập
+Mỗi giám khảo hoàn thành đánh giá trước khi xem điểm của người khác.
+Tài liệu gốc
+15
+Phỏng vấn
+Cảnh báo bất đồng
+Phát hiện kết quả đánh giá có sự chênh lệch lớn.
+Tài liệu gốc
+16
+Phỏng vấn
+Phân tích xu hướng chấm điểm
+Thống kê lịch sử đánh giá của người phỏng vấn.
+Tài liệu gốc
+17
+Offer
+Quản lý và phê duyệt Offer
+Lập thư mời nhận việc và trình duyệt trước khi gửi.
+Tài liệu gốc
+18
+Offer
+Phê duyệt theo khung lương
+Tự động chuyển cấp duyệt khi mức lương vượt khung.
+Mở rộng
+19
+Offer
+Tạo thư và ký điện tử
+Sinh thư mời từ mẫu và hỗ trợ quy trình ký điện tử.
+Mở rộng
+20
+Offer
+Phân tích lý do từ chối
+Ghi nhận lý do ứng viên từ chối và tổng hợp báo cáo.
+Mở rộng
+21
+Tiếp nhận
+Chuyển thành nhân viên
+Chuyển hồ sơ ứng viên trúng tuyển sang hồ sơ nhân sự chính thức.
+Tài liệu gốc
+22
+Nguồn ứng viên
+Talent Pool
+Lưu trữ và tìm kiếm lại ứng viên tiềm năng.
+Tài liệu gốc
+23
+Tuyển dụng nội bộ
+Internal Talent Marketplace
+Đăng cơ hội, tiếp nhận ứng tuyển và phân công nhân sự nội bộ.
+Tài liệu gốc
+4.4. Lợi ích của module
+Module giúp doanh nghiệp quản lý xuyên suốt quá trình tuyển dụng trên một hệ thống, giảm thao tác thủ công và hạn chế thất lạc hồ sơ. HR có thể theo dõi tiến độ từng vị trí, phối hợp với hội đồng phỏng vấn, quản lý phê duyệt Offer và tái sử dụng nguồn ứng viên tiềm năng.
+Các chức năng mở rộng về AI, tự động đăng tin, nhắc lịch và phân tích Offer hướng đến việc rút ngắn thời gian tuyển dụng, nâng cao trải nghiệm ứng viên và cung cấp thêm thông tin để doanh nghiệp cải thiện quy trình tuyển dụng.
+5. Hồ sơ nhân sự (Employee Profile & Lifecycle) 
+5.1. Tổng quan
+Module Quản lý hồ sơ nhân sự là nơi lưu trữ và quản lý thông tin tập trung của toàn bộ nhân viên trong doanh nghiệp, từ khi tiếp nhận, thử việc, làm việc chính thức, điều chuyển, bổ nhiệm cho đến khi nghỉ việc.
+Đây là module dữ liệu trung tâm, cung cấp thông tin nhân viên cho các phân hệ Hội nhập, Hợp đồng, Chấm công, Nghỉ phép, Tính lương và Phân quyền.
+Đặc biệt, mỗi nhân viên được quản lý theo ba chiều độc lập: phòng ban, chi nhánh làm việc và chức danh/cấp bậc. Doanh nghiệp có thể thay đổi một trong ba thông tin này mà không bắt buộc phải thay đổi các thông tin còn lại.
+5.2. Các phân hệ và chức năng
+5.2.1. Tiếp nhận và khởi tạo hồ sơ nhân viên
+Cho phép HR tạo hồ sơ nhân viên mới bằng cách nhập thông tin trực tiếp hoặc sử dụng dữ liệu từ ứng viên đã trúng tuyển trong Module Tuyển dụng.
+Hồ sơ bao gồm thông tin cá nhân, mã nhân viên, phòng ban, chi nhánh, chức danh và các thông tin liên quan đến công việc. Khi tạo hồ sơ, HR có thể lựa chọn tạo tài khoản đăng nhập hệ thống cho nhân viên.
+Khi tiếp nhận nhân viên mới có áp dụng thử việc, hệ thống khởi tạo hồ sơ với trạng thái PROBATION. Đồng thời, HR có thể khởi tạo tiến trình hội nhập tương ứng. Trạng thái thử việc và trạng thái hội nhập được quản lý độc lập. 
+5.2.2. Quản lý thông tin cá nhân và pháp lý
+Cho phép HR lưu trữ, tra cứu và cập nhật những thông tin định danh cần thiết để quản lý nhân sự và thực hiện các nghiệp vụ liên quan.
+Nhóm thông tin
+Nội dung quản lý
+Định danh cá nhân
+CCCD hoặc hộ chiếu, ngày cấp, nơi cấp.
+Thông tin thuế
+Mã số thuế thu nhập cá nhân.
+Bảo hiểm
+Mã số bảo hiểm xã hội.
+Tài khoản ngân hàng
+Số tài khoản, tên ngân hàng và chi nhánh ngân hàng.
+Ảnh chân dung
+Ảnh hồ sơ, hỗ trợ đối chiếu nhận diện trong nghiệp vụ chấm công.
+Thông tin ngân hàng được sử dụng cho nghiệp vụ chi trả lương; mã số thuế và thông tin người phụ thuộc hỗ trợ nghiệp vụ thuế thu nhập cá nhân.
+Do chứa dữ liệu cá nhân nhạy cảm, những thông tin này cần được kiểm soát quyền truy cập phù hợp, không mặc định hiển thị đầy đủ cho mọi người có quyền xem hồ sơ.
+5.2.3. Quản lý thông tin công việc
+Cho phép doanh nghiệp quản lý vị trí làm việc và quan hệ quản lý của từng nhân viên.
+Các thông tin chính bao gồm phòng ban trực thuộc, chi nhánh làm việc, chức danh, cấp bậc, người quản lý trực tiếp, loại hình làm việc và ngày kết thúc thử việc.
+Thông tin quản lý trực tiếp còn được sử dụng để xác định người phụ trách phê duyệt các yêu cầu nhân sự như nghỉ phép và chấm công. Hệ thống không cho phép một nhân viên được thiết lập làm quản lý trực tiếp của chính mình. 
+5.2.4. Quản lý người phụ thuộc
+Cho phép nhân viên hoặc HR đăng ký và cập nhật thông tin người phụ thuộc phục vụ quản lý nhân sự và nghiệp vụ giảm trừ gia cảnh.
+Hệ thống lưu trữ danh sách người phụ thuộc và trạng thái đăng ký giảm trừ thuế. Nhân viên có thể bổ sung hoặc xóa thông tin theo quyền được cấp.
+Thông tin này được cung cấp cho phân hệ Tính lương và Thuế để phục vụ các nghiệp vụ liên quan.
+5.2.5. Quản lý người liên hệ khẩn cấp
+Cho phép lưu trữ thông tin người cần liên hệ khi nhân viên gặp sự cố hoặc tai nạn lao động, bao gồm họ tên, mối quan hệ, số điện thoại và địa chỉ.
+Đây là nhóm thông tin riêng trong hồ sơ nhân sự, giúp HR và những người được phân quyền có thể liên hệ kịp thời khi cần thiết.
+5.2.6. Quản lý vòng đời nhân sự
+Cho phép HR theo dõi và cập nhật trạng thái làm việc của nhân viên trong suốt quá trình công tác, từ khi mới gia nhập đến khi nghỉ việc.
+Quy tắc chuyển trạng thái từ PROBATION sang ACTIVE
+Nhân viên được chuyển sang trạng thái ACTIVE sau khi đáp ứng các điều kiện tiếp nhận chính thức theo quy định của doanh nghiệp, bao gồm kết quả thử việc đạt yêu cầu, hoàn tất các hạng mục hội nhập bắt buộc và đáp ứng các điều kiện hồ sơ, hợp đồng có liên quan.
+Module Hồ sơ nhân sự chịu trách nhiệm kiểm tra điều kiện và cập nhật trạng thái làm việc. Module Hội nhập chỉ cung cấp kết quả hoàn thành tiến trình, không trực tiếp kích hoạt nhân viên.
+Khi nhân viên nghỉ việc, hệ thống cập nhật trạng thái hồ sơ thành TERMINATED, khóa tài khoản đăng nhập liên kết và hủy các phiên đăng nhập đang hoạt động, hạn chế việc tiếp tục truy cập hệ thống sau khi chấm dứt quan hệ làm việc. 
+2.7. Quản lý điều chuyển, bổ nhiệm và lịch sử công tác
+Cho phép HR và người quản lý có thẩm quyền cập nhật phòng ban, chức danh, người quản lý trực tiếp và trạng thái làm việc của nhân viên.
+Mọi thay đổi công tác phải được lưu lại lịch sử thay vì chỉ ghi đè lên thông tin cũ. Hệ thống ghi nhận nội dung trước và sau thay đổi, ngày có hiệu lực và người thực hiện
+Lịch sử này giúp HR tra cứu quá trình làm việc, xác định thời điểm thay đổi vị trí và hỗ trợ các nghiệp vụ nhân sự có liên quan. 
+2.8. Phân quyền truy cập hồ sơ nhân sự
+Hệ thống kết hợp với Module Phân quyền để kiểm soát người dùng được xem hoặc cập nhật hồ sơ của những nhân viên nào.
+Phạm vi
+Quyền truy cập dữ liệu
+Cá nhân (OWN)
+Hồ sơ của chính mình.
+Nhóm (TEAM)
+Hồ sơ của những nhân viên do mình trực tiếp quản lý.
+Phòng ban (DEPARTMENT)
+Hồ sơ nhân viên thuộc phòng ban và các đơn vị con trực thuộc.
+Công ty (COMPANY)
+Hồ sơ nhân viên thuộc công ty được cấp quyền.
+Toàn hệ thống (ALL)
+Hồ sơ nhân viên trên toàn bộ các công ty.
+Phạm vi dữ liệu không đồng nghĩa với quyền chỉnh sửa. Chẳng hạn, Trưởng phòng có thể được phép xem hồ sơ của nhân viên trong phòng nhưng không mặc nhiên được sửa thông tin CCCD hoặc tài khoản ngân hàng của họ.
+5.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Tiếp nhận nhân sự
+Tạo hồ sơ nhân viên
+Khởi tạo hồ sơ nhân sự mới, có thể tạo kèm tài khoản đăng nhập.
+2
+Tiếp nhận nhân sự
+Kiểm tra trùng lặp
+Kiểm tra mã nhân viên và số CCCD/hộ chiếu đã tồn tại.
+3
+Hồ sơ cá nhân
+Quản lý thông tin pháp lý
+Lưu trữ CCCD/hộ chiếu, mã số thuế và mã BHXH.
+4
+Hồ sơ cá nhân
+Quản lý tài khoản ngân hàng
+Lưu thông tin tài khoản phục vụ chi trả lương.
+5
+Hồ sơ cá nhân
+Quản lý ảnh chân dung
+Lưu ảnh hồ sơ phục vụ nhận diện nhân viên.
+6
+Thông tin công việc
+Quản lý phòng ban và chi nhánh
+Xác định đơn vị trực thuộc và địa điểm làm việc.
+7
+Thông tin công việc
+Quản lý chức danh và cấp bậc
+Gắn nhân viên với vị trí công việc và cấp bậc tương ứng.
+8
+Thông tin công việc
+Quản lý cấp trên trực tiếp
+Xác định người quản lý của từng nhân viên.
+9
+Thông tin công việc
+Quản lý loại hình làm việc
+Theo dõi nhân viên toàn thời gian, bán thời gian, thực tập hoặc hợp đồng.
+10
+Thông tin công việc
+Quản lý thời gian thử việc
+Lưu ngày kết thúc thử việc của nhân viên.
+11
+Thông tin gia đình
+Quản lý người phụ thuộc
+Lưu danh sách người phụ thuộc và trạng thái đăng ký giảm trừ thuế.
+12
+Thông tin gia đình
+Quản lý liên hệ khẩn cấp
+Lưu thông tin người liên hệ khi xảy ra sự cố.
+13
+Biến động nhân sự
+Điều chuyển và bổ nhiệm
+Cập nhật phòng ban, chức danh và người quản lý trực tiếp.
+14
+Biến động nhân sự
+Lịch sử công tác
+Lưu lại thông tin trước và sau mỗi lần thay đổi cùng ngày hiệu lực.
+15
+Vòng đời nhân sự
+Quản lý trạng thái làm việc
+Theo dõi các trạng thái thử việc, đang làm việc, tạm nghỉ và nghỉ việc.
+16
+Vòng đời nhân sự
+Khóa tài khoản khi nghỉ việc
+Khóa tài khoản liên kết và hủy phiên đăng nhập khi nhân viên nghỉ việc.
+17
+Vòng đời nhân sự
+Xác nhận hoàn thành thử việc 
+Ghi nhận kết quả thử việc và kiểm tra các điều kiện liên quan trước khi chuyển nhân viên sang trạng thái ACTIVE. 
+18
+Phân quyền
+Kiểm soát phạm vi dữ liệu
+Giới hạn truy cập hồ sơ theo cá nhân, nhóm, phòng ban, công ty hoặc toàn hệ thống.
+19
+Tra cứu
+Tìm kiếm hồ sơ nhân sự
+Tra cứu, lọc và xem thông tin nhân viên theo quyền được cấp.
+5.4. Mối quan hệ với các module khác
+5.5. Lợi ích của module
+Module Quản lý hồ sơ nhân sự giúp doanh nghiệp xây dựng nguồn dữ liệu nhân viên tập trung, giảm việc nhập thông tin trùng lặp giữa các bộ phận và theo dõi đầy đủ quá trình công tác của từng người.
+Việc lưu lịch sử biến động và kiểm soát quyền truy cập hỗ trợ HR quản lý dữ liệu nhất quán, đồng thời cung cấp thông tin cần thiết cho các nghiệp vụ chấm công, nghỉ phép, hợp đồng và tính lương.
+6. Hội nhập nhân sự (Onboarding)
+6.1. Tổng quan
+Module Quản lý hội nhập nhân sự giúp doanh nghiệp chuẩn hóa và theo dõi toàn bộ quá trình tiếp nhận nhân viên mới, từ khi ứng viên trúng tuyển đến khi hoàn tất các thủ tục, được cấp tài khoản, bàn giao thiết bị và tham gia đào tạo định hướng.
+Thay vì HR phải phối hợp thủ công với từng bộ phận, hệ thống sử dụng danh sách công việc (Checklist) để xác định rõ những việc cần hoàn thành, theo dõi tiến độ và kiểm tra các điều kiện trước khi nghiệm thu và hoàn tất tiến trình hội nhập của nhân viên 
+6.2. Các phân hệ và chức năng
+6.2.1. Quản lý mẫu Checklist hội nhập
+Cho phép HR xây dựng các mẫu danh sách công việc cần thực hiện khi tiếp nhận nhân viên mới. Mỗi mẫu có thể được thiết kế riêng theo phòng ban hoặc chức danh, phù hợp với đặc thù của từng vị trí.
+Ví dụ, nhân viên lập trình cần được cấp laptop, tài khoản GitLab và quyền truy cập các công cụ phát triển; trong khi nhân viên kinh doanh có thể cần được cấp tài khoản CRM và tham gia đào tạo sản phẩm.
+Các hạng mục trong Checklist được chia thành năm nhóm:
+Nhóm công việc
+Nội dung
+Hồ sơ, giấy tờ
+Thu thập CCCD, bằng cấp, giấy khám sức khỏe, cam kết bảo mật.
+Tài khoản
+Cấp email công ty và các tài khoản phần mềm cần thiết.
+Thiết bị
+Bàn giao laptop, màn hình, thẻ nhân viên và các tài sản liên quan.
+Đào tạo định hướng
+Giới thiệu văn hóa, nội quy và các quy định của doanh nghiệp.
+Công việc khác
+Gặp mặt quản lý, người hướng dẫn và bàn giao công việc ban đầu.
+Mỗi hạng mục được xác định là bắt buộc hoặc không bắt buộc. Những mục bắt buộc phải hoàn thành trước khi HR có thể nghiệm thu toàn bộ quá trình hội nhập.
+6.2.2. Khởi tạo tiến trình hội nhập cho nhân viên
+Sau khi ứng viên trúng tuyển được chuyển thành nhân viên, HR lựa chọn mẫu Checklist phù hợp và khởi tạo tiến trình hội nhập.
+Hệ thống tự động tạo danh sách công việc riêng cho nhân viên đó từ mẫu đã chọn, giúp HR không phải nhập lại từng đầu việc. Mỗi nhân viên chỉ có tối đa một tiến trình hội nhập đang thực hiện tại cùng một thời điểm.
+6.2.3. Quản lý hồ sơ và giấy tờ nhân sự
+Cho phép nhân viên tải lên các giấy tờ cần thiết trong quá trình hội nhập, bao gồm giấy tờ tùy thân, bằng cấp, giấy khám sức khỏe, hợp đồng và các tài liệu liên quan.
+HR có thể xem, kiểm tra và xác thực từng tài liệu. Hệ thống ghi nhận người thực hiện và thời điểm xác thực, giúp hạn chế tình trạng hồ sơ thiếu hoặc chưa được kiểm tra.
+Đối với hạng mục Checklist yêu cầu nộp giấy tờ, hệ thống kiểm tra tài liệu đã được tải lên và xác thực trước khi cho phép đánh dấu hoàn thành.
+6.2.4. Quản lý cấp phát tài khoản công nghệ thông tin
+Cho phép HR phối hợp với bộ phận IT trong việc cấp tài khoản email, phần mềm nội bộ và các hệ thống cần thiết cho nhân viên mới.
+Mỗi yêu cầu được theo dõi theo trạng thái chờ cấp phát, đã cấp phát hoặc thất bại. Người phụ trách cập nhật kết quả sau khi thực hiện.
+Đối với công việc cấp tài khoản trong Checklist, hệ thống chỉ cho phép xác nhận hoàn thành khi đã có tài khoản được ghi nhận ở trạng thái cấp phát thành công.
+6.2.5. Quản lý bàn giao thiết bị và tài sản
+Cho phép HR theo dõi các hạng mục thiết bị cần bàn giao cho nhân viên mới, như laptop, màn hình, bàn phím, chuột và thẻ nhân viên.
+Module Onboarding liên kết với phân hệ Quản lý tài sản để tra cứu những thiết bị đã được cấp phát cho nhân viên, từ đó hỗ trợ HR kiểm tra tình trạng bàn giao trước khi hoàn tất các công việc liên quan.
+6.2.6. Quản lý đào tạo định hướng
+Cho phép HR lên lịch và quản lý các buổi đào tạo hội nhập dành cho nhân viên mới, như giới thiệu văn hóa doanh nghiệp, nội quy lao động, quy định bảo mật và quy trình làm việc.
+Mỗi buổi đào tạo có thông tin về thời gian, địa điểm hoặc đường dẫn họp trực tuyến, nội dung và người phụ trách. HR có thể theo dõi trạng thái đã lên lịch, hoàn thành hoặc hủy.
+6.2.7. Theo dõi tiến độ hội nhập
+Cho phép HR và người quản lý theo dõi tiến độ thực hiện Checklist của từng nhân viên, bao gồm tổng số công việc, số công việc đã hoàn thành và tỷ lệ hoàn thành.
+6.2.8. Nghiệm thu và hoàn tất hội nhập
+Sau khi các bộ phận liên quan hoàn thành công việc, HR thực hiện nghiệm thu tiến trình hội nhập.
+Hệ thống kiểm tra toàn bộ các hạng mục bắt buộc. Nếu vẫn còn công việc chưa hoàn thành, HR không thể kết thúc tiến trình. Các hạng mục không bắt buộc có thể được bỏ qua.
+Khi tất cả công việc bắt buộc đã hoàn tất và HR xác nhận nghiệm thu, hệ thống chuyển tiến trình hội nhập sang trạng thái COMPLETED, ghi nhận thời điểm hoàn thành và thông báo kết quả cho Module Hồ sơ nhân sự.
+Việc hoàn tất hội nhập không tự động chuyển trạng thái nhân viên từ PROBATION sang ACTIVE. Nhân viên chỉ được chuyển sang ACTIVE sau khi đáp ứng các điều kiện tiếp nhận chính thức do Module Hồ sơ nhân sự quản lý.
+6.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Mẫu hội nhập
+Quản lý Checklist Template
+Tạo, chỉnh sửa và quản lý các mẫu hội nhập theo phòng ban hoặc chức danh.
+2
+Mẫu hội nhập
+Cấu hình công việc
+Thiết lập danh sách công việc, thứ tự thực hiện và mức độ bắt buộc.
+3
+Tiếp nhận nhân sự
+Khởi tạo tiến trình
+Tạo tiến trình hội nhập cho nhân viên mới từ mẫu Checklist phù hợp.
+4
+Tiếp nhận nhân sự
+Quản lý công việc
+Theo dõi và xác nhận hoàn thành từng hạng mục trong Checklist.
+5
+Tiếp nhận nhân sự
+Bỏ qua công việc
+Cho phép bỏ qua các hạng mục không bắt buộc.
+6
+Hồ sơ nhân sự
+Thu thập giấy tờ
+Tải lên và lưu trữ hồ sơ, giấy tờ cần thiết của nhân viên mới.
+7
+Hồ sơ nhân sự
+Thẩm định giấy tờ
+HR kiểm tra, xác thực và ghi nhận kết quả thẩm định tài liệu.
+8
+Tài khoản IT
+Yêu cầu cấp tài khoản
+Tạo và theo dõi yêu cầu cấp tài khoản email, phần mềm và hệ thống nội bộ.
+9
+Tài khoản IT
+Xác nhận cấp phát
+Ghi nhận trạng thái cấp phát và kiểm tra điều kiện hoàn thành công việc.
+10
+Thiết bị
+Theo dõi bàn giao tài sản
+Tra cứu thiết bị đã được cấp phát cho nhân viên thông qua phân hệ Quản lý tài sản.
+11
+Đào tạo
+Quản lý lịch đào tạo
+Tạo lịch, cập nhật và theo dõi các buổi đào tạo định hướng.
+12
+Theo dõi tiến độ
+Theo dõi Checklist
+Hiển thị số lượng công việc và tỷ lệ hoàn thành hội nhập.
+13
+Nghiệm thu
+Kiểm tra công việc bắt buộc
+Ngăn hoàn tất tiến trình nếu còn hạng mục bắt buộc chưa hoàn thành.
+14
+Nghiệm thu
+Hoàn tất hội nhập
+HR xác nhận kết thúc tiến trình khi đáp ứng đầy đủ các điều kiện.
+15
+Tích hợp Hồ sơ nhân sự 
+Đồng bộ kết quả hội nhập 
+Thông báo kết quả hoàn thành hội nhập cho Module Hồ sơ nhân sự để phục vụ kiểm tra điều kiện tiếp nhận chính thức. 
+16
+Quản lý tiến trình
+Hủy hội nhập
+Cho phép hủy tiến trình hội nhập đang thực hiện khi cần thiết.
+6.4. Lợi ích của module
+Module Quản lý hội nhập nhân sự giúp doanh nghiệp chuẩn hóa quy trình tiếp nhận nhân viên mới, xác định rõ các công việc cần thực hiện và tăng cường phối hợp giữa HR, IT và các bộ phận liên quan.
+Thông qua Checklist và bảng theo dõi tiến độ, HR có thể phát hiện sớm những công việc còn thiếu, hạn chế tình trạng nhân viên bắt đầu làm việc khi chưa được cấp tài khoản, thiết bị hoặc hoàn thiện hồ sơ.
+Đồng thời, việc liên kết với các phân hệ Tuyển dụng, Hồ sơ nhân sự và Quản lý tài sản giúp dữ liệu được sử dụng xuyên suốt, giảm thao tác nhập liệu trùng lặp và bảo đảm quá trình tiếp nhận nhân viên diễn ra nhất quán.
+7. Số hóa và lưu kho hồ sơ nhân sự (DIGITAL RECORDS REPOSITORY) 
+7.1. Tổng quan
+Module Số hóa và Lưu kho Hồ sơ nhân sự giúp doanh nghiệp chuyển đổi hồ sơ giấy thành hồ sơ điện tử có cấu trúc, quản lý tập trung tài liệu của nhân viên và kiểm soát toàn bộ vòng đời lưu trữ, từ tiếp nhận, số hóa, bóc tách thông tin, nộp lưu kho cho đến xét duyệt và tiêu hủy khi hết thời hạn lưu trữ.
+Khác với chức năng tải lên giấy tờ trong Module Hội nhập, module này thực hiện quy trình quản lý tài liệu chính thức. Mỗi tài liệu được phân loại, gắn metadata, xác thực, tổ chức thành các bộ hồ sơ và áp dụng chính sách lưu trữ tương ứng.
+Module tích hợp với Hồ sơ nhân sự, Hội nhập, Hợp đồng, OCR, Quy trình phê duyệt và Phân quyền nhằm hạn chế nhập liệu trùng lặp, bảo đảm tính nhất quán và hỗ trợ tra cứu, kiểm tra, thanh tra khi cần thiết.
+7.2. Các phân hệ và chức năng
+7.2.1. Thu thập và số hóa tài liệu
+Cho phép HR hoặc nhân viên tải lên giấy tờ thông qua ứng dụng web hoặc thiết bị di động, bao gồm ảnh chụp, tài liệu scan và file PDF.
+Đối với tài liệu được chụp bằng điện thoại, hệ thống hỗ trợ nhận diện vùng tài liệu, cắt ảnh, chỉnh độ nghiêng và cải thiện chất lượng trước khi xử lý. Đối với xấp hồ sơ scan nhiều trang, hệ thống tự động xác định ranh giới giữa các tài liệu và đề xuất tách thành những file riêng biệt.
+Trước khi thực hiện OCR, hệ thống kiểm tra chất lượng ảnh, độ đầy đủ của các trang và cho phép HR xem trước kết quả tách tài liệu. Những tài liệu không đạt yêu cầu có thể được yêu cầu tải lên hoặc scan lại.
+Sau khi xác nhận kết quả tách, hệ thống chuẩn hóa định dạng tài liệu để phục vụ OCR và lưu trữ. Bản gốc được bảo toàn để có thể đối chiếu khi cần. 
+7.2.2. Bóc tách, nhập liệu và xác nhận metadata
+Sau khi tiếp nhận, hệ thống gửi tài liệu đến OCR Service để nhận diện loại giấy tờ và trích xuất nội dung. Các thông tin quan trọng được tự động ánh xạ vào biểu mẫu metadata tương ứng với từng loại tài liệu.
+Admin có thể cấu hình bộ trường metadata riêng cho CCCD, bằng cấp, hợp đồng, giấy khám sức khỏe và những tài liệu khác.
+Loại tài liệu
+Metadata điển hình
+CCCD
+Số CCCD, họ tên, ngày sinh, ngày cấp, nơi cấp.
+Bằng cấp
+Tên bằng, chuyên ngành, cơ sở đào tạo, ngày cấp.
+Hợp đồng lao động
+Số hợp đồng, loại hợp đồng, ngày ký, ngày có hiệu lực.
+Chứng chỉ
+Tên chứng chỉ, đơn vị cấp, ngày cấp, ngày hết hạn.
+Giấy khám sức khỏe
+Ngày khám, cơ sở khám, thời hạn hiệu lực nếu có.
+Hệ thống hiển thị độ tin cậy của từng trường được OCR trích xuất. Theo cấu hình đề xuất, trường có độ tin cậy từ 60% trở lên được tự điền để người dùng xác nhận; trường dưới 60% được đánh dấu cần kiểm tra và hiển thị nội dung gốc để chỉnh sửa thủ công.
+Hệ thống đồng thời đối chiếu metadata với dữ liệu đã có trong Module Hồ sơ nhân sự. Nếu phát hiện thông tin không trùng khớp, chẳng hạn ngày sinh trên CCCD khác ngày sinh trong hồ sơ, hệ thống hiển thị cảnh báo để HR kiểm tra.
+Sau khi xác thực, hệ thống có thể đề xuất cập nhật những thông tin phù hợp sang Hồ sơ nhân sự, nhưng không tự ý ghi đè dữ liệu đã được xác nhận trước đó.
+Mỗi tài liệu được gắn vào bộ hồ sơ theo mục đích, ví dụ hồ sơ tuyển dụng, hồ sơ hợp đồng hoặc hồ sơ y tế, giúp HR tra cứu và quản lý theo nhóm.
+7.2.3. Quản lý bộ hồ sơ và nộp lưu kho chính thức
+Cho phép HR tổ chức các tài liệu đã được số hóa thành từng bộ hồ sơ (Dossier) theo nhân viên và mục đích quản lý. Một nhân viên có thể có nhiều bộ hồ sơ như hồ sơ tuyển dụng, hồ sơ hợp đồng, hồ sơ bảo hiểm hoặc hồ sơ y tế.
+Mỗi bộ hồ sơ bao gồm danh sách tài liệu, thông tin metadata, trạng thái xử lý và lịch sử cập nhật. Tài liệu được liên kết với hồ sơ nhân viên để bảo đảm có thể tra cứu tập trung.
+Khi tài liệu đã được xác nhận metadata, HR có thể gửi yêu cầu nộp lưu kho chính thức. Hệ thống chuyển yêu cầu đến quy trình phê duyệt của doanh nghiệp.
+Sau khi được phê duyệt, tài liệu chuyển sang trạng thái ARCHIVED, được áp dụng chính sách lưu trữ và ghi nhận thời điểm nộp lưu, người thực hiện, người phê duyệt.
+Quản lý phiên bản: Tài liệu đã nộp lưu không được ghi đè trực tiếp. Khi cần thay thế bản scan thiếu trang hoặc cập nhật chính tài liệu đó, hệ thống tạo phiên bản mới và giữ lại lịch sử phiên bản cũ theo chính sách. Những giấy tờ bổ sung độc lập, chẳng hạn một bằng cấp mới, được quản lý như tài liệu mới trong cùng bộ hồ sơ.
+7.2.4. Quản lý chính sách lưu trữ và vòng đời tài liệu
+Cho phép Admin cấu hình chính sách lưu trữ (Retention Policy) theo từng loại tài liệu hoặc bộ hồ sơ, bao gồm thời hạn lưu trữ, sự kiện bắt đầu tính hạn và các điều kiện đặc biệt.
+Sau khi tài liệu được nộp lưu chính thức, hệ thống xác định thời hạn lưu trữ tương ứng. Các tài liệu đang phục vụ tranh chấp, kiểm toán hoặc thanh tra có thể được áp dụng trạng thái tạm giữ, không đưa vào quy trình tiêu hủy dù đã đến hạn.
+Hệ thống định kỳ kiểm tra và tổng hợp các trường hợp cần xử lý trên bảng theo dõi tập trung.
+Hệ thống cần phân biệt hai loại thời hạn:
+Loại thời hạn
+Ý nghĩa
+Nghiệp vụ
+Ngày hết hiệu lực (expiry_date)
+Ngày giấy tờ không còn hiệu lực sử dụng.
+Nhắc gia hạn hoặc bổ sung tài liệu.
+Ngày kết thúc lưu trữ (retention_until)
+Ngày kết thúc thời hạn lưu giữ theo chính sách.
+Đưa vào danh sách xem xét hủy nếu đủ điều kiện.
+Nhân viên có thể truy cập cổng ESS để theo dõi giấy tờ đã nộp, giấy tờ còn thiếu và những tài liệu cần cập nhật. Nếu quá thời hạn bổ sung hồ sơ theo cấu hình, hệ thống tự động gửi nhắc nhở.
+7.2.5. Đề xuất hủy và hội đồng xét duyệt
+Cho phép HR lập đề xuất hủy đối với những tài liệu đã hết thời hạn lưu trữ. Mỗi đề xuất cần xác định rõ danh sách tài liệu, lý do, chính sách lưu trữ áp dụng và người đề xuất.
+Trước khi chuyển đến hội đồng, hệ thống kiểm tra điều kiện hủy. Những tài liệu còn trong thời hạn lưu trữ hoặc đang bị tạm giữ vì yêu cầu pháp lý, thanh tra hay tranh chấp không được phép tiêu hủy.
+Hội đồng xét hủy gồm nhiều thành viên được phân quyền. Quyết định hủy chỉ được thông qua khi đáp ứng tỷ lệ biểu quyết theo cấu hình và không tồn tại điều kiện ngăn chặn tiêu hủy.
+Sau khi thực hiện tiêu hủy, hệ thống ghi nhận người đề xuất, thành viên hội đồng, kết quả biểu quyết, người thực hiện, thời điểm và bằng chứng tiêu hủy. Biên bản và nhật ký xét hủy được lưu riêng theo chính sách quản lý hồ sơ.
+7.2.6. Truy cập, bảo mật và xuất hồ sơ
+Cho phép doanh nghiệp phân quyền truy cập tài liệu dựa trên loại tài liệu, phạm vi nhân sự và hành động được phép thực hiện.
+Ví dụ, bộ phận Tính lương có thể được cấp quyền truy cập tài liệu liên quan đến lương hoặc BHXH của nhân viên thuộc phạm vi quản lý, nhưng không mặc nhiên được xem hồ sơ y tế.
+Đối với tài liệu nhạy cảm, hệ thống hỗ trợ đóng dấu watermark động khi xem hoặc tải xuống, bao gồm thông tin người truy cập và thời điểm truy cập. Nhật ký kiểm toán ghi nhận cả hành vi xem, tải, sửa metadata, nộp lưu và tiêu hủy tài liệu.
+Ví dụ: Kiểm soát truy cập tài liệu
+Vai trò
+Quyền truy cập minh họa
+Nhân viên
+Xem và bổ sung giấy tờ cá nhân được cho phép.
+HR
+Tiếp nhận, kiểm tra, xác thực và quản lý hồ sơ trong phạm vi được cấp.
+Payroll
+Truy cập tài liệu phục vụ tính lương và bảo hiểm theo quyền.
+Hội đồng xét hủy
+Xem tài liệu thuộc đề xuất hủy được phân công.
+Kiểm toán
+Tra cứu tài liệu và nhật ký theo phạm vi được phê duyệt.
+Hệ thống hỗ trợ xuất trọn bộ hồ sơ của một nhân viên dưới dạng PDF gộp hoặc file nén. Chức năng này được cấp quyền riêng, có thể yêu cầu phê duyệt đối với tài liệu nhạy cảm và phải ghi nhận lịch sử xuất dữ liệu.
+7.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Thu thập
+Tải lên tài liệu
+Tiếp nhận ảnh chụp, file scan và PDF từ web hoặc ứng dụng di động.
+2
+Số hóa
+Xử lý ảnh
+Tự động cắt ảnh, chỉnh nghiêng và cải thiện chất lượng.
+3
+Số hóa
+Tách tài liệu
+Nhận diện và tách các tài liệu từ file scan nhiều trang.
+4
+Số hóa
+Kiểm tra chất lượng
+Phát hiện tài liệu mờ, thiếu trang hoặc không đạt yêu cầu.
+5
+OCR
+Nhận diện tài liệu
+Phân loại giấy tờ và trích xuất nội dung thông qua OCR Service.
+6
+Metadata
+Cấu hình biểu mẫu
+Thiết lập các trường metadata theo từng loại tài liệu.
+7
+Metadata
+Nhập liệu và xác nhận
+Tự điền kết quả OCR, cho phép kiểm tra và bổ sung thông tin.
+8
+Metadata
+Đối chiếu dữ liệu
+So khớp thông tin trích xuất với Module Hồ sơ nhân sự.
+9
+Metadata
+Đề xuất đồng bộ
+Đề xuất cập nhật thông tin đã xác thực sang Hồ sơ nhân sự.
+10
+Bộ hồ sơ
+Quản lý Dossier
+Phân nhóm tài liệu theo nhân viên và mục đích sử dụng.
+11
+Lưu kho
+Nộp lưu chính thức
+Gửi tài liệu đã xác thực đến quy trình phê duyệt.
+12
+Lưu kho
+Quản lý phiên bản
+Lưu lịch sử các phiên bản, không ghi đè tài liệu đã nộp lưu.
+13
+Lưu kho
+Chính sách lưu trữ
+Cấu hình thời hạn và sự kiện bắt đầu tính hạn lưu trữ.
+14
+Vòng đời
+Nhắc hạn tài liệu
+Theo dõi giấy tờ sắp hết hiệu lực và hồ sơ cần bổ sung.
+15
+Vòng đời
+Theo dõi thời hạn lưu trữ
+Xác định tài liệu đến hạn xem xét hủy.
+16
+Vòng đời
+Tạm giữ tài liệu
+Ngăn tiêu hủy khi có yêu cầu bảo toàn hồ sơ.
+17
+Xét hủy
+Đề xuất hủy
+Lập danh sách và lý do đề xuất tiêu hủy.
+18
+Xét hủy
+Hội đồng xét duyệt
+Tổ chức biểu quyết và ghi nhận quyết định.
+19
+Xét hủy
+Ghi nhận tiêu hủy
+Lưu biên bản, kết quả và bằng chứng tiêu hủy.
+20
+Bảo mật
+Phân quyền tài liệu
+Kiểm soát truy cập theo loại tài liệu, phạm vi nhân sự và hành động.
+21
+Bảo mật
+Watermark và Audit
+Đóng dấu tài liệu nhạy cảm và ghi nhận lịch sử truy cập.
+22
+Khai thác
+Xuất trọn bộ hồ sơ
+Xuất hồ sơ nhân viên thành PDF gộp hoặc file nén theo quyền.
+7.4. Mối quan hệ với các module khác 
+Để tránh quản lý trùng lặp, Module Hội nhập chỉ theo dõi yêu cầu nộp giấy tờ và kết quả xác thực; Module Hồ sơ nhân sự quản lý thông tin nhân viên; còn Module Số hóa và Lưu kho chịu trách nhiệm quản lý tài liệu gốc, metadata, phiên bản và toàn bộ vòng đời lưu trữ.
+7.5. Lợi ích của module
+Module Số hóa và Lưu kho Hồ sơ nhân sự giúp doanh nghiệp chuyển đổi hồ sơ giấy thành tài sản dữ liệu số có cấu trúc, giảm thao tác nhập liệu thủ công và rút ngắn thời gian tra cứu.
+Việc tích hợp OCR, metadata và quy trình xác thực hỗ trợ nâng cao chất lượng dữ liệu nhân sự. Đồng thời, cơ chế lưu kho chính thức, quản lý phiên bản, kiểm soát thời hạn và xét hủy có lưu vết giúp doanh nghiệp quản lý tài liệu xuyên suốt vòng đời và hỗ trợ các yêu cầu kiểm tra, kiểm toán.
+8. Quản lý hợp đồng & Hợp đồng điện tử (Contract Management & E-Contract)
+8.1. Tổng quan
+Module Quản lý Hợp đồng và Hợp đồng điện tử cho phép doanh nghiệp quản lý toàn bộ vòng đời hợp đồng lao động, từ soạn thảo, phê duyệt, ký kết, theo dõi hiệu lực, điều chỉnh, tái ký cho đến chấm dứt và lưu trữ.
+Hệ thống sử dụng các mẫu hợp đồng chuẩn hóa, tự động lấy thông tin từ Hồ sơ nhân sự và kết quả tuyển dụng để tạo văn bản. Hợp đồng có thể được ký trực tiếp trên giấy hoặc ký điện tử từ xa, giúp HR quản lý tập trung quá trình ký kết giữa doanh nghiệp và người lao động.
+Bên cạnh việc quản lý hợp đồng, module còn hỗ trợ kiểm tra các điều kiện pháp lý, theo dõi thời hạn, tính toán quyền lợi khi chấm dứt và chuyển giao hợp đồng đã ký sang Module Số hóa và Lưu kho Hồ sơ nhân sự.
+ 
+8.2. Các phân hệ và chức năng
+8.2.1. Quản lý hồ sơ và thông tin hợp đồng
+Cho phép HR khởi tạo, cập nhật và tra cứu hợp đồng lao động của từng nhân viên. Hệ thống tự động sinh mã hợp đồng theo quy tắc do doanh nghiệp cấu hình, giúp tránh trùng lặp và thuận tiện khi tìm kiếm.
+Thông tin hợp đồng được tổ chức thành các nhóm:
+Nhóm thông tin
+Nội dung
+Người lao động
+Họ tên, mã nhân viên, CCCD, địa chỉ và thông tin liên hệ.
+Người sử dụng lao động
+Pháp nhân ký kết, người đại diện, chức vụ và địa chỉ doanh nghiệp.
+Công việc
+Chức danh, phòng ban, chi nhánh, địa điểm và thời gian làm việc.
+Tiền lương
+Mức lương, phụ cấp, hình thức và kỳ hạn trả lương.
+Thời hạn
+Loại hợp đồng, ngày ký, ngày bắt đầu và ngày kết thúc nếu có.
+Trạng thái
+Dự thảo, chờ duyệt, chờ ký, đã ký, có hiệu lực hoặc đã chấm dứt.
+Hệ thống hỗ trợ các loại hợp đồng lao động xác định thời hạn, không xác định thời hạn và thỏa thuận thử việc riêng khi phù hợp. Những hợp đồng dịch vụ với cá nhân làm việc tự do cần được phân loại riêng, không mặc nhiên coi là hợp đồng lao động.
+8.2.2. Quản lý mẫu và tự động sinh hợp đồng
+Cho phép HR hoặc Admin xây dựng kho mẫu hợp đồng theo loại hợp đồng, nhóm chức danh, phòng ban hoặc chi nhánh.
+Mỗi mẫu có thể được tải lên dưới định dạng DOCX hoặc HTML, với các trường dữ liệu động được tự động thay thế khi sinh hợp đồng.
+Ví dụ, mẫu hợp đồng sử dụng các biến {{employee_name}}, {{position_title}}, {{basic_salary}}, {{start_date}} và {{company_representative_name}}. Hệ thống lấy dữ liệu tương ứng từ Hồ sơ nhân sự, kết quả Offer và thông tin doanh nghiệp.
+Mẫu hợp đồng được quản lý theo phiên bản. Khi HR cập nhật mẫu mới, những hợp đồng đã tạo hoặc đã ký vẫn tham chiếu đến phiên bản đã sử dụng, không bị thay đổi nội dung.
+Trước khi gửi phê duyệt, HR được xem trước hợp đồng đã điền đầy đủ thông tin. Hệ thống kiểm tra những trường bắt buộc, dữ liệu còn thiếu và các quy tắc hợp lệ trước khi cho phép chuyển sang bước tiếp theo.
+8.2.3. Kiểm tra điều kiện và tuân thủ pháp lý
+Hệ thống kiểm tra điều kiện nghiệp vụ và pháp lý trong quá trình tạo, điều chỉnh, tái ký hoặc chấm dứt hợp đồng. Các trường hợp không hợp lệ được thông báo rõ nguyên nhân và yêu cầu HR xử lý trước khi tiếp tục.
+Các nhóm kiểm tra bao gồm loại và thời hạn hợp đồng, thời gian thử việc, mức lương thử việc, số lần ký tiếp hợp đồng xác định thời hạn, điều kiện điều chỉnh hợp đồng và những trường hợp chấm dứt bị hạn chế.
+Đối với các quy tắc phụ thuộc vào loại công việc, đối tượng lao động hoặc trường hợp ngoại lệ, hệ thống cần sử dụng dữ liệu và cấu hình pháp lý tương ứng thay vì áp dụng một điều kiện chung cho mọi nhân viên.
+8.2.4. Phê duyệt và ký kết hợp đồng điện tử
+Cho phép HR thiết lập quy trình phê duyệt nội bộ trước khi gửi hợp đồng đến các bên ký. Quy trình có thể bao gồm Trưởng phòng Nhân sự, Giám đốc Tài chính đối với trường hợp vượt ngân sách và người đại diện có thẩm quyền của doanh nghiệp.
+Sau khi được phê duyệt, hợp đồng chuyển sang giai đoạn ký kết. Hệ thống hỗ trợ xác định các bên ký, phương thức ký và thứ tự ký phù hợp với từng loại hợp đồng.
+Hệ thống hỗ trợ hai nhóm phương thức ký:
+Phương thức
+Mô tả
+Chữ ký số
+Sử dụng chứng thư số và giải pháp ký qua USB Token hoặc ký số từ xa.
+Chữ ký điện tử khác
+Xác nhận bằng OTP kết hợp thao tác chấp thuận và lưu bằng chứng giao dịch, khi đáp ứng điều kiện pháp luật áp dụng.
+Theo Luật Giao dịch điện tử 2023, chữ ký điện tử không bị phủ nhận giá trị pháp lý chỉ vì tồn tại dưới dạng điện tử; tuy nhiên, chữ ký số và chữ ký điện tử chuyên dùng bảo đảm an toàn có cơ sở pháp lý cụ thể về giá trị tương đương chữ ký trên văn bản giấy. Vì vậy, không nên mặc định mọi hình thức OTP kết hợp nhấp xác nhận đều có giá trị tương đương chữ ký số.
+Khi một bên từ chối ký, hệ thống ghi nhận lý do và trả hợp đồng về HR để trao đổi hoặc chỉnh sửa. Hợp đồng đã được ký một phần phải được xử lý theo quy trình hủy lượt ký và phát hành phiên bản mới nếu nội dung thay đổi.
+Hệ thống tự động nhắc những người chưa ký sau khoảng thời gian được cấu hình và có thể chuyển thông báo đến quản lý khi quá hạn.
+8.2.5. Xác minh chữ ký và bảo đảm tính toàn vẹn
+Đối với hợp đồng điện tử, hệ thống cần lưu giữ cả nội dung hợp đồng và bằng chứng chứng minh quá trình giao kết.
+Các thông tin cần được quản lý gồm danh tính người ký, phương thức xác thực, thời điểm ký, trạng thái chứng thư số nếu có, mã định danh giao dịch và lịch sử thao tác.
+Đối với chữ ký số, hệ thống kiểm tra tính hợp lệ của chữ ký và chứng thư số. Khi sử dụng dịch vụ cấp dấu thời gian, hệ thống lưu bằng chứng thời gian do nhà cung cấp dịch vụ tin cậy cung cấp.
+Mỗi phiên bản hợp đồng được gắn giá trị băm như SHA-256 để hỗ trợ phát hiện thay đổi. Bản hợp đồng cuối cùng, dữ liệu chữ ký và bằng chứng giao dịch phải được lưu trữ theo định dạng có thể truy cập và xác minh về sau.
+8.2.6. Quản lý phụ lục hợp đồng
+Cho phép HR tạo phụ lục để điều chỉnh hoặc bổ sung những nội dung của hợp đồng đã ký, như tiền lương, phụ cấp, chức danh, địa điểm làm việc hoặc các điều khoản khác.
+Mỗi phụ lục được liên kết với hợp đồng gốc, đánh số thứ tự và quản lý lịch sử độc lập. Phụ lục được áp dụng cùng quy trình soạn thảo, phê duyệt, ký điện tử và lưu trữ như hợp đồng chính.
+Khi phụ lục có hiệu lực, hệ thống cung cấp dữ liệu thay đổi cho các module liên quan, chẳng hạn mức lương mới cho Payroll hoặc chức danh mới cho Hồ sơ nhân sự.
+Các thay đổi phải được kiểm tra tính hợp lệ; không sử dụng phụ lục để thực hiện những điều chỉnh không được pháp luật cho phép.
+8.2.7. Theo dõi hiệu lực, cảnh báo và tái ký
+Cho phép HR theo dõi hợp đồng đang có hiệu lực, sắp hết hạn, đã hết hạn và những trường hợp cần tái ký.
+Hệ thống định kỳ kiểm tra hợp đồng sắp hết hạn và gửi thông báo trước 45 ngày hoặc 30 ngày theo cấu hình. Người quản lý trực tiếp có thể được yêu cầu đánh giá và đề xuất tái ký hoặc kết thúc quan hệ lao động.
+Khi HR tạo hợp đồng mới, hệ thống kiểm tra lịch sử ký kết để xác định loại hợp đồng được phép sử dụng. Đối với trường hợp hợp đồng xác định thời hạn hết hạn nhưng nhân viên vẫn tiếp tục làm việc, hệ thống phải theo dõi mốc 30 ngày và áp dụng quy tắc chuyển đổi tương ứng, bao gồm các ngoại lệ theo pháp luật.
+8.2.8. Chấm dứt hợp đồng và tính toán trợ cấp
+Cho phép HR tiếp nhận và xử lý đề xuất chấm dứt hợp đồng từ người lao động hoặc người sử dụng lao động. Mỗi yêu cầu phải ghi nhận căn cứ chấm dứt, bên khởi xướng, ngày dự kiến kết thúc và những tài liệu liên quan.
+Hệ thống hỗ trợ kiểm tra thời hạn báo trước, các trường hợp pháp luật hạn chế quyền đơn phương chấm dứt và những nghĩa vụ cần thực hiện trước khi kết thúc quan hệ lao động.
+Đối với trường hợp phát sinh trợ cấp thôi việc hoặc trợ cấp mất việc làm, hệ thống lấy dữ liệu lịch sử công tác, thời gian tham gia bảo hiểm thất nghiệp và tiền lương làm căn cứ để tính toán. HR kiểm tra kết quả trước khi chuyển sang quy trình phê duyệt và thanh toán.
+8.2.9. Báo cáo và khai trình sử dụng lao động
+Cho phép HR tổng hợp dữ liệu hợp đồng để phục vụ các báo cáo quản trị và nghĩa vụ báo cáo lao động của doanh nghiệp.
+Hệ thống hỗ trợ thống kê số lượng hợp đồng theo loại, chi nhánh, phòng ban, tình trạng hiệu lực, số hợp đồng mới, tái ký và chấm dứt trong kỳ.
+Dữ liệu hợp đồng được kết hợp với Hồ sơ nhân sự để hỗ trợ lập báo cáo tình hình thay đổi lao động theo biểu mẫu và quy định áp dụng. Cần phân biệt nghĩa vụ báo cáo sử dụng lao động với thủ tục đăng ký từng hợp đồng; không mặc định mọi hợp đồng lao động đều phải được nộp đăng ký riêng tại cơ quan quản lý lao động.
+8.2.10. Quản lý hợp đồng trên ESS và thiết bị di động
+Cho phép nhân viên truy cập hợp đồng của chính mình thông qua cổng Employee Self-Service (ESS) hoặc ứng dụng di động.
+Nhân viên có thể xem hợp đồng được gửi ký, kiểm tra nội dung, lựa chọn ký hoặc từ chối kèm lý do, theo dõi trạng thái và tải hợp đồng đã hoàn tất.
+Đối với HR, hệ thống cung cấp bảng theo dõi ký kết hàng loạt, cho phép lọc theo phòng ban, chi nhánh, thời hạn và người chưa ký để chủ động nhắc nhở.
+8.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Hồ sơ hợp đồng
+Tạo và quản lý hợp đồng
+Khởi tạo, cập nhật và tra cứu hợp đồng của nhân viên.
+2
+Hồ sơ hợp đồng
+Sinh mã hợp đồng
+Tự động đánh mã theo quy tắc doanh nghiệp.
+3
+Mẫu hợp đồng
+Quản lý Template
+Cấu hình mẫu theo loại hợp đồng, vị trí và chi nhánh.
+4
+Mẫu hợp đồng
+Quản lý phiên bản
+Lưu lịch sử mẫu, không làm thay đổi hợp đồng đã phát hành.
+5
+Soạn thảo
+Tự động điền dữ liệu
+Lấy thông tin từ Hồ sơ nhân sự, Offer và dữ liệu doanh nghiệp.
+6
+Soạn thảo
+Xem trước hợp đồng
+Kiểm tra văn bản hoàn chỉnh trước khi phê duyệt và ký.
+7
+Tuân thủ
+Kiểm tra điều kiện
+Kiểm tra nội dung, thời hạn và các điều kiện pháp lý liên quan.
+8
+Phê duyệt
+Phê duyệt đa cấp
+Điều phối các bước xét duyệt nội bộ theo thẩm quyền.
+9
+Ký điện tử
+Ký nhiều bên
+Cấu hình người ký, phương thức và thứ tự ký.
+10
+Ký điện tử
+Xử lý từ chối ký
+Ghi nhận lý do và chuyển hợp đồng về HR xử lý.
+11
+Ký điện tử
+Nhắc ký tự động
+Nhắc các bên chưa ký và cảnh báo quá hạn.
+12
+Bảo mật
+Xác minh chữ ký
+Kiểm tra chữ ký số, chứng thư và bằng chứng xác thực.
+13
+Bảo mật
+Bảo đảm toàn vẹn
+Lưu giá trị băm, phiên bản cuối và nhật ký ký kết.
+14
+Phụ lục
+Quản lý phụ lục
+Tạo, phê duyệt, ký và theo dõi hiệu lực phụ lục.
+15
+Hiệu lực
+Cảnh báo hết hạn
+Thông báo hợp đồng sắp hoặc đã hết hạn.
+16
+Hiệu lực
+Tái ký hợp đồng
+Hỗ trợ đánh giá, kiểm tra điều kiện và ký tiếp.
+17
+Chấm dứt
+Xử lý chấm dứt
+Quản lý căn cứ, thời hạn báo trước và phê duyệt.
+18
+Chấm dứt
+Tính toán trợ cấp
+Tính các khoản quyền lợi dựa trên dữ liệu liên quan.
+19
+Báo cáo
+Báo cáo hợp đồng
+Thống kê tình hình ký kết, tái ký và chấm dứt.
+20
+ESS
+Ký và tải hợp đồng
+Cho phép nhân viên ký từ xa và truy cập bản đã ký.
+21
+Lưu trữ
+Đồng bộ lưu kho
+Chuyển hợp đồng đã ký sang quy trình lưu trữ chính thức.
+8.4. Mối quan hệ với các module khác
+Module
+Mối quan hệ
+Tuyển dụng
+Cung cấp kết quả Offer và các điều kiện đã thỏa thuận để khởi tạo hợp đồng.
+Hồ sơ nhân sự
+Cung cấp thông tin nhân viên và tiếp nhận các thay đổi về công việc, trạng thái làm việc.
+Hội nhập
+Theo dõi việc ký hợp đồng nếu được cấu hình là một hạng mục hội nhập.
+Quy trình phê duyệt
+Điều phối phê duyệt hợp đồng, phụ lục và đề xuất chấm dứt.
+Chấm công và Nghỉ phép
+Cung cấp dữ liệu làm việc, nghỉ phép phục vụ theo dõi và quyết toán.
+Tính lương và Bảo hiểm
+Tiếp nhận thông tin tiền lương, phụ cấp và thời điểm có hiệu lực.
+Số hóa và Lưu kho
+Tiếp nhận hợp đồng, phụ lục và bằng chứng ký kết để lưu trữ chính thức.
+Phân quyền
+Kiểm soát quyền xem, soạn thảo, phê duyệt, ký, xuất và chấm dứt hợp đồng.
+Quy tắc tích hợp với Hồ sơ nhân sự
+Hợp đồng hoàn tất ký kết (FULLY_SIGNED) không đồng nghĩa với hợp đồng đã đến ngày có hiệu lực (ACTIVE). Tương tự, hợp đồng đã có hiệu lực không mặc nhiên đồng nghĩa với nhân viên đã hoàn thành thử việc.
+Module Hợp đồng cung cấp trạng thái ký kết, thời điểm có hiệu lực và những thay đổi về điều kiện lao động. Module Hồ sơ nhân sự chịu trách nhiệm kiểm tra điều kiện và cập nhật trạng thái nhân viên theo quy trình đã thống nhất với Onboarding.
+8.5. Lợi ích của module
+Module Quản lý Hợp đồng và Hợp đồng điện tử giúp doanh nghiệp chuẩn hóa quy trình ký kết, giảm thao tác soạn thảo thủ công và rút ngắn thời gian luân chuyển văn bản giữa HR, người quản lý và nhân viên.
+Việc quản lý mẫu, phiên bản, chữ ký và nhật ký giao dịch hỗ trợ tra cứu lịch sử, xác minh nội dung đã ký và xử lý tranh chấp khi cần thiết. Đồng thời, cơ chế cảnh báo hết hạn, tái ký và đồng bộ dữ liệu giúp các bộ phận chủ động thực hiện nghiệp vụ liên quan đến nhân sự, tiền lương và bảo hiểm.
+8.6. Căn cứ pháp lý và các quy tắc tuân thủ
+Module Quản lý Hợp đồng và Hợp đồng điện tử chịu sự điều chỉnh của pháp luật lao động, pháp luật giao dịch điện tử và các quy định liên quan đến bảo vệ dữ liệu cá nhân, bảo hiểm và quản lý hồ sơ.
+8.6.1. Danh mục văn bản pháp luật
+Văn bản
+Phạm vi áp dụng trong module
+Bộ luật Lao động 2019
+Giao kết, nội dung, loại hợp đồng, thử việc, phụ lục, tái ký, chấm dứt và trợ cấp.
+Luật Giao dịch điện tử 2023
+Giá trị pháp lý của hợp đồng điện tử, chữ ký điện tử, tính toàn vẹn và khả năng truy cập lại.
+Nghị định 23/2025/NĐ-CP
+Chữ ký điện tử và dịch vụ tin cậy, bao gồm các giải pháp ký số và dấu thời gian.
+Nghị định 145/2020/NĐ-CP
+Hướng dẫn một số nội dung của Bộ luật Lao động, quản lý lao động, trợ cấp và báo cáo sử dụng lao động.
+Luật Bảo hiểm xã hội và các văn bản hướng dẫn hiện hành
+Xác định nghĩa vụ bảo hiểm và đồng bộ dữ liệu hợp đồng với phân hệ Bảo hiểm.
+Pháp luật về bảo vệ dữ liệu cá nhân
+Xử lý, lưu trữ, chia sẻ và kiểm soát truy cập thông tin nhân viên, hợp đồng và bằng chứng ký.
+8.6.2. Áp dụng pháp luật theo từng chức năng
+Chức năng trong Module 8
+Căn cứ pháp lý chính
+Quy tắc cần áp dụng
+8.2.1. Tạo hợp đồng
+Điều 13, 14, 20, 21 BLLĐ 2019
+Xác định đúng quan hệ lao động, hình thức, loại hợp đồng và nội dung bắt buộc.
+8.2.2. Sinh hợp đồng từ mẫu
+Điều 21 BLLĐ 2019
+Kiểm tra các nội dung bắt buộc trước khi gửi ký.
+8.2.3. Kiểm tra thử việc
+Điều 24–27 BLLĐ 2019
+Kiểm tra thời hạn, tiền lương thử việc và kết quả thử việc.
+8.2.3. Kiểm tra tái ký
+Điều 20 BLLĐ 2019
+Kiểm tra thời hạn, số lần ký tiếp và trường hợp ngoại lệ.
+8.2.4. Ký điện tử
+Điều 14 BLLĐ 2019; Luật Giao dịch điện tử 2023
+Kiểm tra phương thức giao kết và điều kiện pháp lý của chữ ký.
+8.2.5. Xác minh chữ ký
+Luật Giao dịch điện tử 2023; Nghị định 23/2025/NĐ-CP
+Xác minh chữ ký, tính toàn vẹn, bằng chứng và dấu thời gian nếu sử dụng.
+8.2.6. Phụ lục
+Điều 22, 33 BLLĐ 2019
+Kiểm soát nội dung được phép sửa đổi, bổ sung và thời điểm có hiệu lực.
+8.2.7. Hiệu lực và tái ký
+Điều 20, 23 BLLĐ 2019
+Theo dõi thời điểm có hiệu lực, ngày hết hạn và chuyển đổi loại hợp đồng khi đủ điều kiện.
+8.2.8. Chấm dứt
+Điều 34–47 BLLĐ 2019; Nghị định 145/2020/NĐ-CP
+Kiểm tra căn cứ, báo trước, hạn chế chấm dứt và quyền lợi liên quan.
+8.2.9. Báo cáo
+Điều 12 BLLĐ 2019; Nghị định 145/2020/NĐ-CP
+Tổng hợp và lập báo cáo tình hình sử dụng lao động.
+8.2.10. ESS
+Luật Giao dịch điện tử 2023; pháp luật bảo vệ dữ liệu cá nhân
+Bảo đảm khả năng truy cập hợp đồng, xác thực người dùng và bảo vệ dữ liệu.
+Các quy tắc cụ thể dưới đây được sử dụng để thiết kế kiểm tra nghiệp vụ.
+8.6.3. Các quy tắc pháp lý cần đưa vào hệ thống
+A. Giao kết và nội dung hợp đồng
+Điều 14, 20 và 21 – Bộ luật Lao động 2019
+Hệ thống phải kiểm tra loại hợp đồng, thời hạn và các nội dung bắt buộc như công việc, địa điểm, tiền lương, thời giờ làm việc và bảo hiểm.
+Hợp đồng xác định thời hạn có thời hạn không quá 36 tháng. Nếu hai bên tiếp tục ký hợp đồng xác định thời hạn sau khi hợp đồng đầu tiên hết hạn, nguyên tắc chung chỉ cho phép ký tiếp một lần, trừ những trường hợp ngoại lệ luật định.
+B. Thử việc
+Điều 24–27 – Bộ luật Lao động 2019
+Kiểm tra thời gian thử việc tối đa theo tính chất công việc, nguyên tắc chỉ thử việc một lần đối với một công việc và mức lương thử việc tối thiểu bằng 85% mức lương của công việc đó.
+Khi kết thúc thử việc, hệ thống ghi nhận kết quả và chuyển thông tin đến Hồ sơ nhân sự; không tự động coi hoàn tất Onboarding là đạt thử việc.
+C. Phụ lục hợp đồng
+Điều 22 và 33 – Bộ luật Lao động 2019
+Phụ lục được dùng để quy định chi tiết, sửa đổi hoặc bổ sung nội dung hợp đồng, nhưng không được sửa đổi thời hạn hợp đồng lao động. Trường hợp cần thay đổi thời hạn phải xử lý bằng phương thức phù hợp theo pháp luật.
+D. Chấm dứt và trợ cấp
+Điều 34–47 – Bộ luật Lao động 2019
+Hệ thống phải xác định căn cứ chấm dứt, chủ thể thực hiện, thời hạn báo trước và các trường hợp pháp luật hạn chế việc đơn phương chấm dứt.
+Khi phát sinh nghĩa vụ trợ cấp, hệ thống tính toán dựa trên thời gian làm việc được tính hưởng trợ cấp và tiền lương làm căn cứ theo quy định. Không mặc định mọi trường hợp chấm dứt đều được hưởng trợ cấp.
+8.6.4. Quy tắc riêng đối với hợp đồng điện tử
+Yêu cầu pháp lý đối với E-Contract
+Hình thức giao kết: Điều 14 Bộ luật Lao động 2019 công nhận hợp đồng lao động được giao kết thông qua phương tiện điện tử dưới hình thức thông điệp dữ liệu theo pháp luật giao dịch điện tử.
+Giá trị của tài liệu điện tử: Hệ thống cần bảo đảm nội dung hợp đồng có thể truy cập, sử dụng để tham chiếu và kiểm tra tính toàn vẹn theo điều kiện pháp luật áp dụng.
+Chữ ký điện tử: Phương thức ký phải đáp ứng điều kiện tương ứng của Luật Giao dịch điện tử 2023. Không mặc định thao tác nhập OTP hoặc nhấp nút xác nhận có giá trị pháp lý giống chữ ký số.
+Xác minh và lưu trữ: Đối với hợp đồng ký số, cần bảo toàn dữ liệu chữ ký, thông tin chứng thư và bằng chứng xác minh. Dấu thời gian từ dịch vụ tin cậy được sử dụng khi cần chứng minh thời điểm ký theo phương án pháp lý và kỹ thuật đã lựa chọn.
+9. Điểm danh & Ca làm việc (Attendance)
+9.1. Tổng quan
+Module Attendance quản lý toàn bộ quá trình thiết lập ca làm việc, phân ca nhân viên, chấm công, xử lý sai lệch và tổng hợp bảng công tháng để phục vụ tính lương.
+Trong phiên bản này, chấm công bằng ảnh khuôn mặt là phương thức xác thực bắt buộc. Khi nhân viên thực hiện check-in hoặc check-out, hệ thống sử dụng camera chụp ảnh khuôn mặt, kiểm tra tính chân thực và đối chiếu với ảnh khuôn mặt đã được đăng ký trong Module Hồ sơ nhân sự (Employee Profile). Đồng thời, hệ thống kiểm tra vị trí GPS để xác nhận nhân viên đang ở địa điểm làm việc hợp lệ.
+Một lượt chấm công thông thường chỉ được ghi nhận thành công khi cả xác thực khuôn mặt và vị trí đều hợp lệ. Các trường hợp ngoại lệ được xử lý thông qua quy trình giải trình hoặc chấm công đặc biệt có phê duyệt.
+9.2. Các phân hệ và chức năng
+9.2.1. Quản lý ca làm việc (Shift Management)
+Cho phép HR thiết lập danh mục ca làm việc của doanh nghiệp, bao gồm ca hành chính, ca sáng, ca chiều, ca đêm và những ca đặc thù.
+Mỗi ca có mã, tên, thời gian bắt đầu và kết thúc, thời gian nghỉ giữa ca, số giờ làm việc tiêu chuẩn, định mức công và thời gian ân hạn đi muộn hoặc về sớm.
+Các chức năng bao gồm tạo ca, cập nhật, tra cứu, kích hoạt hoặc ngừng sử dụng và xóa ca chưa phát sinh dữ liệu phân công.
+Hệ thống hỗ trợ ca qua ngày và sử dụng cấu hình ca làm căn cứ xác định thời gian làm việc thực tế.
+9.2.2. Phân ca làm việc (Shift Assignment)
+Cho phép HR phân công nhân viên vào các ca làm việc theo từng ngày hoặc khoảng thời gian.
+Hệ thống hỗ trợ phân ca hàng loạt, xem lịch theo phòng ban, chi nhánh và nhân viên, cũng như hủy lịch đã phân công. Nhân viên được tra cứu lịch làm việc của mình trên ESS.
+Khi thực hiện chấm công, hệ thống xác định ca đã được phân công hoặc ca mặc định hợp lệ để đối chiếu giờ vào, giờ ra và định mức công.
+9.2.3. Đăng ký và quản lý ảnh khuôn mặt (Face Enrollment)
+Module Hồ sơ nhân sự chịu trách nhiệm quản lý dữ liệu khuôn mặt đã đăng ký. Attendance sử dụng dữ liệu này thông qua dịch vụ xác thực, không tự tạo một hồ sơ khuôn mặt độc lập cho cùng nhân viên. 
+Các chức năng cần có:
+Đăng ký khuôn mặt lần đầu, kiểm tra chất lượng và xác thực người thật.
+Xem trạng thái đăng ký khuôn mặt trong hồ sơ nhân viên.
+Đăng ký lại khi ảnh không còn phù hợp hoặc xác thực thường xuyên thất bại.
+Vô hiệu hóa dữ liệu khuôn mặt cũ khi thay thế.
+Ghi nhận lịch sử đăng ký, cập nhật và thu hồi.
+Quy tắc thiết kế: Ảnh đại diện thông thường trong hồ sơ nhân sự không mặc nhiên là ảnh đủ điều kiện xác thực sinh trắc học. Cần có ảnh đăng ký đạt chất lượng, quy trình xác minh danh tính và cơ chế bảo vệ dữ liệu phù hợp.
+9.2.4. Chấm công bằng xác thực khuôn mặt và GPS
+Chức năng cốt lõi bắt buộc
+Khi nhân viên chọn Check-in hoặc Check-out, ứng dụng mở camera để chụp ảnh khuôn mặt trực tiếp và thu thập tọa độ GPS.
+Hệ thống kiểm tra chất lượng ảnh, phát hiện người thật và so sánh khuôn mặt vừa chụp với dữ liệu đã đăng ký trong Hồ sơ nhân sự của chính nhân viên đó. Đây là xác thực một-một (1:1), không phải tìm kiếm danh tính trên toàn bộ nhân viên.
+Nếu kết quả so khớp đạt ngưỡng chấp nhận và vị trí GPS hợp lệ, hệ thống ghi nhận thời gian chấm công. Nếu không đạt, lượt chấm công bị từ chối hoặc chuyển sang quy trình ngoại lệ.
+Điều kiện xác thực
+Điều kiện
+Kết quả yêu cầu
+Hồ sơ khuôn mặt
+Đã đăng ký và còn hiệu lực
+Ảnh chụp trực tiếp
+Đạt chất lượng
+Kiểm tra người thật
+Đạt
+So khớp khuôn mặt
+Đạt ngưỡng cấu hình
+GPS
+Trong phạm vi địa điểm hợp lệ
+Ca làm việc
+Xác định được ca phù hợp
+Lượt chấm công
+Không trùng hoặc sai thứ tự
+Hệ thống phải lưu kết quả xác thực, thời điểm, phiên bản mẫu khuôn mặt được sử dụng, vị trí và mã giao dịch. Ảnh chụp trực tiếp chỉ được lưu nếu thực sự cần thiết theo chính sách lưu trữ và bảo vệ dữ liệu; không cần mặc định lưu toàn bộ ảnh của mọi lượt chấm công.
+9.2.5. Xử lý xác thực thất bại và chấm công ngoại lệ
+Nhân viên có thể gặp các tình huống như camera hỏng, không có kết nối mạng, ảnh không đạt chất lượng, không nhận diện được khuôn mặt hoặc GPS nằm ngoài phạm vi cho phép.
+Hệ thống cần hiển thị nguyên nhân phù hợp và cho phép thử lại trong giới hạn cấu hình. Nếu vẫn thất bại, nhân viên có thể gửi yêu cầu chấm công ngoại lệ kèm lý do và minh chứng.
+Các trường hợp đi công tác, làm việc tại địa điểm khác hoặc không thể sử dụng nhận diện khuôn mặt cần có phương án xác minh thay thế được HR phê duyệt. Không cho phép tự động bỏ qua cả xác thực danh tính lẫn xác minh địa điểm.
+9.2.6. Theo dõi nhật ký chấm công
+Nhân viên có thể xem trạng thái chấm công hôm nay và lịch sử theo tháng. HR và quản lý được tra cứu dữ liệu trong phạm vi được phân quyền.
+Mỗi bản ghi thể hiện ngày làm việc, ca, giờ vào/ra, phương thức xác thực, kết quả xác thực, vị trí, số phút đi muộn hoặc về sớm và số công được ghi nhận.
+Nhật ký check-in/check-out gốc phải được bảo toàn. Những thay đổi sau đó được ghi nhận bằng bản ghi điều chỉnh riêng, không ghi đè dữ liệu ban đầu.
+9.2.7. Tự động tính công và phát hiện bất thường
+Hệ thống tính toán thời gian làm việc thực tế, số phút đi muộn, về sớm và số công quy đổi dựa trên ca được phân công cùng dữ liệu chấm công hợp lệ.
+Tác vụ tự động phát hiện các trường hợp thiếu check-in, thiếu check-out, không có dữ liệu chấm công theo lịch phân ca hoặc xác thực thất bại chưa được xử lý.
+Đối với ca đêm, việc kiểm tra phải được thực hiện sau khi ca kết thúc và hết khoảng thời gian chấm công cho phép, tránh đánh dấu vắng mặt khi nhân viên vẫn đang làm việc.
+Các trạng thái chấm công
+Trạng thái
+Ý nghĩa
+ON_TIME
+Chấm công đúng giờ
+LATE
+Đi muộn
+EARLY
+Về sớm
+LATE_AND_EARLY
+Đi muộn và về sớm
+MISSING_CHECK_OUT
+Thiếu lượt check-out
+ABSENT
+Không có dữ liệu đi làm hợp lệ sau khi đối soát
+EXPLAINED
+Đã được phê duyệt giải trình
+PENDING_VERIFICATION
+Chờ xử lý xác thực ngoại lệ (đề xuất mới)
+Không nên tự động coi mọi trường hợp nhận diện khuôn mặt thất bại là vắng mặt. Hệ thống cần phân biệt lỗi xác thực với việc nhân viên thực sự không đi làm.
+9.2.8. Giải trình và điều chỉnh chấm công
+Cho phép nhân viên gửi đơn giải trình khi quên chấm công, sai lệch thời gian, thiết bị gặp sự cố hoặc xác thực khuôn mặt không thành công.
+Nhân viên lựa chọn ngày làm việc, loại lý do, thời gian đề xuất và đính kèm minh chứng. Đơn được chuyển sang Module Workflow để quản lý hoặc HR xét duyệt.
+Sau khi được phê duyệt, hệ thống tạo bản ghi điều chỉnh và tự động tính lại bảng công liên quan. Nhật ký chấm công gốc và kết quả xác thực ban đầu vẫn được giữ nguyên để phục vụ đối soát.
+9.2.9. Tổng hợp bảng công tháng (Monthly Timesheet)
+Hệ thống tổng hợp bảng công của từng nhân viên dựa trên lịch phân ca, dữ liệu chấm công, các đơn giải trình đã được phê duyệt và dữ liệu nghỉ phép.
+Bảng công bao gồm số ngày công chuẩn, công thực tế, nghỉ hưởng lương, nghỉ không hưởng lương, tổng công tính lương, tổng thời gian đi muộn/về sớm và số lượt chấm công còn thiếu.
+HR có thể xem bảng công theo nhân viên, phòng ban hoặc toàn công ty, kiểm tra các trường hợp bất thường và tính lại kết quả trước khi khóa.
+9.2.10. Khóa chốt bảng công và đồng bộ Payroll
+Sau khi hoàn tất đối soát, HR thực hiện khóa bảng công tháng. Hệ thống lưu bản tổng hợp tại thời điểm chốt và cung cấp dữ liệu cho Module Payroll.
+Nếu một đơn giải trình được phê duyệt sau khi kỳ công đã khóa, hệ thống không tự động thay đổi bản đã chuyển cho Payroll. Trường hợp này cần quy trình mở khóa có kiểm soát hoặc điều chỉnh hồi tố được phê duyệt.
+10.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm
+Chức năng
+1
+Ca làm việc
+Tạo, cập nhật và quản lý danh mục ca
+2
+Ca làm việc
+Cấu hình giờ làm, nghỉ giữa ca, công chuẩn và ân hạn
+3
+Phân ca
+Phân ca cá nhân và hàng loạt
+4
+Phân ca
+Xem lịch làm việc, tra cứu và hủy phân ca
+5
+Khuôn mặt
+Đăng ký khuôn mặt từ Hồ sơ nhân sự
+6
+Khuôn mặt
+Kiểm tra chất lượng ảnh và người thật
+7
+Khuôn mặt
+Quản lý trạng thái, phiên bản và đăng ký lại
+8
+Chấm công
+Check-in bằng khuôn mặt kết hợp GPS
+9
+Chấm công
+Check-out bằng khuôn mặt kết hợp GPS
+10
+Chấm công
+So khớp ảnh trực tiếp với dữ liệu đã đăng ký
+11
+Chấm công
+Xử lý ca đêm qua ngày
+12
+Ngoại lệ
+Thử lại khi xác thực thất bại
+13
+Ngoại lệ
+Yêu cầu chấm công đặc biệt có phê duyệt
+14
+Nhật ký
+Xem trạng thái và lịch sử chấm công
+15
+Nhật ký
+Tra cứu kết quả xác thực và bảo toàn log gốc
+16
+Tính công
+Tính giờ làm, công, đi muộn và về sớm
+17
+Tính công
+Tự động phát hiện thiếu chấm công, vắng mặt
+18
+Giải trình
+Tạo, theo dõi và tra cứu đơn
+19
+Giải trình
+Phê duyệt qua Workflow và điều chỉnh công
+20
+Bảng công
+Tổng hợp và tính lại bảng công tháng
+21
+Bảng công
+Khóa chốt và cung cấp dữ liệu cho Payroll
+22
+Quản trị
+Cấu hình ngưỡng xác thực và quản lý quyền truy cập
+23
+Kiểm toán
+Truy vết giao dịch, kết quả xác thực và điều chỉnh
+9.4. Yêu cầu bảo mật và tuân thủ
+Vì phiên bản mới xử lý cả dữ liệu khuôn mặt và vị trí GPS, hệ thống phải đáp ứng những yêu cầu bảo vệ dữ liệu cá nhân nghiêm ngặt hơn phiên bản chỉ sử dụng GPS.
+Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 có hiệu lực từ ngày 01/01/2026. Nghị định 356/2025/NĐ-CP xác định dữ liệu sinh trắc học và dữ liệu vị trí xác định qua dịch vụ định vị thuộc danh mục dữ liệu cá nhân nhạy cảm.
+Các yêu cầu cần đưa vào thiết kế gồm:
+Thông báo rõ mục đích, phạm vi và căn cứ pháp lý của việc xử lý dữ liệu khuôn mặt; thực hiện các yêu cầu về sự đồng ý khi pháp luật áp dụng.
+Mã hóa dữ liệu khi truyền và lưu trữ; giới hạn người và dịch vụ được phép truy cập.
+Không cung cấp ảnh khuôn mặt hoặc mẫu sinh trắc học trực tiếp cho các module không có nhu cầu xử lý.
+Xác định thời hạn lưu trữ, cơ chế xóa hoặc hủy dữ liệu và quy trình xử lý yêu cầu của nhân viên.
+Ghi nhật ký truy cập, cập nhật, xác thực và các sự cố bảo mật.
+Có phương án xác minh danh tính thay thế phù hợp với những trường hợp không thể sử dụng nhận diện khuôn mặt.
+Điều 31 của Luật Bảo vệ dữ liệu cá nhân cũng quy định những yêu cầu bảo vệ riêng đối với dữ liệu vị trí và dữ liệu sinh trắc học.
+10. Bảng lương và Tính lương tự động (Payroll)
+10.1. Tổng quan
+Module Quản lý Tiền lương và Tính lương tự động cho phép doanh nghiệp quản lý các thành phần thu nhập, lịch sử thay đổi lương, tạm ứng, tính toán lương hằng tháng, phê duyệt bảng lương, chi trả và phát hành phiếu lương điện tử.
+Hệ thống tự động tổng hợp dữ liệu từ Hợp đồng, Chấm công, Nghỉ phép và Hồ sơ nhân sự để tính lương, bảo hiểm bắt buộc, thuế thu nhập cá nhân và các khoản khấu trừ. Kế toán lương có thể rà soát, điều chỉnh những khoản phát sinh và trình bảng lương cho người có thẩm quyền phê duyệt.
+Nguyên tắc cốt lõi: Dữ liệu lương đã được phê duyệt hoặc chốt phải được lưu dưới dạng bản ghi lịch sử bất biến. Những thay đổi về hợp đồng, mức lương hoặc quy định pháp luật sau này không được tự động làm thay đổi kết quả của kỳ lương đã chốt.
+10.2. Các phân hệ và chức năng
+10.2.1. Quản lý thành phần lương (Salary Components)
+Cho phép HR hoặc người có thẩm quyền thiết lập danh mục các khoản cấu thành thu nhập và khấu trừ của nhân viên. Mỗi thành phần có mã định danh, tên hiển thị, loại khoản mục, số tiền mặc định và các thuộc tính phục vụ tính thuế, bảo hiểm.
+Hệ thống hỗ trợ bốn nhóm thành phần theo tài liệu nghiệp vụ: phụ cấp, thưởng, khấu trừ và hoàn trả chi phí. Mỗi khoản được xác định là phát sinh định kỳ hoặc một lần.
+Mỗi khoản mục cần có quy tắc xác định số tiền, đối tượng áp dụng và thời điểm hiệu lực. Các thuộc tính chịu thuế và tính đóng bảo hiểm không nên được thiết lập tùy ý nếu đã có quy định pháp luật tương ứng. 
+10.2.2. Quản lý lịch sử biến động lương (Salary History)
+Cho phép HR theo dõi lịch sử tăng lương, giảm lương hoặc điều chỉnh mức lương làm căn cứ đóng bảo hiểm của từng nhân viên.
+Mỗi thay đổi được ghi nhận với mức lương cũ, mức lương mới, ngày bắt đầu áp dụng, ngày kết thúc nếu có, số quyết định và lý do điều chỉnh.
+Khi tính lương, hệ thống lấy mức lương và các phụ lục hợp đồng có hiệu lực trong kỳ tương ứng. Nếu mức lương thay đổi giữa kỳ, hệ thống cần xác định cách phân bổ theo từng giai đoạn hiệu lực.
+Lịch sử lương là dữ liệu phục vụ tính toán; việc thay đổi mức lương hiện tại không làm thay đổi bảng lương đã chốt của những kỳ trước. 
+10.2.3. Quản lý tạm ứng tiền lương (Salary Advance)
+Cho phép nhân viên gửi yêu cầu tạm ứng lương thông qua ESS. Nhân viên nhập số tiền đề nghị, lý do và thời điểm yêu cầu.
+Hệ thống kiểm tra hạn mức tạm ứng theo quy định và chính sách áp dụng, sau đó chuyển đơn sang Module Workflow để phê duyệt.
+Khi đơn được chấp thuận, kế toán ghi nhận việc giải ngân. Khoản đã giải ngân được liên kết với kỳ lương dự kiến thu hồi, tránh khấu trừ trùng hoặc khấu trừ khi tiền chưa thực sự được chi.
+Trạng thái đơn tạm ứng gồm DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, DISBURSED và DEDUCTED.
+10.2.4. Quản lý kỳ lương (Payroll Period)
+Cho phép kế toán tạo và quản lý các kỳ tính lương theo tháng hoặc chu kỳ trả lương của doanh nghiệp.
+Mỗi kỳ lương bao gồm mã kỳ, tên kỳ, thời gian bắt đầu và kết thúc, ngày chi trả dự kiến, số ngày công chuẩn và trạng thái xử lý.
+Hệ thống cho phép xem danh sách kỳ lương, số lượng nhân viên, tổng thu nhập Gross, tổng lương thực nhận Net và tiến độ xử lý.
+Không cho phép tính lại kỳ lương đã khóa. Các thao tác tính toán, phê duyệt và chốt kỳ cần kiểm tra trạng thái để tránh xử lý trùng hoặc xung đột khi nhiều kế toán cùng thao tác. 
+10.2.5. Tự động tổng hợp dữ liệu tính lương
+Khi bắt đầu tính lương, hệ thống thu thập dữ liệu từ các module liên quan thông qua dịch vụ tích hợp, thay vì yêu cầu kế toán nhập lại dữ liệu thủ công.
+Nguồn dữ liệu
+Thông tin tiếp nhận
+Hợp đồng
+Lương cơ bản, lương đóng bảo hiểm và phụ lục có hiệu lực.
+Attendance
+Ngày công thực tế và số giờ làm thêm theo từng loại.
+Leave
+Ngày nghỉ hưởng lương, không hưởng lương và nghỉ theo chế độ.
+Hồ sơ nhân sự
+Thông tin thuế, người phụ thuộc và tài khoản ngân hàng.
+Payroll
+Thành phần lương, thưởng, khấu trừ và khoản tạm ứng đã giải ngân.
+Trước khi tính toán, hệ thống kiểm tra tính đầy đủ của dữ liệu, đặc biệt là bảng công đã chốt, mức lương có hiệu lực và các khoản tạm ứng chưa thu hồi.
+Những trường hợp thiếu dữ liệu hoặc có thông tin không nhất quán được đưa vào danh sách cần xử lý. Kế toán có thể xem nguồn gốc từng khoản để đối chiếu.
+10.2.6. Tính lương tự động (Payroll Calculation Engine)
+Đây là chức năng trung tâm của module, thực hiện tính toán lương cho từng nhân viên hoặc toàn bộ doanh nghiệp trong một kỳ.
+Theo tài liệu gốc, công thức lương thời gian được xác định như sau:
+Công thức này áp dụng cho phương án trả lương theo thời gian được mô tả trong tài liệu. Những hình thức trả lương khác hoặc trường hợp điều chỉnh lương giữa kỳ cần bổ sung quy tắc tính riêng.
+Tính tiền làm thêm giờ
+Hệ thống phân loại giờ làm thêm theo ngày làm việc bình thường, ngày nghỉ hằng tuần, ngày lễ và thời gian làm việc ban đêm.
+Tiền làm thêm được tính theo đơn giá giờ phù hợp và hệ số áp dụng. Theo Điều 98 Bộ luật Lao động 2019, mức tối thiểu đối với làm thêm vào ngày thường, ngày nghỉ hằng tuần và ngày lễ lần lượt là 150%, 200% và 300%, với những quy tắc bổ sung cho làm việc ban đêm.
+Tính các khoản bảo hiểm bắt buộc
+Hệ thống xác định đối tượng tham gia, mức lương làm căn cứ đóng, tỷ lệ đóng và giới hạn tương ứng. Kết quả phải phân biệt phần người lao động đóng và phần doanh nghiệp đóng.
+Phần doanh nghiệp đóng được ghi nhận là chi phí nhân sự, không trừ trực tiếp vào lương Net của người lao động.
+Tính thuế thu nhập cá nhân
+Hệ thống xác định thu nhập chịu thuế, các khoản miễn thuế, giảm trừ hợp lệ và áp dụng biểu thuế tương ứng với kỳ tính thuế.
+Các thông số pháp lý không được cố định trong mã nguồn mà cần lấy từ Module Legal & Compliance theo phiên bản đang áp dụng.
+10.2.7. Rà soát và điều chỉnh bảng lương
+Sau khi tính toán, kế toán được xem bảng lương chi tiết của từng nhân viên và tổng hợp toàn kỳ.
+Hệ thống hỗ trợ phát hiện các trường hợp bất thường như lương tăng hoặc giảm trên 30% so với kỳ trước, thiếu dữ liệu chấm công, thiếu thông tin thuế hoặc phát sinh khoản khấu trừ cần xác minh. Ngưỡng 30% là quy tắc cảnh báo được đề xuất trong tài liệu nghiệp vụ, không phải giới hạn pháp luật.
+quan-ly-tinh-luong-payroll.md
+Kế toán có thể bổ sung thưởng, phụ cấp hoặc khoản điều chỉnh hợp lệ khi kỳ lương còn ở trạng thái cho phép chỉnh sửa. Mỗi thay đổi phải lưu người thực hiện, lý do, giá trị trước và sau điều chỉnh.
+Đối với các khoản khấu trừ liên quan đến kỷ luật hoặc bồi thường, hệ thống phải kiểm tra căn cứ pháp lý và hồ sơ liên quan, không cho phép tạo khoản trừ tùy ý.
+10.2.8. Phê duyệt bảng lương
+Sau khi rà soát, kế toán gửi bảng lương đến Module Workflow để phê duyệt theo quy trình của doanh nghiệp.
+Người phê duyệt có thể xem tổng quỹ lương, số lượng nhân viên, các khoản biến động lớn và bảng lương chi tiết theo phạm vi được cấp quyền.
+Nếu bảng lương bị từ chối, hệ thống ghi nhận lý do và trả về cho kế toán điều chỉnh. Nếu được chấp thuận, dữ liệu chuyển sang trạng thái đã duyệt và không được chỉnh sửa trực tiếp.
+10.2.9. Chi trả và khóa sổ kỳ lương
+Sau khi bảng lương được phê duyệt, kế toán thực hiện chi trả theo phương thức thanh toán của doanh nghiệp.
+Hệ thống ghi nhận kết quả thanh toán và đối chiếu với danh sách nhân viên, tài khoản nhận lương và số tiền thực nhận.
+Tài liệu gốc mô tả quá trình từ mở kỳ lương, tính toán, phê duyệt đến thanh toán và khóa sổ. Đề xuất bổ sung trạng thái PAYMENT_PROCESSING để xử lý trường hợp một số nhân viên đã nhận lương nhưng những giao dịch khác vẫn đang chờ hoặc bị ngân hàng từ chối. 
+10.2.10. Phát hành và tra cứu phiếu lương điện tử
+Sau khi hoàn tất chi trả và chốt kỳ, hệ thống tự động sinh phiếu lương điện tử cho từng nhân viên.
+Phiếu lương thể hiện các khoản thu nhập, bảo hiểm, thuế, tạm ứng, khấu trừ và số tiền thực nhận. Nhân viên có thể xem hoặc tải phiếu lương của chính mình thông qua ESS.
+Phiếu lương chứa thông tin tài chính nhạy cảm nên cần giới hạn quyền truy cập, bảo vệ khi lưu trữ và ghi nhận lịch sử tải xuống. Không nên sử dụng bốn số cuối CCCD làm mật khẩu PDF mặc định vì thông tin này có thể bị đoán hoặc đã được chia sẻ. 
+10.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Cấu hình lương
+Quản lý thành phần lương
+Thiết lập phụ cấp, thưởng, khấu trừ và hoàn trả.
+2
+Cấu hình lương
+Cấu hình thuế và bảo hiểm
+Liên kết khoản mục với quy tắc pháp lý tương ứng.
+3
+Lịch sử lương
+Theo dõi biến động lương
+Quản lý các quyết định tăng, giảm và thời điểm hiệu lực.
+4
+Tạm ứng
+Yêu cầu tạm ứng
+Nhân viên gửi và theo dõi đơn trên ESS.
+5
+Tạm ứng
+Phê duyệt và giải ngân
+Xử lý đơn, ghi nhận thanh toán và kỳ thu hồi.
+6
+Kỳ lương
+Quản lý kỳ tính lương
+Tạo, tra cứu và theo dõi tiến độ kỳ lương.
+7
+Dữ liệu
+Tổng hợp dữ liệu đầu vào
+Thu thập hợp đồng, công, phép và các khoản phát sinh.
+8
+Tính toán
+Tính lương thời gian
+Tính lương theo ngày công và nghỉ hưởng lương.
+9
+Tính toán
+Tính lương làm thêm
+Tính OT theo loại ngày và thời gian làm việc.
+10
+Tính toán
+Tính bảo hiểm
+Xác định phần người lao động và doanh nghiệp đóng.
+11
+Tính toán
+Tính thuế TNCN
+Áp dụng miễn giảm và biểu thuế theo kỳ.
+12
+Tính toán
+Tính lương Net
+Tổng hợp thu nhập và các khoản khấu trừ.
+13
+Đối soát
+Phát hiện bất thường
+Cảnh báo biến động lương và dữ liệu chưa hợp lệ.
+14
+Đối soát
+Điều chỉnh bảng lương
+Bổ sung các khoản phát sinh trước khi phê duyệt.
+15
+Phê duyệt
+Trình duyệt bảng lương
+Tích hợp quy trình Workflow.
+16
+Thanh toán
+Ghi nhận chi trả
+Theo dõi kết quả thanh toán cho từng nhân viên.
+17
+Khóa sổ
+Chốt kỳ lương
+Bảo toàn dữ liệu và ngăn thay đổi trực tiếp.
+18
+Phiếu lương
+Sinh phiếu lương PDF
+Phát hành phiếu lương điện tử sau khi hoàn tất.
+19
+ESS
+Tra cứu phiếu lương
+Nhân viên xem và tải phiếu lương cá nhân.
+20
+Báo cáo
+Tổng hợp quỹ lương
+Theo dõi Gross, Net, bảo hiểm và chi phí nhân sự.
+21
+Kiểm toán
+Nhật ký tính và điều chỉnh
+Truy vết dữ liệu, phiên bản quy tắc và người thực hiện.
+Các chức năng đối soát thanh toán chi tiết, báo cáo nâng cao và nhật ký phiên bản quy tắc là phần hoàn thiện được đề xuất thêm so với tài liệu Payroll v1.0.
+10.4. Căn cứ pháp lý và yêu cầu tuân thủ
+Cần cập nhật các thông số pháp lý trong tài liệu gốc
+Tài liệu Payroll v1.0 đang sử dụng mức giảm trừ gia cảnh 11 triệu đồng/tháng cho bản thân, 4,4 triệu đồng cho người phụ thuộc và biểu thuế lũy tiến 7 bậc.
+quan-ly-tinh-luong-payroll.md
+Đối với kỳ tính thuế năm 2026, mức giảm trừ đã thay đổi thành 15,5 triệu đồng/tháng cho bản thân và 6,2 triệu đồng/tháng cho mỗi người phụ thuộc; biểu thuế lũy tiến đối với tiền lương, tiền công của cá nhân cư trú chuyển thành 5 bậc.
+Vì vậy, không nên triển khai trực tiếp những hằng số thuế trong tài liệu cũ.
+Nhóm chức năng
+Căn cứ pháp lý
+Yêu cầu áp dụng
+Trả lương
+Bộ luật Lao động 2019, Chương VI
+Hình thức, kỳ hạn, nguyên tắc và nghĩa vụ trả lương.
+Lương làm thêm, ban đêm
+Điều 98 Bộ luật Lao động 2019
+Tính đúng đơn giá và hệ số theo loại thời gian làm việc.
+Tạm ứng lương
+Điều 101 Bộ luật Lao động 2019
+Kiểm tra các trường hợp và điều kiện tạm ứng.
+Khấu trừ lương
+Điều 102 Bộ luật Lao động 2019
+Kiểm tra căn cứ và giới hạn khấu trừ.
+Thuế TNCN
+Luật Thuế TNCN 109/2025/QH15 và văn bản hướng dẫn
+Áp dụng biểu thuế, miễn giảm và thời điểm hiệu lực phù hợp.
+Lương tối thiểu
+Nghị định 293/2025/NĐ-CP
+Kiểm tra mức lương tối thiểu theo vùng từ 01/01/2026.
+Bảo hiểm bắt buộc
+Luật Bảo hiểm xã hội 2024 và các quy định liên quan
+Xác định đối tượng, căn cứ, tỷ lệ và giới hạn đóng theo từng thời kỳ.
+Các khoản miễn thuế, tỷ lệ bảo hiểm và giới hạn đóng cần được rà soát riêng theo văn bản đang áp dụng, thay vì sao chép nguyên các giá trị trong tài liệu năm 2024.
+11. Hiệu suất làm việc (Performance - Không mô tả)
+11.1. Tổng quan
+Module Đánh giá Hiệu suất & KPI (Performance Management) hỗ trợ doanh nghiệp quản lý toàn bộ chu kỳ đánh giá hiệu suất của nhân viên, từ thiết lập kỳ đánh giá, xây dựng KPI và mục tiêu, tự đánh giá, quản lý đánh giá đến chốt kết quả và xếp loại tự động.
+Module sử dụng mô hình đánh giá theo chu kỳ Quý (QUARTERLY), Nửa năm (SEMI_ANNUAL) và Năm (ANNUAL). Mỗi nhân viên có các mục tiêu được gán trọng số và tổng trọng số trong một kỳ không vượt quá 100%. Quy trình đánh giá gồm SELF → MANAGER → FINALIZED → Rating.
+Module Performance đóng vai trò trung tâm đo lường kết quả công việc và cung cấp dữ liệu cho các quyết định nhân sự như thăng tiến, khen thưởng và đào tạo.
+11.2. Các phân hệ và chức năng
+11.2.1. Quản lý kỳ đánh giá
+Cho phép HR tạo và quản lý các kỳ đánh giá hiệu suất của doanh nghiệp theo Quý, Nửa năm hoặc Năm. Mỗi kỳ có tên, loại kỳ, thời gian bắt đầu, thời gian kết thúc và trạng thái.
+Kỳ đánh giá được quản lý theo ba trạng thái:
+DRAFT: Kỳ đang được chuẩn bị, có thể chỉnh sửa và thiết lập dữ liệu.
+ACTIVE: Kỳ đang được áp dụng để thiết lập mục tiêu và thực hiện đánh giá.
+CLOSED: Kỳ đã kết thúc và không được phép chỉnh sửa.
+Hệ thống yêu cầu ngày bắt đầu không được sau ngày kết thúc, tên kỳ không được trùng trong cùng công ty. Chỉ kỳ ở trạng thái DRAFT mới được phép xóa và kỳ đã CLOSED không được sửa.
+Các chức năng chính
+Tạo kỳ đánh giá.
+Chỉnh sửa thông tin kỳ đánh giá.
+Xem danh sách và chi tiết kỳ đánh giá.
+Chuyển trạng thái DRAFT → ACTIVE → CLOSED.
+Xóa kỳ đánh giá khi kỳ đang ở trạng thái DRAFT.
+Tra cứu kỳ đánh giá theo thời gian và loại chu kỳ.
+11.2.2. Quản lý danh mục KPI
+Cho phép doanh nghiệp xây dựng danh mục các chỉ số dùng để đo lường hiệu suất nhân viên.
+Một KPI có thể được thiết lập ở phạm vi toàn công ty hoặc gắn với một đơn vị tổ chức cụ thể. KPI có thông tin về tên, đơn vị tính, cách đo lường và trạng thái hoạt động.
+Ví dụ:
+KPI
+Đơn vị tính
+Phạm vi
+Tỷ lệ hoàn thành công việc
+%
+Toàn công ty
+Doanh thu bán hàng
+VND
+Phòng Kinh doanh
+Số lượng lỗi phát sinh
+Số lượng
+Phòng Công nghệ
+Đối với KPI được thiết lập riêng cho một đơn vị tổ chức, KPI đó chỉ được phép giao cho nhân viên thuộc đúng đơn vị tương ứng.
+Các chức năng chính
+Tạo KPI.
+Cập nhật thông tin KPI.
+Xem danh sách và chi tiết KPI.
+Kích hoạt hoặc ngừng sử dụng KPI.
+Xóa KPI.
+Phân biệt KPI cấp công ty và KPI cấp đơn vị.
+11.2.3. Thiết lập mục tiêu cá nhân
+Cho phép thiết lập các mục tiêu công việc cụ thể cho từng nhân viên trong từng kỳ đánh giá.
+Mỗi mục tiêu bao gồm tên mục tiêu, giá trị cần đạt, KPI liên kết nếu có, trọng số và trạng thái thực hiện. Trọng số của từng mục tiêu nằm trong khoảng từ 0,01% đến 100%, đồng thời tổng trọng số của một nhân viên trong một kỳ không được vượt quá 100%.
+Ví dụ:
+Nhân viên
+Mục tiêu
+KPI
+Trọng số
+Trạng thái
+Nguyễn Văn An
+Hoàn thành tính năng
+Delivery
+40%
+Đang thực hiện
+Nguyễn Văn An
+Đảm bảo chất lượng
+Quality
+35%
+Đang thực hiện
+Nguyễn Văn An
+Hoàn thành đúng tiến độ
+Productivity
+25%
+Đã hoàn thành
+Hệ thống không cho phép tạo mục tiêu nếu kỳ đánh giá chưa ở trạng thái ACTIVE. Đồng thời, trường hợp mục tiêu sử dụng KPI của một đơn vị thì nhân viên phải thuộc đúng đơn vị đó.
+Các chức năng chính
+Tạo mục tiêu cho nhân viên.
+Liên kết mục tiêu với KPI.
+Thiết lập giá trị cần đạt.
+Thiết lập trọng số.
+Cập nhật trạng thái mục tiêu.
+Chỉnh sửa và xóa mục tiêu khi đáp ứng điều kiện.
+Kiểm tra tổng trọng số của các mục tiêu.
+11.2.4. Tự đánh giá kết quả
+Cho phép nhân viên tự đánh giá mức độ hoàn thành từng mục tiêu trong kỳ đánh giá.
+Nhân viên nhập điểm cho từng mục tiêu và có thể ghi nhận xét chung hoặc nhận xét cho từng mục tiêu. Hệ thống chỉ cho phép người sở hữu phiếu thực hiện phần tự đánh giá của chính mình.
+Phiếu sau khi gửi tự đánh giá sẽ chuyển từ trạng thái:
+DRAFT
+   ↓
+SELF_REVIEWED
+Hệ thống cho phép cập nhật lại nội dung đánh giá trước khi phiếu được chốt.
+Các chức năng chính
+Xem phiếu đánh giá cá nhân.
+Chấm điểm từng mục tiêu.
+Nhập nhận xét cho từng mục tiêu.
+Nhập nhận xét tổng quan.
+Gửi bản tự đánh giá.
+11.2.5. Quản lý đánh giá của cấp quản lý
+Cho phép quản lý trực tiếp đánh giá kết quả thực hiện mục tiêu của nhân viên thuộc phạm vi quản lý.
+Quản lý thực hiện chấm điểm từng mục tiêu và đưa ra nhận xét. Điểm của quản lý là cơ sở chính được sử dụng để tính điểm hiệu suất tổng hợp của nhân viên.
+Ví dụ:
+Mục tiêu
+Tự đánh giá
+Quản lý đánh giá
+Hoàn thành tính năng
+85
+90
+Đảm bảo chất lượng
+82
+85
+Hoàn thành đúng tiến độ
+88
+92
+Quản lý có thể thực hiện đánh giá ngay cả khi nhân viên chưa hoàn thành phần tự đánh giá; hệ thống không bắt buộc hai bước này phải diễn ra theo thứ tự cứng.
+Các chức năng chính
+Xem danh sách nhân viên thuộc phạm vi quản lý.
+Xem phiếu đánh giá của nhân viên.
+Chấm điểm từng mục tiêu.
+Ghi nhận nhận xét.
+Gửi kết quả đánh giá của quản lý.
+11.2.6. Tính điểm tổng hợp và xếp loại
+Sau khi quản lý hoàn thành đánh giá, hệ thống tự động tính điểm hiệu suất tổng hợp dựa trên điểm quản lý và trọng số của từng mục tiêu.
+Công thức tính:
+Final Score=∑(Manager Scorei×Weighti)∑Weighti\text{Final Score} = \frac{\sum(\text{Manager Score}_i \times \text{Weight}_i)} {\sum \text{Weight}_i}
+Điểm tổng được làm tròn đến hai chữ số thập phân. Chỉ những mục tiêu đã có điểm của quản lý mới được đưa vào tính toán.
+Kết quả được tự động quy đổi thành mức xếp loại:
+Điểm
+Xếp loại
+Mã
+≥ 90
+Xuất sắc
+EXCELLENT
+≥ 80 và < 90
+Tốt
+GOOD
+≥ 65 và < 80
+Đạt
+SATISFACTORY
+≥ 50 và < 65
+Cần cải thiện
+NEEDS_IMPROVEMENT
+< 50
+Kém
+POOR
+Các chức năng chính
+Tính điểm tổng hợp tự động.
+Tính điểm theo trọng số mục tiêu.
+Làm tròn điểm kết quả.
+Tự động xác định mức xếp loại.
+Hiển thị điểm và xếp loại trên phiếu đánh giá.
+11.2.7. Chốt và quản lý kết quả đánh giá
+Cho phép người có thẩm quyền hoàn tất quá trình đánh giá và chốt kết quả cuối cùng.
+Phiếu đánh giá được chuyển qua các trạng thái:
+DRAFT
+   ↓
+SELF_REVIEWED
+   ↓
+MANAGER_REVIEWED
+   ↓
+FINALIZED
+Sau khi phiếu ở trạng thái FINALIZED, kết quả trở thành bất biến, không được phép tiếp tục chỉnh sửa hoặc gửi lại các bước đánh giá. Tương tự, kỳ đánh giá đã CLOSED cũng không được chỉnh sửa.
+Các chức năng chính
+Kiểm tra kết quả đánh giá trước khi chốt.
+Chốt điểm và xếp loại cuối kỳ.
+Ghi nhận người thực hiện chốt.
+Ghi nhận thời điểm chốt.
+Khóa phiếu sau khi FINALIZED.
+11.2.8. Tra cứu kết quả đánh giá
+Cho phép các đối tượng có quyền tra cứu kết quả đánh giá theo phạm vi dữ liệu được cấp.
+Nhân viên có thể xem kết quả của bản thân; quản lý xem kết quả nhân viên thuộc phạm vi quản lý; HR và Super Admin có thể quản lý, tra cứu dữ liệu theo phạm vi quyền tương ứng. Module hiện định nghĩa các quyền performance.view, performance.manage, performance.view_own và performance.evaluate.
+Các chức năng chính
+Tra cứu kết quả theo kỳ đánh giá.
+Xem điểm tổng hợp.
+Xem mức xếp loại.
+Xem điểm chi tiết theo mục tiêu.
+Xem kết quả tự đánh giá và quản lý đánh giá.
+Lọc kết quả theo phạm vi được phân quyền.
+11.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Kỳ đánh giá
+Quản lý kỳ đánh giá
+Tạo, xem, cập nhật và quản lý các kỳ đánh giá theo Quý, Nửa năm hoặc Năm.
+2
+Kỳ đánh giá
+Quản lý trạng thái kỳ
+Chuyển kỳ đánh giá qua các trạng thái DRAFT, ACTIVE và CLOSED theo quy trình.
+3
+KPI
+Quản lý KPI
+Tạo, chỉnh sửa, xem và xóa danh mục KPI của công ty hoặc đơn vị.
+4
+KPI
+Quản lý phạm vi KPI
+Xác định KPI áp dụng cho toàn công ty hoặc một đơn vị tổ chức cụ thể.
+5
+Mục tiêu
+Thiết lập mục tiêu
+Giao mục tiêu cho từng nhân viên trong một kỳ đánh giá.
+6
+Mục tiêu
+Liên kết KPI
+Gắn mục tiêu cá nhân với KPI tương ứng khi cần thiết.
+7
+Mục tiêu
+Quản lý trọng số
+Thiết lập trọng số cho từng mục tiêu và kiểm tra tổng trọng số không vượt quá 100%.
+8
+Đánh giá
+Tự đánh giá
+Cho phép nhân viên tự chấm điểm và ghi nhận nhận xét cho các mục tiêu của mình.
+9
+Đánh giá
+Quản lý đánh giá
+Cho phép quản lý trực tiếp chấm điểm và nhận xét kết quả làm việc của nhân viên.
+10
+Tổng hợp
+Tính điểm hiệu suất
+Tự động tính điểm tổng hợp dựa trên điểm quản lý và trọng số của các mục tiêu.
+11
+Tổng hợp
+Xếp loại hiệu suất
+Tự động xác định mức xếp loại từ điểm tổng hợp.
+12
+Kết quả
+Chốt đánh giá
+Hoàn tất phiếu đánh giá và chuyển sang trạng thái FINALIZED.
+13
+Kết quả
+Khóa kết quả
+Không cho phép chỉnh sửa phiếu sau khi đã FINALIZED.
+14
+Tra cứu
+Tra cứu kết quả cá nhân
+Nhân viên xem kết quả đánh giá của chính mình.
+15
+Tra cứu
+Tra cứu kết quả theo phạm vi
+Quản lý và HR xem kết quả nhân viên theo phạm vi dữ liệu được cấp quyền.
+12. Khen thưởng & Vi phạm (Reward & Discipline  không mô tả)
+12.1. Tổng quan
+Module Khen thưởng & Kỷ luật được thiết kế để quản lý toàn bộ vòng đời của các hoạt động khen thưởng, xử lý vi phạm kỷ luật và tiếp nhận khiếu nại của nhân viên trong doanh nghiệp.
+Module không chỉ lưu trữ các quyết định đã ban hành mà còn kiểm soát quy trình xử lý, căn cứ, thời hiệu, trạng thái và tính bất biến của quyết định. Đối với kỷ luật lao động, hệ thống kiểm tra các điều kiện liên quan đến nhân viên, tình trạng nghỉ phép, thời hiệu xử lý, bằng chứng và thủ tục trước khi cho phép ban hành quyết định.
+Một điểm quan trọng của module là quyết định đã có hiệu lực không được tùy ý chỉnh sửa. Hồ sơ kỷ luật ở trạng thái DECIDED hoặc EXPIRED không được sửa/xóa; khoản khen thưởng đã được chốt và đẩy vào bảng lương cũng bị khóa; khiếu nại đã giải quyết hoặc đóng không được giải quyết lại.
+12.2. Các phân hệ và chức năng
+12.2.1. Quản lý hồ sơ khen thưởng
+Cho phép doanh nghiệp ghi nhận và quản lý các quyết định khen thưởng dành cho nhân viên dựa trên thành tích hoặc các tiêu chí được doanh nghiệp quy định.
+Mỗi quyết định khen thưởng được gắn với một nhân viên, loại khen thưởng, tiêu đề, lý do, người quyết định và ngày quyết định. Hệ thống hỗ trợ nhiều hình thức như giấy khen/vinh danh, thưởng bằng tiền, đề xuất thăng tiến và các hình thức khác.
+Ví dụ:
+Nhân viên
+Hình thức
+Nội dung
+Giá trị
+Nguyễn Văn An
+Thưởng tiền
+Hoàn thành xuất sắc dự án
+5.000.000 VNĐ
+Trần Văn Bình
+Giấy khen
+Nhân viên xuất sắc tháng
+—
+Lê Văn Cường
+Đề xuất thăng tiến
+Thành tích nổi bật
+—
+Đối với khoản thưởng bằng tiền, hệ thống có thể ghi nhận số tiền thưởng để phục vụ việc chuyển dữ liệu sang module Tiền lương.
+Khi khoản thưởng đã được pushedToPayroll = true, hệ thống khóa việc chỉnh sửa hoặc xóa quyết định nhằm đảm bảo dữ liệu giữa Khen thưởng và Tiền lương không bị sai lệch.
+Các chức năng chính
+Tạo quyết định khen thưởng.
+Chọn nhân viên được khen thưởng.
+Phân loại hình thức khen thưởng.
+Nhập lý do và nội dung khen thưởng.
+Thiết lập số tiền thưởng nếu có.
+Chỉnh sửa quyết định khi chưa đẩy vào bảng lương.
+Xóa quyết định khi chưa đẩy vào bảng lương.
+Tra cứu lịch sử khen thưởng.
+Khóa quyết định sau khi đã chuyển sang bảng lương.
+Minh họa giao diện:
+┌─────────────────────────────────────────────────────────────┐
+│                    QUYẾT ĐỊNH KHEN THƯỞNG                  │
+├─────────────────────────────────────────────────────────────┤
+│ Nhân viên        Nguyễn Văn An                             │
+│ Hình thức        Thưởng tiền                              │
+│ Tiêu đề          Hoàn thành xuất sắc dự án ABC             │
+│ Số tiền          5.000.000 VNĐ                             │
+│ Lý do            Hoàn thành 120% mục tiêu quý              │
+│ Ngày quyết định  15/09/2026                                │
+│                                                             │
+│                 [ Lưu quyết định ]                         │
+└─────────────────────────────────────────────────────────────┘
+12.2.2. Quản lý hồ sơ vi phạm và kỷ luật
+Cho phép HR lập hồ sơ xử lý vi phạm đối với nhân viên khi phát sinh hành vi vi phạm nội quy hoặc quy định của doanh nghiệp.
+Hồ sơ kỷ luật lưu trữ các thông tin như ngày vi phạm, nhóm vi phạm, bằng chứng, căn cứ nội quy, ngày họp xử lý, thành phần tham dự, hình thức kỷ luật, lý do và người ban hành quyết định.
+Các hình thức kỷ luật được quản lý gồm:
+Khiển trách (KHIEN_TRACH)
+Kéo dài thời hạn nâng lương (KEO_DAI_NANG_LUONG)
+Cách chức (CACH_CHUC)
+Sa thải (SA_THAI)
+Đối với hình thức kéo dài thời hạn nâng lương, thời gian không được vượt quá 6 tháng theo quy tắc nghiệp vụ của module.
+Đối với sa thải, hệ thống không cho phép HR ban hành trực tiếp mà phải thực hiện qua quy trình phê duyệt riêng.
+Các chức năng chính
+Lập hồ sơ vi phạm.
+Ghi nhận ngày và loại vi phạm.
+Ghi nhận bằng chứng.
+Ghi nhận căn cứ nội quy lao động.
+Ghi nhận thông tin cuộc họp xử lý.
+Chọn hình thức kỷ luật.
+Nhập lý do xử lý.
+Ban hành quyết định.
+Phê duyệt quyết định sa thải.
+Tra cứu lịch sử xử lý kỷ luật.
+12.2.3. Kiểm tra điều kiện và thời hiệu xử lý kỷ luật
+Đây là một trong những chức năng quan trọng của module nhằm hạn chế việc xử lý kỷ luật không đúng điều kiện.
+Khi HR lập hồ sơ, hệ thống tự động xác định thời hiệu xử lý dựa trên ngày xảy ra vi phạm:
+Vi phạm thông thường
+        │
+        └──→ Thời hiệu: + 6 tháng
+Vi phạm về tài chính,
+tài sản hoặc bí mật
+        │
+        └──→ Thời hiệu: + 12 tháng
+Hệ thống đồng thời kiểm tra nhân viên có đang làm việc hay không và có thuộc trường hợp bị hạn chế xử lý kỷ luật như đang nghỉ phép, nghỉ ốm, nghỉ thai sản hoặc nuôi con dưới 12 tháng tuổi hay không.
+Trước khi ban hành quyết định, hệ thống yêu cầu hồ sơ phải có đầy đủ các thành phần nghiệp vụ cần thiết như:
+Căn cứ nội quy.
+Bằng chứng vi phạm.
+Ngày họp xử lý.
+Thành phần tham dự.
+Nếu hồ sơ chưa đầy đủ hoặc đã quá thời hiệu, hệ thống không cho phép ban hành quyết định.
+Minh họa kiểm tra thời hiệu:
+┌───────────────────────────────────────────┐
+│ KIỂM TRA HỒ SƠ KỶ LUẬT                    │
+├───────────────────────────────────────────┤
+│ Ngày vi phạm       : 10/03/2026           │
+│ Loại vi phạm       : GENERAL               │
+│ Thời hiệu          : 10/09/2026           │
+│                                           │
+│ Ngày hiện tại      : 20/08/2026           │
+│                                           │
+│ ✓ Chưa hết thời hiệu                       │
+│ ✓ Nhân viên đang làm việc                  │
+│ ✓ Không thuộc trường hợp bị hạn chế        │
+│                                           │
+│              [ Có thể xử lý ]             │
+└───────────────────────────────────────────┘
+12.2.4. Ban hành và phê duyệt quyết định kỷ luật
+Sau khi hồ sơ đáp ứng đầy đủ điều kiện, HR có thể ban hành quyết định đối với các hình thức kỷ luật thông thường.
+Đối với sa thải, hệ thống yêu cầu thực hiện bước phê duyệt riêng. Khi quyết định sa thải được phê duyệt, hệ thống có thể kích hoạt quy trình Offboarding để bắt đầu thủ tục thôi việc của nhân viên.
+Quy trình có thể mô tả như sau:
+┌──────────────┐
+│ Lập hồ sơ    │
+│ DRAFT        │
+└──────┬───────┘
+       ↓
+┌──────────────────┐
+│ Kiểm tra điều    │
+│ kiện & thời hiệu │
+└──────┬───────────┘
+       ↓
+┌──────────────────┐
+│ Kiểm tra thủ tục │
+│ xử lý kỷ luật    │
+└──────┬───────────┘
+       ↓
+   ┌───┴───────────┐
+   │               │
+   ↓               ↓
+Kỷ luật thường    SA THẢI
+   │               │
+   ↓               ↓
+DECIDED      APPROVE DISMISSAL
+                   │
+                   ↓
+              Offboarding
+12.2.5. Tự động theo dõi và xóa án kỷ luật
+Module có cơ chế tự động theo dõi thời hạn xóa kỷ luật sau khi quyết định được ban hành.
+Hệ thống tự tính expiryDate dựa trên hình thức kỷ luật:
+Hình thức
+Thời điểm hết hiệu lực
+Khiển trách
+Sau 3 tháng
+Kéo dài nâng lương
+Sau 6 tháng
+Cách chức
+Sau 6 tháng
+Sa thải
+Không tự động xóa
+Khi đến hạn, DisciplineScheduler chạy tự động hằng ngày vào 02:30 AM để tìm các hồ sơ đã đến hạn và chuyển trạng thái từ DECIDED sang EXPIRED.
+Minh họa:
+           QUYẾT ĐỊNH KỶ LUẬT
+                     │
+                     ↓
+                 DECIDED
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+      + 3 tháng              + 6 tháng
+          │                     │
+          ↓                     ↓
+     KHIỂN TRÁCH          KÉO DÀI / CÁCH CHỨC
+          │                     │
+          └──────────┬──────────┘
+                     ↓
+                  EXPIRED
+                (Xóa án)
+12.2.6. Quản lý khiếu nại và phản ánh nội bộ
+Cho phép nhân viên gửi các đơn khiếu nại hoặc phản ánh liên quan đến môi trường làm việc, chính sách, chế độ đãi ngộ hoặc các vấn đề phát sinh trong doanh nghiệp.
+Các nhóm khiếu nại bao gồm:
+WORKPLACE_CONFLICT: Mâu thuẫn tại nơi làm việc.
+COMPENSATION: Lương, thưởng và chế độ đãi ngộ.
+POLICY: Chính sách doanh nghiệp.
+HARASSMENT: Quấy rối.
+OTHER: Các nội dung khác.
+Đơn khiếu nại được quản lý theo quy trình:
+OPEN
+  ↓
+INVESTIGATING
+  ↓
+RESOLVED
+  ↓
+CLOSED
+HR có thể tiếp nhận, điều tra, ghi nhận kết quả giải quyết và đóng hồ sơ. Sau khi khiếu nại đã ở trạng thái RESOLVED hoặc CLOSED, hệ thống không cho phép giải quyết lại.
+Các chức năng chính
+Nhân viên tạo đơn khiếu nại.
+Phân loại nội dung khiếu nại.
+Theo dõi trạng thái xử lý.
+HR xem và điều tra khiếu nại.
+Ghi nhận phương án giải quyết.
+Chuyển đơn sang RESOLVED.
+Đóng hồ sơ khiếu nại.
+Tra cứu lịch sử khiếu nại.
+12.2.7. Quản lý lịch sử khen thưởng và kỷ luật
+Cho phép HR tra cứu lịch sử các quyết định đã phát sinh đối với từng nhân viên.
+Thông tin lịch sử có thể được sử dụng để:
+Theo dõi thành tích của nhân viên.
+Theo dõi các vi phạm đã được xử lý.
+Kiểm tra trạng thái hiệu lực của quyết định.
+Phục vụ đánh giá nhân sự.
+Hỗ trợ các nghiệp vụ thăng tiến, phát triển nghề nghiệp hoặc thôi việc.
+Hệ thống đảm bảo các quyết định đã ban hành không bị thay đổi tùy ý, qua đó duy trì tính toàn vẹn của lịch sử nhân sự.
+12.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Khen thưởng
+Quản lý khen thưởng
+Tạo, xem và quản lý các quyết định khen thưởng cho nhân viên.
+2
+Khen thưởng
+Phân loại khen thưởng
+Quản lý các hình thức như giấy khen, thưởng tiền, đề xuất thăng tiến và hình thức khác.
+3
+Khen thưởng
+Quản lý tiền thưởng
+Ghi nhận giá trị tiền thưởng và chuẩn bị dữ liệu chuyển sang bảng lương.
+4
+Khen thưởng
+Khóa quyết định thưởng
+Không cho sửa hoặc xóa khoản thưởng sau khi đã đẩy vào bảng lương.
+5
+Kỷ luật
+Lập hồ sơ vi phạm
+Ghi nhận nhân viên, ngày vi phạm, loại vi phạm, lý do và các thông tin liên quan.
+6
+Kỷ luật
+Quản lý bằng chứng
+Lưu trữ bằng chứng và căn cứ phục vụ quá trình xử lý.
+7
+Kỷ luật
+Quản lý hình thức kỷ luật
+Quản lý khiển trách, kéo dài nâng lương, cách chức và sa thải.
+8
+Kỷ luật
+Kiểm tra điều kiện xử lý
+Kiểm tra trạng thái nhân viên và các trường hợp bị hạn chế xử lý.
+9
+Kỷ luật
+Kiểm tra thời hiệu
+Tự động xác định và kiểm tra thời hiệu xử lý kỷ luật.
+10
+Kỷ luật
+Kiểm tra thủ tục
+Kiểm tra nội quy, bằng chứng, ngày họp và thành phần tham dự trước khi ban hành.
+11
+Kỷ luật
+Ban hành quyết định
+Chuyển hồ sơ đủ điều kiện sang trạng thái DECIDED.
+12
+Kỷ luật
+Phê duyệt sa thải
+Thực hiện quy trình phê duyệt riêng đối với quyết định sa thải.
+13
+Kỷ luật
+Tự động xóa án
+Tự động chuyển quyết định hết thời hạn sang trạng thái EXPIRED.
+14
+Khiếu nại
+Gửi khiếu nại
+Cho phép nhân viên gửi đơn phản ánh hoặc khiếu nại nội bộ.
+15
+Khiếu nại
+Quản lý khiếu nại
+HR tiếp nhận, điều tra và xử lý các đơn khiếu nại.
+16
+Khiếu nại
+Giải quyết khiếu nại
+Ghi nhận kết quả xử lý và chuyển đơn sang trạng thái RESOLVED/CLOSED.
+17
+Lịch sử
+Tra cứu lịch sử
+Tra cứu các quyết định khen thưởng, kỷ luật và khiếu nại của nhân viên.
+13. Phát triển nhân sự và Quy hoạch kế nhiệm
+13.1. Tổng quan
+Module Phát triển Nhân sự & Quy hoạch Kế nhiệm (Career & Talent Management) hỗ trợ doanh nghiệp quản lý lộ trình phát triển nghề nghiệp, xây dựng nguồn nhân sự kế thừa và phát hiện các nhân sự có tiềm năng. Module khai thác dữ liệu từ cơ cấu tổ chức, vị trí công việc, hồ sơ nhân viên và kết quả đánh giá hiệu suất để hình thành các kế hoạch phát triển nhân sự có định hướng.
+Module được tổ chức thành bốn nhóm chức năng chính:
+Quản lý lộ trình thăng tiến: thiết lập các hướng phát triển chuẩn giữa các vị trí/chức danh.
+Quy hoạch kế nhiệm: xác định các vị trí trọng yếu, mức độ rủi ro và danh sách ứng viên kế nhiệm.
+Kho nhân tài nội bộ: tập hợp nhân sự tiềm năng và phân loại bằng các thẻ như HiPo, Key Talent, Leadership Potential, Tech Expert.
+Career Simulator & ESS: cho phép nhân viên tự xem lộ trình nghề nghiệp, mô phỏng các hướng phát triển và lưu lại kịch bản cá nhân.
+Module có quan hệ trực tiếp với Organization để lấy thông tin vị trí/chức danh, Employee để xác định nhân viên và vị trí hiện tại, đồng thời sử dụng dữ liệu nhân sự làm cơ sở cho việc xây dựng lộ trình và quy hoạch kế nhiệm.
+13.2. Các phân hệ và chức năng
+13.2.1. Quản lý lộ trình thăng tiến
+Tổng quan
+Chức năng này cho phép doanh nghiệp thiết lập các lộ trình thăng tiến chuẩn giữa các vị trí/chức danh. Mỗi lộ trình xác định vị trí xuất phát, vị trí đích, yêu cầu kinh nghiệm tối thiểu và mô tả các yêu cầu về năng lực, kỹ năng hoặc chứng chỉ.
+Ví dụ:
+Junior Developer → Developer → Senior Developer → Tech Lead
+Các chức năng chính
+Thiết lập lộ trình giữa hai vị trí.
+Xem danh sách và chi tiết các lộ trình.
+Cập nhật yêu cầu năng lực và số năm kinh nghiệm.
+Xóa lộ trình không còn sử dụng.
+Tra cứu các hướng phát triển phù hợp với vị trí hiện tại của nhân viên.
+Hiển thị các vị trí đích và số năm kinh nghiệm yêu cầu.
+Quy tắc nghiệp vụ
+Vị trí xuất phát và vị trí đích không được trùng nhau.
+Trong cùng một công ty không được tồn tại hai lộ trình có cùng cặp vị trí xuất phát – vị trí đích.
+Minh họa: Lộ trình thăng tiến 
+Khi tra cứu lộ trình của một nhân viên, hệ thống xác định vị trí hiện tại, tìm các lộ trình có vị trí xuất phát tương ứng và trả về các vị trí đích khả dụng. 
+13.2.2. Quy hoạch kế nhiệm vị trí trọng yếu
+Tổng quan
+Chức năng Quy hoạch kế nhiệm (Succession Planning) hỗ trợ doanh nghiệp xác định các vị trí quan trọng và chuẩn bị nguồn nhân sự có khả năng thay thế khi cần thiết.
+Mỗi vị trí trọng yếu có thể được thiết lập một kế hoạch kế nhiệm, trong đó xác định:
+Mức độ rủi ro của vị trí.
+Ngày rà soát kế hoạch.
+Danh sách ứng viên kế nhiệm.
+Mức độ sẵn sàng của từng ứng viên.
+Ghi chú về năng lực hoặc nội dung cần đào tạo, bồi dưỡng.
+Các chức năng chính
+Tạo kế hoạch kế nhiệm cho vị trí trọng yếu.
+Xác định mức độ rủi ro: LOW, MEDIUM, HIGH, CRITICAL.
+Thiết lập ngày rà soát kế hoạch.
+Thêm ứng viên kế nhiệm.
+Cập nhật mức độ sẵn sàng của ứng viên.
+Ghi nhận nhận xét và nhu cầu phát triển.
+Xóa ứng viên khỏi kế hoạch.
+Xóa kế hoạch không còn sử dụng.
+Mức độ sẵn sàng
+Mức độ
+Ý nghĩa
+READY_NOW
+Có khả năng đảm nhiệm vị trí ngay
+READY_1_2_YEARS
+Có khả năng đảm nhiệm trong khoảng 1–2 năm
+READY_3_5_YEARS
+Có khả năng đảm nhiệm trong khoảng 3–5 năm
+Các mức độ trên được định nghĩa trực tiếp trong mô hình succession_candidates.
+Quy tắc nghiệp vụ quan trọng
+Ứng viên kế nhiệm không được chính là người đang giữ vị trí mục tiêu.
+Ví dụ:
+Vị trí mục tiêu: Trưởng phòng Công nghệ Người đang giữ: Nguyễn Văn A → Nguyễn Văn A không thể được thêm làm ứng viên kế nhiệm cho chính vị trí đó.
+Hệ thống chặn trường hợp này bằng lỗi CANDIDATE_IS_CURRENT_HOLDER. Ngoài ra, một ứng viên cũng không được thêm hai lần vào cùng một kế hoạch.
+Minh họa: Quy hoạch kế nhiệm
+Quy trình thêm ứng viên bao gồm kiểm tra kế hoạch, xác thực nhân viên, kiểm tra người đang giữ vị trí mục tiêu và kiểm tra ứng viên đã tồn tại trong kế hoạch hay chưa trước khi lưu.
+13.2.3. Quản lý kho nhân tài nội bộ
+Tổng quan
+Kho nhân tài nội bộ (Internal Talent Pool) tập hợp những nhân viên được doanh nghiệp xác định là có tiềm năng hoặc có năng lực đặc biệt để phục vụ công tác phát triển và quy hoạch nhân sự.
+Mỗi nhân sự trong kho được gắn một hoặc nhiều nhóm phân loại năng lực, chẳng hạn:
+HiPo – High Potential.
+Key Talent.
+Leadership Potential.
+Tech Expert.
+Các chức năng chính
+Thêm nhân viên vào kho nhân tài.
+Gắn thẻ phân loại nhân tài.
+Ghi nhận lý do hoặc thành tích nổi bật.
+Xem danh sách nhân sự tiềm năng.
+Lọc nhân tài theo nhân viên hoặc tag.
+Cập nhật tag và ghi chú.
+Xóa nhân sự khỏi kho nhân tài.
+Quy tắc nghiệp vụ
+Một nhân viên không được gắn trùng cùng một tag trong kho nhân tài của công ty. Khi thêm nhân viên, hệ thống kiểm tra nhân viên tồn tại và kiểm tra tính duy nhất của cặp nhân viên – tag trước khi tạo bản ghi.
+Minh họa: Kho nhân tài
+Nếu chưa được phân công, màn hình sẽ hiển thị thông báo chưa có hồ sơ phụ trách. 
+13.2.4. Mô phỏng lộ trình sự nghiệp và Cổng tự phục vụ nhân viên
+Tổng quan
+Career Simulator là chức năng phân tích nhằm hỗ trợ nhân viên hình dung các hướng phát triển nghề nghiệp có thể xảy ra dựa trên vị trí hiện tại, thâm niên và các hồ sơ nhân sự có đặc điểm tương đồng.
+Hệ thống tìm nhóm hồ sơ tương đồng, phân tích các bước dịch chuyển nghề nghiệp và tính toán tỷ lệ tương thích (match %) để đưa ra các lộ trình mô phỏng.
+Các chức năng chính
+Xem lộ trình thăng tiến chuẩn của bản thân.
+Xem các lộ trình nghề nghiệp được hệ thống gợi ý.
+Tìm các hồ sơ nhân sự có đặc điểm tương đồng.
+Xem tỷ lệ tương thích của các lộ trình.
+Lưu lại một kịch bản mô phỏng.
+Xem lại các kịch bản đã lưu.
+Xóa kịch bản cá nhân.
+Xem xu hướng thăng tiến và luân chuyển theo phòng ban đối với người có quyền phù hợp.
+Minh họa: Career Simulator
+Quy trình mô phỏng trong tài liệu gồm bước xác định vị trí và thâm niên, tìm nhóm nhân sự tương đồng, phân tích tỷ lệ tương thích, hiển thị lộ trình và cho phép nhân viên lưu snapshot nếu mong muốn.
+Bảo mật kịch bản cá nhân
+Các kịch bản đã lưu thuộc quyền quản lý của chính nhân viên tạo ra. Khi xem hoặc xóa một kịch bản, hệ thống đối chiếu employee_id của bản ghi với nhân viên đang đăng nhập. Việc truy cập hoặc xóa kịch bản của người khác bị từ chối, tương ứng với lỗi FORBIDDEN_SIMULATION_ACCESS.
+13.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Lộ trình thăng tiến
+Thiết lập lộ trình
+Xây dựng quan hệ phát triển giữa vị trí xuất phát và vị trí đích, kèm yêu cầu kinh nghiệm và năng lực.
+2
+Lộ trình thăng tiến
+Tra cứu lộ trình
+Xem danh sách, chi tiết và các hướng phát triển khả dụng từ vị trí hiện tại.
+3
+Lộ trình thăng tiến
+Cập nhật lộ trình
+Điều chỉnh mô tả năng lực và yêu cầu kinh nghiệm của lộ trình.
+4
+Lộ trình thăng tiến
+Xóa lộ trình
+Xóa mềm lộ trình không còn sử dụng.
+5
+Quy hoạch kế nhiệm
+Lập kế hoạch kế nhiệm
+Xác định vị trí trọng yếu, mức độ rủi ro và lịch rà soát.
+6
+Quy hoạch kế nhiệm
+Quản lý ứng viên
+Thêm, cập nhật, xóa ứng viên và đánh giá mức độ sẵn sàng.
+7
+Quy hoạch kế nhiệm
+Thẩm định ứng viên
+Kiểm tra ứng viên không phải người đang giữ vị trí mục tiêu và không bị trùng trong kế hoạch.
+8
+Kho nhân tài
+Quản lý Talent Pool
+Đưa nhân sự tiềm năng vào kho nhân tài để theo dõi và phát triển.
+9
+Kho nhân tài
+Phân loại nhân tài
+Gắn tag HiPo, Key Talent, Leadership Potential, Tech Expert.
+10
+Kho nhân tài
+Đánh giá/Ghi chú
+Ghi nhận lý do, thành tích hoặc thông tin phát triển của nhân tài.
+11
+Career Simulator
+Phân tích hồ sơ tương đồng
+Tìm nhân sự có vị trí và thâm niên tương đồng để làm cơ sở tham chiếu.
+12
+Career Simulator
+Gợi ý lộ trình
+Phân tích và đưa ra các hướng phát triển nghề nghiệp kèm tỷ lệ tương thích.
+13
+Career Simulator
+Lưu kịch bản
+Cho phép nhân viên lưu snapshot của lộ trình mong muốn.
+14
+ESS – MyCareer
+Xem lộ trình cá nhân
+Nhân viên tự tra cứu lộ trình từ vị trí hiện tại.
+15
+ESS – MyCareer
+Quản lý kịch bản cá nhân
+Xem và xóa các kịch bản do chính mình lưu.
+16
+Phân tích tổ chức
+Xu hướng nghề nghiệp
+Phân tích xu hướng thăng tiến và luân chuyển theo phòng ban.
+Các nhóm chức năng trên được xây dựng từ bốn nhóm API chính của module: CareerPathController, SuccessionPlanController, InternalTalentPoolController và CareerSimulatorController, cùng nhóm API MyCareerController dành cho ESS.
+14. Quản lý nghỉ phép (Leave Management)
+14.1. Tổng quan
+Module Leave quản lý toàn bộ quá trình nghỉ phép của nhân viên, từ thiết lập loại nghỉ, chính sách nghỉ phép, tính quỹ phép hằng năm đến tiếp nhận, phê duyệt và theo dõi đơn xin nghỉ.
+Hệ thống tự động tính số ngày nghỉ, kiểm tra số dư phép, ngăn đơn trùng lịch và liên kết với Attendance để tránh ghi nhận nhân viên vắng mặt khi đang nghỉ hợp lệ. Dữ liệu nghỉ đã được phê duyệt được cung cấp cho Payroll để tính lương và phục vụ quyết toán phép chưa nghỉ khi nhân viên thôi việc.
+14.2. Các phân hệ và chức năng
+14.2.1. Quản lý danh mục loại nghỉ (Leave Type Management)
+Cho phép HR quản lý những loại nghỉ được áp dụng trong doanh nghiệp. Mỗi loại nghỉ có mã, tên, nhóm nghỉ, nguồn chi trả, số ngày cố định theo sự kiện nếu có và yêu cầu phê duyệt.
+Danh mục loại nghỉ
+Loại nghỉ
+Nhóm
+Đặc điểm
+Nghỉ phép năm
+ANNUAL
+Sử dụng quỹ phép cá nhân
+Nghỉ lễ, Tết
+PUBLIC_HOLIDAY
+Theo lịch nghỉ hợp lệ
+Nghỉ kết hôn, tang lễ
+PERSONAL_PAID
+Hưởng lương theo điều kiện áp dụng
+Nghỉ việc riêng không lương
+PERSONAL_UNPAID
+Theo quy định hoặc thỏa thuận
+Nghỉ ốm đau
+SICK
+Liên quan đến chế độ BHXH
+Nghỉ thai sản
+MATERNITY
+Liên quan đến chế độ BHXH
+HR có thể tạo, xem, cập nhật, kích hoạt hoặc ngừng sử dụng loại nghỉ. Hệ thống không cho phép xóa loại nghỉ đang được sử dụng bởi chính sách hoặc đơn xin nghỉ. 
+14.2.2. Quản lý chính sách nghỉ phép (Leave Policy Management)
+Cho phép HR thiết lập chính sách nghỉ phép theo loại hợp đồng, điều kiện làm việc, thâm niên và quy định của doanh nghiệp.
+Mỗi chính sách xác định định mức nghỉ hằng năm, số ngày tăng thêm theo thâm niên, số ngày được chuyển sang năm tiếp theo, thời hạn sử dụng phép chuyển và ngày bắt đầu hiệu lực.
+Hệ thống phải xác định chính sách có hiệu lực tương ứng với nhân viên, tránh áp dụng đồng thời nhiều chính sách mâu thuẫn. 
+14.2.3. Quản lý quỹ phép cá nhân (Leave Balance Management)
+Hệ thống quản lý số ngày nghỉ được cấp, số ngày đã sử dụng, số ngày đang chờ phê duyệt và số phép chuyển từ năm trước của từng nhân viên.
+Khi nhân viên gửi đơn, hệ thống giữ chỗ số ngày tương ứng để ngăn sử dụng vượt quỹ. Khi đơn được duyệt, số ngày giữ chỗ chuyển thành đã sử dụng. Nếu đơn bị từ chối hoặc hủy hợp lệ, số ngày được hoàn trả. 
+14.2.4. Tự động tính và cấp quỹ phép năm
+Hệ thống tính quỹ phép dựa trên định mức áp dụng, thời gian làm việc trong năm và số ngày tăng thêm theo thâm niên.
+Đối với nhân viên vào làm giữa năm, số phép được cấp được tính theo tỷ lệ thời gian làm việc. HR có thể yêu cầu tính lại quỹ phép cho một nhân viên hoặc toàn bộ nhân viên trong công ty.
+Hệ thống giữ nguyên số ngày đã sử dụng, đang chờ duyệt và phép chuyển từ năm trước khi tính lại định mức.
+14.2.5. Tạo và gửi đơn xin nghỉ (Leave Request)
+Nhân viên sử dụng ESS để chọn loại nghỉ, ngày bắt đầu, ngày kết thúc, buổi nghỉ và nhập lý do.
+Hệ thống hỗ trợ nghỉ nguyên ngày hoặc nửa ngày (buổi sáng hoặc buổi chiều). HR có quyền tạo đơn thay nhân viên theo phạm vi quản lý.
+14.2.6. Kiểm tra điều kiện và tính số ngày nghỉ
+Trước khi tiếp nhận đơn, hệ thống kiểm tra tính hợp lệ của khoảng thời gian, ngày nghỉ trong quá khứ, số dư phép khả dụng, đơn nghỉ trùng thời gian và dữ liệu chấm công đã phát sinh.
+Nếu đơn hợp lệ, hệ thống tính tổng số ngày nghỉ và giữ chỗ quỹ phép đối với những loại nghỉ có hạn mức. Nếu loại nghỉ không yêu cầu phê duyệt, hệ thống có thể tự động duyệt theo cấu hình.
+quan-ly-nghi-phep-leave.md
+Công cụ tính ngày nghỉ hỗ trợ nghỉ nửa ngày và những loại nghỉ có số ngày cố định theo sự kiện. Tài liệu hiện tại loại trừ thứ Bảy, Chủ nhật và một số ngày lễ cố định khi tính ngày nghỉ thông thường. Với nhân viên làm theo ca, nên mở rộng để tính theo lịch làm việc thực tế thay vì mặc định mọi người đều nghỉ cuối tuần.
+14.2.7. Phê duyệt đơn nghỉ (Leave Approval)
+Đơn nghỉ hợp lệ được chuyển sang Module Workflow để quản lý hoặc HR xét duyệt.
+Người phê duyệt có thể xem thông tin nhân viên, loại nghỉ, thời gian, lý do, quỹ phép và lịch sử xử lý. Khi duyệt, hệ thống chuyển số ngày đang giữ chỗ sang đã sử dụng. Khi từ chối, hệ thống hoàn lại số ngày đã giữ chỗ và ghi nhận lý do.
+14.2.8. Hủy đơn và hoàn trả quỹ phép
+Nhân viên được hủy đơn của chính mình nếu đơn đang chờ duyệt hoặc đã duyệt nhưng chưa đến ngày bắt đầu nghỉ. HR có thể hủy thay theo quyền được cấp.
+Khi hủy đơn đang chờ, hệ thống giải phóng số ngày giữ chỗ. Khi hủy đơn đã duyệt, hệ thống hoàn lại số ngày đã sử dụng và đồng bộ thay đổi cho Attendance.
+quan-ly-nghi-phep-leave.md
+Nếu đơn nghỉ đã bắt đầu hoặc dữ liệu liên quan đã được chuyển vào kỳ công, kỳ lương đã chốt, cần có quy trình điều chỉnh riêng thay vì cho phép hủy trực tiếp.
+14.2.9. Tra cứu lịch sử nghỉ phép
+Nhân viên có thể xem danh sách đơn nghỉ, trạng thái, thời gian, số ngày và lịch sử phê duyệt của bản thân.
+Quản lý phòng ban và HR có thể lọc đơn theo nhân viên, loại nghỉ, trạng thái và khoảng thời gian trong phạm vi được phân quyền.
+Hệ thống đồng thời cung cấp thông tin quỹ phép cá nhân theo từng năm và loại nghỉ, giúp nhân viên theo dõi số ngày đã sử dụng và số ngày còn khả dụng.
+14.2.10. Quản lý nghỉ ốm đau và thai sản
+Tài liệu Leave v2.0 có danh mục nghỉ ốm đau và thai sản, phân biệt nguồn chi trả từ doanh nghiệp và quỹ BHXH. Riêng chế độ ốm đau có bảng định mức theo số năm tham gia BHXH và điều kiện làm việc.
+quan-ly-nghi-phep-leave.md
+Đối với các chế độ này, hệ thống cần phân biệt thời gian nghỉ được phê duyệt với việc xác định điều kiện hưởng và số tiền do cơ quan BHXH chi trả. Phần quản lý hồ sơ chứng từ, nộp hồ sơ và theo dõi giải quyết chế độ BHXH là hướng mở rộng, chưa được đặc tả đầy đủ trong tài liệu hiện tại.
+14.2.11. Thanh toán phép chưa nghỉ khi thôi việc
+Khi nhân viên thôi việc, hệ thống xác định số ngày phép năm chưa sử dụng và cung cấp dữ liệu cho quy trình quyết toán.
+Tài liệu hiện tại sử dụng lương cơ bản theo hợp đồng, số ngày công chuẩn 22 và số ngày phép còn lại để tính khoản thanh toán. Đây là công thức được mô tả trong tài liệu, cần được rà soát theo căn cứ tiền lương và quy định áp dụng tại thời điểm thôi việc.
+14.2.12. Đồng bộ Attendance và Payroll
+Khi đơn nghỉ được phê duyệt, Leave cung cấp thông tin ngày nghỉ và loại nghỉ cho Attendance để đối soát với lịch phân ca và dữ liệu chấm công.
+Đối với Payroll, hệ thống cung cấp số ngày nghỉ hưởng lương và không hưởng lương theo kỳ, cùng dữ liệu phục vụ thanh toán phép chưa nghỉ khi thôi việc.
+Module Leave chịu trách nhiệm xác định tình trạng và quỹ nghỉ; Attendance chịu trách nhiệm tổng hợp công; Payroll chịu trách nhiệm tính toán các khoản tiền lương và thanh toán.
+14.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+1
+Loại nghỉ
+Tạo, xem, cập nhật và ngừng sử dụng loại nghỉ
+2
+Loại nghỉ
+Cấu hình nguồn chi trả, số ngày cố định và yêu cầu phê duyệt
+3
+Chính sách
+Thiết lập định mức theo loại hợp đồng và điều kiện làm việc
+4
+Chính sách
+Cấu hình thâm niên, chuyển phép và thời hạn sử dụng
+5
+Quỹ phép
+Tính và cấp quỹ phép hằng năm
+6
+Quỹ phép
+Tính phép theo tỷ lệ khi nhân viên vào làm giữa năm
+7
+Quỹ phép
+Theo dõi phép đã dùng, đang giữ chỗ và còn khả dụng
+8
+Quỹ phép
+Tính lại quỹ phép cá nhân hoặc toàn công ty
+9
+Đơn nghỉ
+Tạo đơn nghỉ nguyên ngày hoặc nửa ngày
+10
+Đơn nghỉ
+HR tạo đơn thay nhân viên
+11
+Đơn nghỉ
+Kiểm tra số dư, ngày trùng và dữ liệu chấm công
+12
+Đơn nghỉ
+Tính số ngày nghỉ tự động
+13
+Phê duyệt
+Gửi đơn qua Workflow
+14
+Phê duyệt
+Phê duyệt, từ chối và lưu lịch sử xử lý
+15
+Phê duyệt
+Tự động duyệt loại nghỉ không cần phê duyệt
+16
+Hủy đơn
+Hủy đơn và hoàn trả quỹ phép
+17
+Tra cứu
+Xem lịch sử đơn và quỹ phép cá nhân
+18
+Tra cứu
+Quản lý danh sách đơn và quỹ phép theo phạm vi
+19
+Chế độ
+Quản lý loại nghỉ ốm đau, thai sản
+20
+Quyết toán
+Tính phép năm chưa nghỉ khi thôi việc
+21
+Tích hợp
+Cung cấp dữ liệu nghỉ cho Attendance
+22
+Tích hợp
+Cung cấp dữ liệu nghỉ và phép tồn cho Payroll
+14.4. Mối quan hệ với các module khác
+14.5. Căn cứ pháp lý và phạm vi mở rộng
+Tài liệu nghiệp vụ sử dụng Bộ luật Lao động 2019, đặc biệt các Điều 112–115, và quy định về bảo hiểm xã hội làm cơ sở thiết kế chính sách nghỉ phép.
+Khi triển khai, các định mức, điều kiện hưởng chế độ và công thức thanh toán phải được rà soát theo văn bản có hiệu lực tại thời điểm áp dụng. Module Legal & Compliance được đề xuất quản lý phiên bản những quy tắc này để Leave không phải cố định toàn bộ thông số trong mã nguồn.
+15. Điều chuyển nhân sự (Transfer)
+15.1. Tổng quan
+Module Transfer quản lý toàn bộ quá trình điều chuyển nhân sự trong doanh nghiệp, bao gồm chuyển phòng ban, chi nhánh, công ty thành viên, thay đổi chức vụ và điều chuyển tạm thời có thời hạn.
+Hệ thống hỗ trợ tạo phiếu điều chuyển, xác định đơn vị tiếp nhận, thời điểm hiệu lực, trình phê duyệt và cập nhật hồ sơ nhân viên sau khi hoàn tất. Mỗi lần điều chuyển đều lưu lịch sử thay đổi để phục vụ tra cứu, đối soát và quản lý nhân sự.
+Module này còn cung cấp thông tin cho các phân hệ liên quan như Payroll, Notification và Workplace để thực hiện những thay đổi phát sinh sau điều chuyển.
+15.2. Các phân hệ và chức năng
+15.2.1. Quản lý loại hình điều chuyển (Transfer Type)
+Hệ thống phân loại các hình thức điều chuyển để xác định thông tin cần thay đổi và quy trình xử lý phù hợp.
+Đối với điều chuyển tạm thời, hệ thống cần lưu ngày kết thúc để phục vụ việc theo dõi thời hạn và xử lý khi nhân viên kết thúc nhiệm vụ tại đơn vị tiếp nhận. 
+15.2.2. Tạo phiếu điều chuyển (Transfer Request)
+HR tạo phiếu điều chuyển bằng cách lựa chọn nhân viên và nhập các thông tin về đơn vị tiếp nhận, chi nhánh, quản lý mới, chức vụ mới, ngày hiệu lực và lý do điều chuyển.
+Hệ thống tự động lấy thông tin phòng ban, chi nhánh, quản lý và chức vụ hiện tại từ hồ sơ nhân viên để lưu thành dữ liệu gốc của phiếu. Nhờ đó, HR có thể đối chiếu thông tin trước và sau khi điều chuyển.
+Phiếu mới được lưu ở trạng thái DRAFT. HR có thể cập nhật nội dung khi phiếu chưa được trình duyệt.
+15.2.3. Kiểm tra điều kiện điều chuyển
+Trước khi lưu hoặc trình duyệt, hệ thống kiểm tra nhân viên, đơn vị đích, ngày hiệu lực và những yêu cầu điều chuyển đang tồn tại.
+Các điều kiện chính bao gồm:
+Ngày hiệu lực không được ở quá khứ theo quy tắc hiện tại.
+Đơn vị tiếp nhận phải tồn tại.
+Không tạo điều chuyển trùng khi nhân viên đã thuộc đơn vị đích và không có thay đổi chức vụ hoặc quản lý.
+Không tạo yêu cầu mới khi nhân viên đã có phiếu đang chờ duyệt hoặc đã duyệt chưa hoàn tất.
+Nếu khai báo ngày kết thúc điều chuyển tạm thời, ngày này không được trước ngày hiệu lực.
+15.2.4. Cập nhật và hủy phiếu điều chuyển
+HR có thể chỉnh sửa phiếu khi còn ở trạng thái nháp, bao gồm thay đổi đơn vị tiếp nhận, người quản lý mới, chức vụ, thời gian và lý do điều chuyển.
+Sau khi phiếu đã được trình duyệt, hệ thống khóa nội dung để tránh thay đổi thông tin trong khi đang xét duyệt.
+Hệ thống cho phép hủy phiếu nháp, đang chờ duyệt, đã duyệt hoặc bị từ chối. Phiếu đã hoàn thành hoặc đã hủy không được hủy lần nữa.
+15.2.5. Phê duyệt điều chuyển qua Workflow
+Khi hoàn tất thông tin, HR trình phiếu điều chuyển sang Module Workflow với loại yêu cầu TRANSFER_REQUEST.
+Người có thẩm quyền kiểm tra thông tin nhân viên, lý do, đơn vị tiếp nhận, ngày hiệu lực và các thay đổi về chức vụ hoặc lương trước khi quyết định.
+Tài liệu hiện tại có cơ chế tự chuyển sang APPROVED khi chưa cấu hình Workflow. Đối với hệ thống vận hành thực tế, nên thay cơ chế này bằng cảnh báo và tạm dừng trình duyệt để tránh điều chuyển được phê duyệt ngoài ý muốn. 
+15.2.6. Hoàn thành và áp dụng điều chuyển
+Sau khi phiếu được phê duyệt, HR thực hiện thao tác hoàn thành điều chuyển. Hệ thống gọi Module Employee để cập nhật các thông tin công tác tương ứng.
+Các trường có thể thay đổi gồm phòng ban, chi nhánh, người quản lý trực tiếp và chức vụ. Với mỗi trường thay đổi, hệ thống ghi nhận giá trị cũ, giá trị mới, ngày hiệu lực và lý do trước khi cập nhật hồ sơ.
+Sau khi cập nhật thành công, phiếu chuyển sang COMPLETED, ghi nhận người hoàn thành và thời điểm thực hiện, đồng thời phát sự kiện TransferCompletedEvent cho các module liên quan.
+Đề xuất bổ sung: Với phiếu đã duyệt nhưng ngày hiệu lực còn ở tương lai, nên lập lịch áp dụng đúng ngày thay vì cập nhật hồ sơ ngay khi HR nhấn hoàn thành. 
+15.2.7. Quản lý điều chuyển tạm thời 
+Cho phép HR điều chuyển nhân viên sang một đơn vị hoặc vị trí khác trong khoảng thời gian xác định.
+Phiếu điều chuyển tạm thời lưu ngày bắt đầu, ngày kết thúc, đơn vị tiếp nhận, quản lý mới và lý do điều chuyển. Hệ thống sử dụng những thông tin này để theo dõi thời hạn công tác.
+Tài liệu hiện tại đã hỗ trợ loại TEMPORARY và trường end_date, nhưng chưa đặc tả quy trình tự động đưa nhân viên về đơn vị cũ. Vì vậy, đề xuất bổ sung chức năng cảnh báo sắp hết hạn, gia hạn điều chuyển và lập phiếu kết thúc hoặc điều chuyển trở lại.
+15.2.8. Quản lý thay đổi lương và phụ cấp
+Phiếu điều chuyển có thể ghi nhận yêu cầu điều chỉnh lương kèm mức lương cơ bản và các khoản phụ cấp mới.
+Tuy nhiên, Transfer không trực tiếp tính hoặc cập nhật lương trên Payroll. Dữ liệu này được chuyển cho các phân hệ có trách nhiệm xử lý quyết định lương và tính lương theo thời điểm hiệu lực.
+Khi hoàn thành điều chuyển, sự kiện phát ra có thông tin cho biết phiếu có yêu cầu điều chỉnh lương hay không.
+15.2.9. Tra cứu và quản lý lịch sử điều chuyển
+HR có thể tra cứu danh sách phiếu theo nhân viên, trạng thái, loại điều chuyển, đơn vị cũ, đơn vị mới và khoảng ngày hiệu lực.
+Trong hồ sơ nhân viên, hệ thống hiển thị toàn bộ lịch sử điều chuyển theo thời gian, bao gồm các thay đổi về phòng ban, chi nhánh, người quản lý và chức vụ.
+Lịch sử này được lưu để phục vụ đối soát, đánh giá quá trình công tác và truy vết các quyết định nhân sự.
+15.2.10. Thông báo và đồng bộ liên module
+Sau khi điều chuyển hoàn tất, hệ thống phát sự kiện cho các module có liên quan.
+Notification có thể gửi thông báo đến nhân viên và các bên liên quan; Workplace tiếp nhận thông tin để xử lý thay đổi chỗ ngồi; Payroll nhận thông tin điều chỉnh lương nếu có.
+Đối với Attendance, đề xuất bổ sung đồng bộ lịch phân ca và địa điểm chấm công mới khi nhân viên chuyển chi nhánh. Điều này đặc biệt quan trọng vì phiên bản Attendance mới sử dụng GPS kết hợp xác thực khuôn mặt.
+15.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+1
+Loại điều chuyển
+Phân loại điều chuyển nội bộ, chi nhánh, công ty, chức vụ và tạm thời
+2
+Phiếu điều chuyển
+Tạo phiếu và tự động lưu thông tin công tác hiện tại
+3
+Phiếu điều chuyển
+Cập nhật thông tin khi phiếu còn nháp
+4
+Phiếu điều chuyển
+Kiểm tra đơn vị đích, ngày hiệu lực và yêu cầu trùng
+5
+Phiếu điều chuyển
+Hủy phiếu khi đủ điều kiện
+6
+Phê duyệt
+Trình duyệt qua Workflow
+7
+Phê duyệt
+Theo dõi kết quả và lý do từ chối
+8
+Hoàn thành
+Áp dụng thay đổi vào hồ sơ nhân viên
+9
+Hoàn thành
+Ghi nhận lịch sử biến động công tác
+10
+Lương
+Ghi nhận yêu cầu điều chỉnh lương, phụ cấp
+11
+Tra cứu
+Tìm kiếm, lọc và xem chi tiết phiếu
+12
+Tra cứu
+Xem lịch sử điều chuyển theo nhân viên
+13
+Tích hợp
+Phát sự kiện cho Notification, Workplace và Payroll
+14
+Tạm thời
+Theo dõi ngày kết thúc điều chuyển
+15
+Tạm thời
+Cảnh báo hết hạn, gia hạn hoặc điều chuyển trở lại (đề xuất)
+16
+Tích hợp
+Đồng bộ lịch làm việc và địa điểm chấm công mới (đề xuất)
+16. Offboarding
+16.1. Tổng quan
+Module Offboarding quản lý toàn bộ quy trình nhân viên rời khỏi doanh nghiệp, từ tiếp nhận đơn xin thôi việc hoặc ban hành quyết định chấm dứt hợp đồng đến bàn giao công việc, thu hồi tài sản, phỏng vấn nghỉ việc và khóa tài khoản.
+Theo tài liệu, hệ thống phải hoàn thành bốn bước kiểm soát chính: phê duyệt → bàn giao năm hạng mục → thu hồi tài sản → khóa tài khoản. Sau khi hoàn tất, hồ sơ nhân viên được cập nhật sang trạng thái RESIGNED hoặc TERMINATED tương ứng.
+16.2. Các phân hệ và chức năng
+16.2.1. Quản lý đơn xin thôi việc tự nguyện (Resignation Management)
+Cho phép nhân viên chủ động nộp đơn xin thôi việc thông qua hệ thống ESS. Nhân viên khai báo ngày làm việc cuối mong muốn, nhóm lý do nghỉ việc và nội dung giải thích nếu có.
+Hệ thống kiểm tra nhân viên có đang trong một quy trình thôi việc khác hay không, đồng thời đối chiếu ngày nghỉ dự kiến với thời hạn báo trước theo loại hợp đồng.
+Các nhóm lý do xin thôi việc
+Nhóm lý do
+Mô tả
+BETTER_OPPORTUNITY
+Có cơ hội nghề nghiệp khác
+PERSONAL_FAMILY
+Lý do cá nhân hoặc gia đình
+HEALTH
+Lý do sức khỏe
+RELOCATION
+Thay đổi nơi cư trú
+CAREER_CHANGE
+Chuyển hướng nghề nghiệp
+WORK_ENVIRONMENT
+Môi trường làm việc
+COMPENSATION
+Thu nhập và đãi ngộ
+OTHER
+Lý do khác
+Sau khi gửi, đơn chuyển sang trạng thái PENDING. Nhân viên có thể theo dõi trạng thái và xem kết quả xử lý.
+16.2.2. Phê duyệt đơn xin thôi việc
+Quản lý hoặc HR tiếp nhận đơn, xem lý do nghỉ việc, loại hợp đồng và ngày làm việc cuối được đề xuất.
+Người có thẩm quyền có thể chấp thuận hoặc từ chối đơn. Khi từ chối, hệ thống yêu cầu nhập lý do. Khi chấp thuận, hệ thống lưu người duyệt, thời điểm duyệt và ngày làm việc cuối được xác nhận, đồng thời tự động tạo năm hạng mục bàn giao.
+Lưu ý nghiệp vụ: Việc tiếp nhận và xử lý đơn xin thôi việc phải phân biệt với quyền đơn phương chấm dứt hợp đồng hợp pháp của người lao động. Không nên thiết kế trạng thái từ chối như một cơ chế mặc nhiên ngăn cản quyền nghỉ việc theo luật.
+16.2.3. Quản lý quyết định chấm dứt hợp đồng (Termination Management)
+Cho phép HR ban hành quyết định chấm dứt hợp đồng trong những trường hợp doanh nghiệp chủ động thực hiện hoặc ghi nhận việc chấm dứt theo căn cứ tương ứng.
+Các nhóm lý do chấm dứt
+Nhóm
+Nội dung
+PERFORMANCE
+Lý do liên quan đến kết quả công việc
+DISCIPLINARY_DISMISSAL
+Sa thải theo quyết định kỷ luật
+RESTRUCTURING_DOWNSIZING
+Tái cơ cấu hoặc cắt giảm nhân sự
+CONTRACT_EXPIRED_NOT_RENEWED
+Hợp đồng hết hạn và không gia hạn
+MUTUAL_AGREEMENT
+Hai bên thỏa thuận chấm dứt
+PROBATION_FAILED
+Không đạt yêu cầu thử việc
+OTHER
+Trường hợp khác
+HR nhập nhân viên, ngày làm việc cuối, nhóm lý do, nội dung chi tiết và quyết định liên quan. Nếu chấm dứt do sa thải kỷ luật, hệ thống liên kết với hồ sơ kỷ luật tương ứng thông qua discipline_id.
+Theo thiết kế hiện tại, quyết định mới được tạo trực tiếp ở trạng thái APPROVED và hệ thống tự sinh năm hạng mục bàn giao.
+Đối với triển khai thực tế, nên bổ sung quy trình thẩm định pháp lý và phê duyệt quyết định trước khi ban hành, đặc biệt với các trường hợp sa thải, tái cơ cấu hoặc đơn phương chấm dứt.
+16.2.4. Quản lý danh sách bàn giao (Offboarding Clearance)
+Ngay khi đơn xin thôi việc được chấp thuận hoặc quyết định chấm dứt được ban hành, hệ thống tự động tạo năm hạng mục bàn giao, ban đầu đều có trạng thái PENDING.
+Mỗi hạng mục có người xác nhận, trạng thái, ghi chú và thời điểm hoàn thành. Người có quyền cập nhật trạng thái thành CLEARED hoặc REJECTED theo kết quả kiểm tra. 
+16.2.5. Thu hồi và đối soát tài sản
+Module Offboarding liên kết với Asset để kiểm tra số tài sản chưa được hoàn trả của nhân viên.
+Khi người phụ trách xác nhận hạng mục ASSET, hệ thống truy vấn số tài sản chưa trả tại thời điểm đó. Nếu còn tài sản chưa hoàn trả, hệ thống không cho phép chuyển hạng mục sang CLEARED.
+Thông tin số lượng tài sản chưa trả được hiển thị trực tiếp trong danh sách bàn giao và lưu lại tại thời điểm xác nhận.
+16.2.6. Phỏng vấn nghỉ việc (Exit Interview)
+HR có thể tổ chức phỏng vấn nhân viên trước khi rời doanh nghiệp nhằm ghi nhận nguyên nhân nghỉ việc, phản hồi về môi trường làm việc và đề xuất cải thiện.
+Hệ thống lưu ngày phỏng vấn, người thực hiện, nội dung phản hồi, lý do nghỉ việc, đề xuất của nhân viên và câu trả lời về việc có sẵn sàng giới thiệu công ty cho người khác hay không.
+Theo tài liệu hiện tại, mỗi nhân viên có một bản ghi phỏng vấn nghỉ việc và có thể cập nhật bản ghi này. Phỏng vấn nghỉ việc không phải điều kiện bắt buộc để hoàn tất Offboarding.
+16.2.7. Tổng hợp hồ sơ thôi việc (Offboarding Summary)
+Hệ thống cung cấp một bảng tổng hợp giúp HR theo dõi toàn bộ tiến độ xử lý hồ sơ thôi việc của từng nhân viên.
+Bảng tổng hợp thực tế bao gồm loại hồ sơ thôi việc, ngày làm việc cuối, lý do, số tài sản chưa trả, số phép năm còn lại, tình trạng năm hạng mục bàn giao và thông tin phỏng vấn nghỉ việc.
+16.2.8. Kiểm tra điều kiện hoàn tất
+Chức năng kiểm soát bắt buộc
+Trước khi hoàn tất thủ tục, hệ thống thực hiện ba bước kiểm tra:
+Nhân viên phải có đơn xin thôi việc hoặc quyết định chấm dứt ở trạng thái APPROVED.
+Nhân viên không còn tài sản chưa hoàn trả theo dữ liệu của Asset.
+Cả năm hạng mục bàn giao phải tồn tại và đều ở trạng thái CLEARED.
+Nếu bất kỳ điều kiện nào chưa đạt, hệ thống từ chối hoàn tất và trả về nguyên nhân tương ứng.
+16.2.9. Cập nhật trạng thái nhân viên và khóa tài khoản
+Khi đáp ứng đầy đủ điều kiện, HR thực hiện hoàn tất Offboarding. Hệ thống cập nhật trạng thái hồ sơ nhân viên theo loại chấm dứt và vô hiệu hóa tài khoản người dùng liên kết.
+Trường hợp
+Trạng thái nhân viên
+Nhân viên tự nguyện thôi việc
+RESIGNED
+Công ty ban hành quyết định chấm dứt
+TERMINATED
+Sau khi hoàn tất, hồ sơ Offboarding được chuyển sang COMPLETED. Tài liệu hiện tại thực hiện cập nhật trạng thái nhân viên, khóa tài khoản và hoàn thành hồ sơ trong luồng xử lý trung tâm.
+Đề xuất bổ sung: Nên lên lịch khóa tài khoản phù hợp với ngày làm việc cuối, đồng thời thu hồi các phiên đăng nhập, token và quyền truy cập trên hệ thống tích hợp. Việc khóa tài khoản HRM không mặc nhiên đồng nghĩa với thu hồi toàn bộ quyền truy cập bên ngoài.
+16.2.10. Tra cứu và quản lý lịch sử thôi việc
+HR có thể tra cứu danh sách đơn xin thôi việc và quyết định chấm dứt theo phạm vi được phân quyền, xem chi tiết từng hồ sơ và theo dõi tiến độ bàn giao.
+Quản lý phòng ban chỉ được truy cập hồ sơ thuộc phạm vi phụ trách. Nhân viên được xem thông tin thôi việc và bàn giao của bản thân.
+Hệ thống lưu người duyệt, người ban hành quyết định, người xác nhận bàn giao và các thời điểm xử lý để phục vụ truy vết.
+16.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+1
+Xin thôi việc
+Nhân viên nộp đơn xin thôi việc
+2
+Xin thôi việc
+Kiểm tra thời hạn báo trước và hồ sơ đang xử lý
+3
+Phê duyệt
+Chấp thuận hoặc từ chối đơn, ghi nhận lý do
+4
+Chấm dứt
+HR ban hành quyết định chấm dứt
+5
+Chấm dứt
+Liên kết hồ sơ kỷ luật khi sa thải
+6
+Bàn giao
+Tự động tạo năm hạng mục bàn giao
+7
+Bàn giao
+Xem và cập nhật trạng thái từng hạng mục
+8
+Tài sản
+Kiểm tra và xác nhận hoàn trả tài sản
+9
+Phỏng vấn
+Ghi nhận và cập nhật phỏng vấn nghỉ việc
+10
+Tổng hợp
+Xem tiến độ, phép tồn và tài sản chưa trả
+11
+Hoàn tất
+Kiểm tra điều kiện hoàn tất Offboarding
+12
+Hoàn tất
+Cập nhật trạng thái hồ sơ nhân viên
+13
+Hoàn tất
+Vô hiệu hóa tài khoản người dùng
+14
+Tra cứu
+Tra cứu đơn, quyết định và hồ sơ bàn giao
+15
+Mở rộng
+Quyết toán lương và các khoản phải trả
+16
+Mở rộng
+Lập lịch thu hồi quyền truy cập theo ngày nghỉ
+17. Pháp luật và Tuân thủ (Legal & Compliance Management)
+17.1. Tổng quan
+Module này nên đóng vai trò trung tâm quản lý quy định pháp luật dùng chung, thay vì mỗi phân hệ tự lưu và cập nhật các quy định riêng.
+Module có ba nhiệm vụ chính: quản lý văn bản pháp luật, chuyển các điều khoản liên quan thành quy tắc nghiệp vụ và theo dõi tác động khi pháp luật thay đổi. Những quy tắc được phê duyệt sẽ được các module như Hợp đồng, Chấm công, Tính lương và Bảo hiểm sử dụng.
+17.2. Các phân hệ và chức năng
+17.3.1. Quản lý kho văn bản pháp luật
+Cho phép bộ phận Pháp chế xây dựng thư viện văn bản pháp luật liên quan đến hoạt động quản trị nhân sự.
+Mỗi văn bản được quản lý với số hiệu, tên, cơ quan ban hành, ngày ban hành, ngày có hiệu lực, phạm vi áp dụng và đường dẫn đến nguồn chính thức. Hệ thống hỗ trợ đính kèm bản gốc, bản hợp nhất và phân loại theo các lĩnh vực như lao động, bảo hiểm, thuế thu nhập cá nhân, giao dịch điện tử và bảo vệ dữ liệu cá nhân.
+HR có thể tìm kiếm theo từ khóa, điều khoản hoặc nhóm nghiệp vụ, đồng thời xem các văn bản có liên quan.
+17.3.2. Theo dõi thay đổi và phiên bản pháp luật
+Hệ thống quản lý mối quan hệ giữa văn bản gốc và các văn bản sửa đổi, bổ sung, thay thế hoặc bãi bỏ.
+Khi tiếp nhận một văn bản mới, hệ thống hỗ trợ so sánh nội dung với phiên bản trước, đánh dấu những điều khoản thay đổi và gửi thông báo đến người phụ trách.
+Hệ thống cần phân biệt ngày văn bản được ban hành, ngày có hiệu lực và ngày doanh nghiệp thực tế cập nhật quy tắc. Việc một văn bản có hiệu lực không đồng nghĩa với mọi hợp đồng hoặc giao dịch trước đó đều phải áp dụng quy định mới.
+17.3.3. Quản lý quy tắc tuân thủ
+Cho phép chuyển những điều khoản có thể kiểm tra tự động thành quy tắc nghiệp vụ.
+Mỗi quy tắc có mã định danh, căn cứ pháp lý, điều kiện áp dụng, tham số, thông báo vi phạm và thời gian hiệu lực. Một điều khoản có thể tạo ra nhiều quy tắc; ngược lại, một quy tắc có thể cần tham chiếu nhiều điều khoản.
+Ví dụ, nhóm quy tắc về thời giờ làm việc có thể bao gồm thời gian làm việc bình thường, thời gian làm thêm, thời gian nghỉ giữa ca và thời gian nghỉ chuyển ca.
+Không phải mọi quy tắc đều chỉ có một giá trị số. Một số quy tắc cần kiểm tra nhiều điều kiện đồng thời, chẳng hạn loại hợp đồng, thời điểm giao kết, đối tượng lao động hoặc trường hợp ngoại lệ.
+17.3.4. Ánh xạ quy định với các module nghiệp vụ
+Cho phép xác định mỗi quy tắc pháp luật đang được những chức năng nào sử dụng.
+Đây là chức năng quan trọng để tránh tình trạng luật thay đổi nhưng chỉ một module được cập nhật, trong khi những module khác vẫn áp dụng quy định cũ.
+Ví dụ, tài liệu Chấm công của CYCLOSA hiện có các nghiệp vụ cấu hình ca làm việc, phân ca, chấm công, giải trình và chốt bảng công. Các nghiệp vụ này có thể được liên kết với quy tắc về thời giờ làm việc và nghỉ ngơi.
+Nhóm quy định
+Module sử dụng
+Chức năng bị ảnh hưởng
+Thời giờ làm việc
+Chấm công
+Cấu hình ca, phân ca và tính thời gian làm việc.
+Làm thêm giờ
+Chấm công, Tính lương
+Kiểm tra giới hạn làm thêm và tính tiền làm thêm.
+Thử việc
+Hợp đồng, Hồ sơ nhân sự
+Kiểm tra thời gian, mức lương và kết quả thử việc.
+Chấm dứt hợp đồng
+Hợp đồng, Tính lương
+Kiểm tra điều kiện chấm dứt và quyết toán quyền lợi.
+Lưu trữ hồ sơ
+Số hóa và Lưu kho
+Xác định thời hạn lưu giữ và điều kiện xét hủy.
+17.3.5. Phân tích tác động khi pháp luật thay đổi
+Khi có văn bản mới hoặc một điều khoản được sửa đổi, hệ thống tự động tra cứu những quy tắc đang tham chiếu đến điều khoản đó và lập danh sách chức năng có khả năng bị ảnh hưởng.
+Bộ phận Pháp chế và BA đánh giá tác động, xác định quy tắc nào có thể cập nhật bằng cấu hình, quy tắc nào cần sửa mã nguồn và trường hợp nào cần thay đổi quy trình nội bộ.
+9.3.6. Phê duyệt và công bố quy tắc
+Quy tắc mới không được áp dụng ngay sau khi nhập liệu. Hệ thống phải hỗ trợ quy trình kiểm tra và phê duyệt trước khi công bố.
+Pháp chế xác nhận căn cứ và cách diễn giải; BA kiểm tra tác động nghiệp vụ; bộ phận kỹ thuật thực hiện kiểm thử; người có thẩm quyền phê duyệt phiên bản cuối.
+Nếu quy tắc không được phê duyệt, hệ thống trả về bản nháp kèm ý kiến để chỉnh sửa. Những quy tắc đã công bố không được ghi đè; mọi thay đổi phải tạo phiên bản mới.
+17.3.7. Kiểm tra tuân thủ tự động
+Các module nghiệp vụ có thể gửi yêu cầu đến Module Tuân thủ để kiểm tra dữ liệu theo quy tắc đang có hiệu lực.
+Ví dụ, khi HR tạo lịch phân ca, Module Chấm công gửi thông tin ca làm việc và lịch của nhân viên đến dịch vụ kiểm tra. Dịch vụ xác định quy tắc áp dụng và trả về kết quả hợp lệ, cảnh báo hoặc vi phạm.
+Kết quả cần bao gồm mã quy tắc, phiên bản, căn cứ pháp lý và lý do kiểm tra không đạt, giúp HR hiểu vấn đề và điều chỉnh.
+17.3.8. Cảnh báo và xử lý vi phạm
+Hệ thống tập trung những cảnh báo tuân thủ phát sinh từ các module và phân công cho bộ phận phụ trách xử lý.
+Một cảnh báo có thể được phân loại theo mức độ, hạn xử lý và trạng thái. Những trường hợp cần đánh giá pháp lý được chuyển đến Pháp chế thay vì tự động ra quyết định.
+Ví dụ, khi phát hiện một lịch làm việc có nguy cơ không đáp ứng thời gian nghỉ chuyển ca, hệ thống cảnh báo HR để điều chỉnh trước khi công bố lịch.
+17.3.9. Báo cáo và nhật ký tuân thủ
+Cho phép doanh nghiệp theo dõi tình trạng tuân thủ theo module, chi nhánh, loại quy định và thời gian.
+Hệ thống lưu nhật ký mọi thay đổi quy tắc, người thực hiện, người phê duyệt, thời điểm công bố và phiên bản được sử dụng trong từng lần kiểm tra. 
+17.3. Bảng tổng hợp chức năng
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Văn bản pháp luật
+Quản lý kho văn bản
+Lưu và phân loại văn bản pháp luật liên quan đến nhân sự.
+2
+Văn bản pháp luật
+Tìm kiếm và tra cứu
+Tra cứu văn bản, điều khoản và nguồn chính thức.
+3
+Phiên bản
+Theo dõi sửa đổi
+Quản lý văn bản sửa đổi, thay thế và bãi bỏ.
+4
+Phiên bản
+So sánh thay đổi
+Xác định những điều khoản đã thay đổi.
+5
+Quy tắc
+Cấu hình quy tắc
+Thiết lập điều kiện, tham số và phạm vi áp dụng.
+6
+Quy tắc
+Quản lý phiên bản
+Lưu lịch sử và thời gian hiệu lực của quy tắc.
+7
+Tích hợp
+Ánh xạ chức năng
+Liên kết quy tắc với các module nghiệp vụ.
+8
+Tác động
+Phân tích ảnh hưởng
+Xác định chức năng cần cập nhật khi luật thay đổi.
+9
+Tác động
+Phân công xử lý
+Giao nhiệm vụ rà soát cho các bộ phận liên quan.
+10
+Phê duyệt
+Rà soát quy tắc
+Kiểm tra căn cứ, cách diễn giải và kết quả thử nghiệm.
+11
+Phê duyệt
+Công bố quy tắc
+Kích hoạt phiên bản được duyệt theo ngày hiệu lực.
+12
+Kiểm tra
+Kiểm tra tuân thủ
+Cung cấp kết quả kiểm tra cho các module nghiệp vụ.
+13
+Cảnh báo
+Phát hiện vi phạm
+Ghi nhận những trường hợp không đáp ứng quy tắc.
+14
+Cảnh báo
+Theo dõi khắc phục
+Phân công, xử lý và đóng cảnh báo.
+15
+Báo cáo
+Dashboard tuân thủ
+Tổng hợp quy tắc, thay đổi và cảnh báo.
+16
+Kiểm toán
+Nhật ký thay đổi
+Truy vết phiên bản, người phê duyệt và kết quả kiểm tra.
+18. AI 1-1 Assistant (Trợ lý)
+18.1. Tổng quan
+Module AI tích hợp trí tuệ nhân tạo vào hệ thống CYCLOSA HRM nhằm hỗ trợ nhân viên tra cứu thông tin, hỗ trợ bộ phận tuyển dụng cho phép hỏi đáp về dữ liệu nhân sự, báo cáo và chính sách nội bộ bằng ngôn ngữ tự nhiên.
+Nguyên tắc xuyên suốt là AI chỉ hỗ trợ, không thay thế quyết định của con người. Hệ thống phải tuân thủ phân quyền, không tự tạo dữ liệu khi thiếu nguồn, ghi nhận nhật ký xử lý và có phương án nhập liệu hoặc xử lý thủ công khi AI gặp lỗi. 
+18.2. Các phân hệ và chức năng
+18.1.1. Hỏi đáp dữ liệu nhân sự và báo cáo
+Người dùng đặt câu hỏi bằng ngôn ngữ tự nhiên thay vì phải tự truy cập từng module, lựa chọn bộ lọc và lập báo cáo.
+Ví dụ:
+Nhân viên: “Tôi còn bao nhiêu ngày phép năm?”
+Quản lý: “Tổng hợp tình hình chấm công của phòng Kinh doanh tháng này.”
+HR: “Tỷ lệ nghỉ việc của công ty trong quý vừa rồi là bao nhiêu?”
+Ban lãnh đạo: “Chi phí tiền lương theo phòng ban trong tháng trước?”
+Hệ thống sử dụng Function Calling để lựa chọn chức năng truy vấn phù hợp, gọi API của module tương ứng và tổng hợp dữ liệu thành câu trả lời dễ hiểu.
+Chatbot chỉ được truy vấn dữ liệu nằm trong phạm vi quyền của người hỏi. Chẳng hạn, nhân viên có thể xem phiếu lương của chính mình nhưng không được truy vấn tổng chi phí lương toàn công ty.
+18.1.2. Hỏi đáp chính sách và tài liệu nội bộ
+Chatbot hỗ trợ giải đáp những câu hỏi liên quan đến nội quy, chế độ phúc lợi, chính sách nghỉ phép, sổ tay nhân viên và hướng dẫn sử dụng HRM.
+Chức năng này sử dụng RAG (Retrieval-Augmented Generation). Hệ thống tìm kiếm những đoạn văn bản liên quan trong kho tài liệu nội bộ, sau đó sử dụng AI để tổng hợp câu trả lời kèm tên tài liệu và mục tham chiếu.
+Nếu không tìm được tài liệu đủ liên quan, chatbot thông báo chưa có thông tin và hướng dẫn người dùng liên hệ HR, thay vì tự suy diễn chính sách.
+18.1.3. Phân loại câu hỏi tự động
+Trước khi trả lời, chatbot xác định mục đích câu hỏi để lựa chọn phương thức xử lý.
+Ba nhóm câu hỏi gồm in_scope_data, in_scope_policy và out_of_scope. Những câu hỏi ngoài phạm vi HRM được xử lý ngay tại bước đầu, không tiếp tục truy vấn dữ liệu hoặc tài liệu.
+HRM-AI-Features-Business-Rules.md
+18.1.4. Trực quan hóa báo cáo
+Khi kết quả truy vấn có dữ liệu thống kê, chatbot có thể sử dụng chức năng render_chart để biểu diễn dưới dạng biểu đồ.
+Ví dụ, khi HR hỏi về biến động nhân sự theo tháng, chatbot lấy dữ liệu từ Reporting rồi đề xuất biểu đồ tương ứng. Chức năng vẽ biểu đồ chỉ sử dụng dữ liệu đã truy xuất, không tự tạo số liệu.
+18.1.5. Quản lý kho tri thức (Knowledge Base)
+HR Admin quản lý tài liệu dùng cho chatbot, bao gồm chính sách nhân sự, sổ tay nhân viên, hướng dẫn hệ thống và tài liệu pháp lý.
+Khi tài liệu được đưa vào kho tri thức, hệ thống chia nội dung thành các đoạn nhỏ, tạo embedding và lập chỉ mục tìm kiếm ngữ nghĩa. Mỗi tài liệu có phiên bản và trạng thái hoạt động hoặc lưu trữ.
+Tài liệu đã lỗi thời phải được ngừng sử dụng để tránh chatbot viện dẫn chính sách không còn hiệu lực.
+18.1.6. Quản lý câu hỏi chưa có lời giải
+Khi chatbot không tìm được tài liệu phù hợp, hệ thống lưu câu hỏi vào danh sách cần bổ sung tri thức.
+Một tác vụ nền định kỳ nhóm các câu hỏi tương tự nhau. Khi số lượng đạt ngưỡng cấu hình, hệ thống gửi thông báo đến HR Admin để xem xét bổ sung hoặc cập nhật tài liệu.
+18.1.7. Lịch sử hội thoại và đánh giá câu trả lời
+Người dùng có thể tiếp tục hội thoại cũ hoặc tạo cuộc trò chuyện mới. Hệ thống lưu câu hỏi, câu trả lời, loại phương thức xử lý, những function đã gọi và tài liệu được trích dẫn.
+Người dùng được đánh giá câu trả lời là hữu ích hoặc không hữu ích. Thông tin phản hồi phục vụ việc cải thiện chất lượng chatbot.
+18.3. Bảng tổng hợp chức năng 
+STT
+Phân hệ
+Chức năng
+1
+Chatbot
+Hỏi đáp dữ liệu nhân sự và báo cáo
+2
+Chatbot
+Hỏi đáp chính sách và tài liệu nội bộ
+3
+Chatbot
+Phân loại ý định và kiểm tra phạm vi câu hỏi
+4
+Chatbot
+Gọi API liên module theo quyền người dùng
+5
+Chatbot
+Trực quan hóa số liệu báo cáo
+6
+Chatbot
+Quản lý kho tri thức và phiên bản tài liệu
+7
+Chatbot
+Theo dõi câu hỏi chưa được giải đáp
+8
+Chatbot
+Lưu lịch sử và đánh giá câu trả lời
+19. Sơ đồ ghế ngồi
+19.1. Tổng quan
+Module Smart Workplace Management quản lý toàn bộ không gian làm việc của doanh nghiệp trên một bản đồ số 2D, từ cơ sở, tầng, phân khu đến từng chỗ ngồi và phòng họp. Hệ thống kết nối thông tin nhân viên, tài sản và vị trí vật lý để hỗ trợ bố trí chỗ ngồi, đặt bàn linh hoạt, đặt phòng họp, báo sự cố và điều hướng trong văn phòng.
+Module cung cấp hai giao diện chính: Workplace Administration dành cho Office Admin và My Workplace dành cho nhân viên.
+19.2. Các phân hệ và chức năng
+19.2.1. Quản lý cấu trúc không gian làm việc
+Quản lý cơ sở và tòa nhà (Site)
+Office Admin tạo và quản lý các cơ sở làm việc của doanh nghiệp. Mỗi cơ sở có mã định danh duy nhất trong công ty, tên, địa chỉ, mô tả và liên kết với một chi nhánh.
+Hệ thống hỗ trợ thêm, sửa, xem danh sách, xem chi tiết và xóa mềm cơ sở. Mã cơ sở được tự động chuẩn hóa thành chữ in hoa để bảo đảm tính nhất quán.
+Quản lý tầng (Floor)
+Mỗi cơ sở có thể gồm nhiều tầng. Office Admin khai báo số tầng, tên và mô tả, sau đó tổ chức các phân khu trên từng tầng.
+Số tầng phải duy nhất trong phạm vi một cơ sở, tránh tạo hai bản ghi trùng nhau.
+Quản lý phân khu (Zone)
+Phân khu đại diện cho các khu vực chức năng trên cùng một tầng, chẳng hạn khu Công nghệ, khu Kinh doanh hoặc khu làm việc chung.
+Mỗi phân khu có thể được liên kết với một phòng ban, gán màu nhận diện và xác định ranh giới bằng hình chữ nhật hoặc đa giác trên bản đồ 2D.
+Quản lý cụm và dãy bàn (Row)
+Trong mỗi phân khu, Office Admin tạo các cụm bàn theo cách bố trí thực tế. Tài liệu quy định ba kiểu cụm:
+SINGLE_ROW: một dãy bàn.
+POD_4_FACING: cụm bốn bàn đối diện nhau.
+POD_6_FACING: cụm sáu bàn đối diện nhau.
+Mỗi cụm có vị trí và góc xoay trên bản đồ. Hệ thống có thể tự động sinh hàng loạt bàn theo cấu trúc cụm đã chọn.
+19.2.2. Quản lý chỗ ngồi (Seat Management)
+Quản lý danh mục bàn làm việc
+Office Admin có thể tạo, cập nhật, tìm kiếm và quản lý từng bàn làm việc. Mỗi bàn có mã định danh, loại bàn, trạng thái, vị trí trên bản đồ, hình dạng, kích thước, góc xoay và các tiện ích đi kèm.
+Loại bàn
+Mục đích
+DEDICATED
+Bàn cố định được phân cho một nhân viên
+HOT_DESK
+Bàn linh hoạt có thể đặt theo ngày
+VISITOR
+Bàn dành cho khách hoặc thực tập sinh
+Các trạng thái của bàn gồm AVAILABLE (còn trống), OCCUPIED (đã có người), MAINTENANCE (đang bảo trì) và BLOCKED (bị khóa).
+Tạo bàn hàng loạt
+Thay vì tạo từng bàn, Office Admin có thể lựa chọn một cụm bàn, cấu hình số lượng, kiểu bố trí và khoảng cách giữa các bàn để hệ thống tự sinh vị trí trên bản đồ.
+Mã bàn được tạo dựa trên năm cấp không gian. Những mã đã tồn tại được bỏ qua, không ghi đè dữ liệu cũ. Bàn mới có trạng thái mặc định AVAILABLE và dữ liệu định danh QR.
+Phân bổ và thu hồi bàn cố định
+Office Admin lựa chọn bàn trống để phân cho nhân viên. Trước khi gán, hệ thống kiểm tra bàn không bị khóa hoặc bảo trì và nhân viên chưa có một bàn cố định khác.
+Sau khi gán thành công, bàn chuyển sang OCCUPIED. Khi nhân viên chuyển vị trí hoặc nghỉ việc, Office Admin thu hồi bàn, xóa liên kết nhân viên và đưa bàn về AVAILABLE nếu không có ràng buộc khác.
+Liên kết tài sản với chỗ ngồi
+Office Admin có thể gắn các tài sản như màn hình, thiết bị ngoại vi hoặc trang thiết bị văn phòng vào từng bàn.
+Hệ thống xác minh tài sản qua Asset Service, ngăn liên kết trùng và cho phép tháo liên kết khi bàn hoặc tài sản thay đổi. Nhờ đó, người quản lý có thể tra cứu tài sản được bố trí tại mỗi chỗ ngồi.
+19.2.3. Bản đồ số văn phòng (2D Floor Plan)
+Bản đồ số là giao diện trực quan hóa không gian làm việc, cho phép người dùng xem cấu trúc thực tế của từng tầng.
+Office Admin tải lên ảnh nền sơ đồ tầng và cấu hình kích thước Canvas, tỷ lệ thực tế, phiên bản bản vẽ và trạng thái phát hành. Hệ thống tổng hợp vị trí các phân khu, cụm bàn, chỗ ngồi và vật thể khác lên cùng bản đồ.
+Bản đồ cho phép tra cứu vị trí, nhận biết trạng thái bàn và xem các tiện ích như phòng họp, thang máy, cầu thang, lối ra, nhà vệ sinh, pantry, máy in và tủ đồ. 
+19.2.4. Đặt bàn làm việc linh hoạt (Hotdesk Booking)
+Nhân viên có thể chủ động đặt bàn làm việc theo ngày thông qua My Workplace, phù hợp với mô hình làm việc linh hoạt hoặc nhân viên thường xuyên di chuyển giữa các cơ sở.
+Tra cứu và đặt bàn
+Nhân viên chọn ngày làm việc, cơ sở, tầng hoặc khu vực, sau đó xem các bàn HOT_DESK còn trống trên bản đồ. Khi lựa chọn một bàn, hệ thống kiểm tra trạng thái và các lượt đặt hiện có trước khi xác nhận.
+Các quy tắc chính:
+Mỗi nhân viên chỉ được có một lượt đặt hotdesk đang hiệu lực trong một ngày.
+Mỗi bàn chỉ được có một lượt đặt đang hiệu lực trong cùng ngày.
+Không được đặt bàn cố định, bàn đang bảo trì hoặc bàn bị khóa.
+Lượt đặt hợp lệ được tạo với trạng thái CONFIRMED.
+Check-in và hủy đặt bàn
+Nhân viên có thể check-in khi sử dụng bàn đã đặt. Hệ thống chỉ cho phép chuyển từ CONFIRMED sang CHECKED_IN và lưu thời điểm check-in.
+Nhân viên có thể hủy lượt đặt của chính mình. Hệ thống ngăn thao tác hủy lặp lại và cập nhật trạng thái để bàn có thể được đặt lại theo các quy tắc khả dụng.
+19.2.5. Quản lý và đặt phòng họp (Meeting Room Booking)
+Quản lý phòng họp
+Office Admin khai báo các phòng họp trên bản đồ tầng với tên, vị trí, kích thước, sức chứa và mã QR.
+Phòng họp thuộc nhóm vật thể không phải bàn (NonDeskObject). Chỉ những vật thể có loại MEETING_ROOM mới được phép đặt lịch.
+Tra cứu lịch trống và đặt phòng
+Nhân viên lựa chọn phòng họp, ngày họp, thời gian bắt đầu, thời gian kết thúc, tên cuộc họp và số lượng người tham gia.
+Hệ thống cung cấp lịch những khung giờ đã được đặt, giúp nhân viên lựa chọn thời gian phù hợp. Khi gửi yêu cầu, hệ thống kiểm tra thời gian bắt đầu phải trước thời gian kết thúc và không trùng với lượt đặt đang hiệu lực của cùng phòng.
+Quản lý lịch đặt và check-in
+Nhân viên xem lịch họp của mình, hủy lịch hoặc check-in phòng đã đặt. Office Admin có quyền tạo và quản lý lịch đặt thay cho nhân viên.
+Trạng thái đặt phòng gồm CONFIRMED, CHECKED_IN, CANCELLED và COMPLETED.
+19.2.6. Quản lý sự cố cơ sở vật chất (Workplace Issue Management)
+Báo cáo sự cố
+Nhân viên có thể báo sự cố trực tiếp từ My Workplace hoặc vị trí trên bản đồ. Phiếu sự cố bao gồm loại sự cố, mức độ nghiêm trọng, tiêu đề, mô tả và vị trí xảy ra.
+Các nhóm sự cố được tài liệu quy định gồm điện, nội thất, điều hòa, thiết bị phần cứng, vệ sinh và các vấn đề khác.
+Nếu sự cố gắn với một bàn hoặc vật thể đã có tọa độ, hệ thống tự động xác định vị trí trên bản đồ.
+Tiếp nhận và xử lý
+Office Admin xem danh sách sự cố, phân công người phụ trách, cập nhật tiến độ và ghi nhận kết quả xử lý.
+19.2.7. Mã QR và điều hướng trong văn phòng
+Quản lý mã QR
+Office Admin có thể sinh mã QR cho bàn và phòng họp. Mã QR liên kết với đối tượng trên hệ thống, cho phép nhân viên quét để xác định vị trí hoặc thực hiện thao tác phù hợp.
+Khi quét mã bàn, hệ thống hiển thị thông tin bàn và hỗ trợ check-in theo lượt đặt. Khi quét mã phòng họp, hệ thống hỗ trợ đặt phòng nhanh. Mã QR tại những vị trí khác có thể được sử dụng làm điểm xuất phát cho chức năng điều hướng.
+Điều hướng trong nhà (Indoor Wayfinding)
+Hệ thống sử dụng thuật toán A* để tìm đường giữa hai vị trí trên bản đồ, có tính đến vật cản và khoảng cách di chuyển.
+Phạm vi
+Cách xử lý
+Cùng tầng (SAME_FLOOR)
+Tìm đường trên bản đồ 2D, tránh vật cản
+Khác tầng, cùng cơ sở (CROSS_FLOOR)
+Tìm đường đến thang máy và hướng dẫn sang tầng đích
+Khác cơ sở (CROSS_SITE)
+Cung cấp thông tin địa chỉ cơ sở đích
+Kết quả bao gồm khoảng cách ước tính, thời gian đi bộ và hướng dẫn từng chặng. Nếu không tìm được đường phù hợp, tài liệu quy định cơ chế dự phòng bằng đường thẳng.
+Tìm vị trí đồng nghiệp
+Nhân viên có thể tìm kiếm đồng nghiệp để xem vị trí bàn làm việc được phân và sử dụng chức năng điều hướng đến đó.
+Thông tin vị trí được lấy từ dữ liệu phân bổ bàn, kết hợp thông tin nhân viên do Employee Service cung cấp. Chức năng tìm kiếm và hiển thị phải tuân thủ phạm vi quyền truy cập.
+19.2.8. My Workplace – Cổng tự phục vụ nhân viên
+My Workplace tập hợp các chức năng liên quan đến không gian làm việc cá nhân trong một giao diện thống nhất.
+Nhân viên có thể xem bàn cố định và tài sản tại bàn, xem hoặc đặt hotdesk, quản lý lịch phòng họp, check-in, báo sự cố và theo dõi những phiếu do mình tạo.
+Hệ thống tự xác định nhân viên từ tài khoản đăng nhập, không cho phép người dùng tự thay đổi mã nhân viên trong yêu cầu để thao tác trên dữ liệu của người khác.
+19.2.9. Báo cáo sử dụng không gian
+Module cung cấp báo cáo tỷ lệ lấp đầy theo cơ sở, hỗ trợ bộ phận quản trị theo dõi tình trạng sử dụng chỗ ngồi và lập kế hoạch bố trí văn phòng.
+Dữ liệu bàn, trạng thái sử dụng và vị trí được tổng hợp từ hệ thống Workplace. Tài liệu có quy định API báo cáo lấp đầy; các dashboard phân tích sâu hơn theo thời gian hoặc dự báo nhu cầu có thể được xem xét ở giai đoạn mở rộng.
+19.3. Bảng tổng hợp chức năng 
+STT
+Phân hệ
+Chức năng
+1
+Mặt bằng
+Quản lý cơ sở, tầng và phân khu
+2
+Mặt bằng
+Quản lý cụm bàn và sinh bàn hàng loạt
+3
+Chỗ ngồi
+Quản lý loại bàn, trạng thái và tiện ích
+4
+Chỗ ngồi
+Phân bổ và thu hồi bàn cố định
+5
+Chỗ ngồi
+Liên kết tài sản với bàn
+6
+Bản đồ số
+Quản lý Floor Plan và Canvas 2D
+7
+Bản đồ số
+Quản lý phòng họp và các vật thể trên tầng
+8
+Hotdesk
+Tra cứu, đặt, hủy và check-in bàn linh hoạt
+9
+Phòng họp
+Tra cứu lịch trống, đặt, hủy và check-in phòng
+10
+Sự cố
+Báo cáo, phân công và theo dõi xử lý
+11
+Sự cố
+Tự động khóa và khôi phục bàn
+12
+QR
+Sinh và quét mã QR bàn/phòng
+13
+Điều hướng
+Tìm đường nội bộ bằng A*
+14
+Điều hướng
+Tìm vị trí đồng nghiệp
+15
+My Workplace
+Quản lý bàn, lượt đặt và phiếu sự cố cá nhân
+16
+Báo cáo
+Báo cáo tỷ lệ lấp đầy không gian
+20. Thông báo nội bộ
+20.1. Tổng quan
+Module Thông báo nội bộ (Notification) là trung tâm giao tiếp trong hệ thống CYCLOSA HRM, có nhiệm vụ gửi và quản lý các thông báo đến đúng người dùng, đặc biệt đối với các sự kiện như phê duyệt, nhắc nhở, cảnh báo hạn chót, hợp đồng sắp hết hạn và các thông báo hệ thống. Module được thiết kế theo hướng Event-Driven, trong đó các module nghiệp vụ phát sinh sự kiện và Notification tiếp nhận để tạo thông báo tương ứng.
+Thông báo được lưu trữ theo từng người dùng và được truy xuất thông qua REST API. Hệ thống không duy trì kết nối WebSocket/Socket.IO liên tục mà sử dụng cơ chế Pull-based, giúp giảm tài nguyên kết nối và phù hợp với môi trường container/load-balancer.
+Các nhóm nghiệp vụ chính
+Các module nghiệp vụ như Workflow, Contract, Leave, Payroll, Discipline, Asset có thể phát sinh sự kiện hoặc gọi trực tiếp Notification Service để tạo thông báo.
+20.2. Các phân hệ và chức năng
+20.2.1. Tự động sinh thông báo
+Hệ thống tự động tạo thông báo khi các module nghiệp vụ phát sinh sự kiện cần thông tin đến người dùng. Cách tiếp cận chính là sử dụng Spring Domain Event, giúp module Notification được tách rời khỏi luồng xử lý nghiệp vụ chính.
+Các chức năng chính:
+Tiếp nhận sự kiện từ các module nghiệp vụ.
+Xác định người dùng cần nhận thông báo.
+Tạo thông báo với tiêu đề, nội dung và loại thông báo.
+Gắn action_url để người dùng có thể chuyển trực tiếp đến màn hình liên quan.
+Lưu thông báo với trạng thái ban đầu là chưa đọc.
+Ví dụ: khi một bước Workflow được giao cho quản lý, hệ thống phát WorkflowStepAssignedEvent; Notification Listener tiếp nhận sự kiện và tạo thông báo cho người quản lý.
+20.2.2. Quản lý và tra cứu thông báo
+Người dùng có thể mở trung tâm thông báo để xem các thông báo của chính mình. Danh sách được hỗ trợ phân trang và lọc thông báo chưa đọc.
+Các chức năng chính:
+Xem danh sách thông báo cá nhân.
+Xem chi tiết một thông báo.
+Lọc thông báo chưa đọc.
+Hiển thị thời gian tạo thông báo.
+Hiển thị trạng thái đã đọc/chưa đọc.
+Phân loại theo loại thông báo:
+WORKFLOW
+CONTRACT
+PAYROLL
+ANNOUNCEMENT
+SYSTEM
+20.2.3. Quản lý trạng thái đã đọc
+Hệ thống quản lý trạng thái đọc của từng thông báo thông qua hai thuộc tính is_read và read_at. Khi người dùng mở hoặc đánh dấu thông báo, hệ thống cập nhật trạng thái tương ứng.
+Các chức năng chính:
+Đánh dấu một thông báo là đã đọc.
+Đánh dấu toàn bộ thông báo là đã đọc.
+Cập nhật thời điểm đọc.
+Cập nhật số lượng thông báo chưa đọc trên biểu tượng quả chuông.
+Luồng xử lý:
+Khi người dùng chọn “Đánh dấu tất cả là đã đọc”, hệ thống cập nhật toàn bộ thông báo chưa đọc của chính người dùng và đưa số đếm trên biểu tượng thông báo về 0.
+20.2.4. Điều hướng nhanh đến nghiệp vụ liên quan
+Mỗi thông báo có thể chứa action_url, cho phép người dùng chuyển trực tiếp đến màn hình nghiệp vụ tương ứng thay vì phải tự tìm kiếm chức năng.
+Ví dụ:
+Thông báo
+    │
+    ├── "Đơn nghỉ phép đang chờ duyệt"
+    │              │
+    │              ↓
+    │      /workflows/pending
+    │
+    ├── "Hợp đồng sắp hết hạn"
+    │              │
+    │              ↓
+    │      /contracts/123
+    │
+    └── "Bảng lương đã được cập nhật"
+                   │
+                   ↓
+             /payroll/...
+Luồng xử lý:
+20.2.5. Đếm thông báo chưa đọc
+Hệ thống cung cấp cơ chế lấy nhanh số lượng thông báo chưa đọc để hiển thị trên biểu tượng quả chuông. Client gọi API GET /unread-count khi tải trang hoặc theo chu kỳ polling định kỳ.
+20.2.6. Phát thông báo hệ thống
+Quản trị viên có quyền phát thông báo chung đến toàn công ty/toàn hệ thống thông qua chức năng notification.broadcast. Theo ma trận RBAC của tài liệu, Super Admin có quyền đầy đủ và HR Admin có quyền trong phạm vi công ty; Manager và Employee không có quyền phát thông báo toàn hệ thống.
+20.2.7. Xóa thông báo cá nhân
+Người dùng có thể xóa thông báo khỏi hộp thư cá nhân thông qua chức năng xóa. Quyền thao tác được giới hạn theo user_id, do đó người dùng không thể xem, đánh dấu hoặc xóa thông báo thuộc về người khác.
+20.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Sinh thông báo
+Tự động tạo thông báo
+Tạo thông báo từ các sự kiện nghiệp vụ như Workflow, Contract, Leave, Payroll, Discipline và các module liên quan.
+2
+Sinh thông báo
+Phát thông báo hệ thống
+Super Admin và HR Admin có thể phát thông báo chung theo phạm vi quyền được cấp.
+3
+Tra cứu
+Xem danh sách thông báo
+Người dùng xem các thông báo thuộc hộp thư cá nhân, có hỗ trợ phân trang và lọc.
+4
+Tra cứu
+Xem chi tiết thông báo
+Hiển thị đầy đủ tiêu đề, nội dung, loại, thời gian và đường dẫn xử lý nếu có.
+5
+Trạng thái
+Đánh dấu đã đọc
+Chuyển thông báo từ chưa đọc sang đã đọc và ghi nhận thời điểm đọc.
+6
+Trạng thái
+Đánh dấu tất cả đã đọc
+Cập nhật toàn bộ thông báo chưa đọc của người dùng thành đã đọc.
+7
+Tra cứu
+Đếm thông báo chưa đọc
+Cung cấp số lượng thông báo chưa đọc để hiển thị trên biểu tượng quả chuông.
+8
+Điều hướng
+Deep Linking
+Chuyển người dùng trực tiếp đến màn hình nghiệp vụ liên quan thông qua action_url.
+9
+Quản lý
+Xóa thông báo
+Cho phép người dùng xóa thông báo trong hộp thư cá nhân.
+10
+Bảo mật
+Kiểm soát quyền truy cập
+Người dùng chỉ được xem, đọc, đánh dấu hoặc xóa thông báo của chính mình.
+Các chức năng trên tương ứng với nhóm API được định nghĩa trong module Notification, bao gồm tra cứu, đếm chưa đọc, xem chi tiết, đánh dấu đọc, đọc tất cả, xóa và phát thông báo hệ thống.
+20.4. Mối quan hệ với các module khác
+Module Notification không trực tiếp xử lý nghiệp vụ của các module khác mà đóng vai trò kênh thông báo, tiếp nhận sự kiện từ các module và tạo thông báo cho người dùng. Kiến trúc này giúp tách biệt Notification khỏi các module nghiệp vụ.
+Các mối quan hệ chính
+Workflow: thông báo khi một bước xử lý/phê duyệt được giao cho người dùng.
+Contract: thông báo các vấn đề liên quan đến hợp đồng, chẳng hạn hợp đồng sắp hết hạn.
+Leave: thông báo về các yêu cầu nghỉ phép cần xử lý.
+Payroll: thông báo liên quan đến bảng lương.
+Discipline: thông báo các nghiệp vụ kỷ luật có liên quan đến người dùng.
+Asset: có thể phát sinh các thông báo liên quan đến tài sản.
+Các module khác: có thể sử dụng Notification Service hoặc Domain Event để gửi thông báo.
+21. Nhật ký kiểm toán & Truy vết hệ thống (Audit Log & Audit Trail) 
+21.1. Tổng quan
+Module Nhật ký kiểm toán (Audit Log) đóng vai trò là cơ chế ghi nhận và truy vết các thao tác quan trọng trên dữ liệu trong hệ thống CYCLOSA HRM. Module phục vụ việc kiểm tra lịch sử thay đổi, thanh kiểm tra nội bộ, phát hiện bất thường và truy xuất trách nhiệm đối với các thao tác trên dữ liệu nhạy cảm. Tài liệu nghiệp vụ đặt module trong bối cảnh tuân thủ ISO/IEC 27001, SOC 2, Nghị định 13/2023/NĐ-CP và Bộ luật Lao động 2019.
+Audit Log hoạt động như một “chiếc hộp đen” của hệ thống: các module như Payroll, Contract, Employee, Leave, Discipline, Roles... phát sinh thao tác sẽ tạo dữ liệu audit thông qua AOP @Auditable, Domain Event hoặc gọi trực tiếp AuditLogService
+21.2. Các phân hệ và chức năng
+21.2.1. Ghi nhận hoạt động hệ thống
+Module tự động ghi nhận các thao tác quan trọng được thực hiện trên hệ thống. Các hành động được chuẩn hóa như CREATE, UPDATE, DELETE, APPROVE, REJECT, OVERRIDE, EXPORT,...
+Các chức năng chính:
+Ghi nhận người thực hiện thao tác.
+Ghi nhận loại hành động.
+Ghi nhận loại đối tượng nghiệp vụ.
+Ghi nhận ID của đối tượng bị tác động.
+Ghi nhận thời điểm thao tác.
+Ghi nhận IP của thiết bị.
+Ghi nhận thông tin trình duyệt, hệ điều hành và thiết bị.
+Minh họa:
+20.2.2. Ghi nhận thay đổi trước và sau
+Đối với các nghiệp vụ cần truy vết chi tiết, hệ thống lưu lại trạng thái trước thay đổi (old_value) và sau thay đổi (new_value) dưới dạng JSON snapshot. Cơ chế này cho phép kiểm toán viên đối chiếu trực tiếp dữ liệu trước và sau thao tác.
+Ví dụ:
+Cách lưu old_value và new_value hỗ trợ giao diện Side-by-side Diff View, giúp kiểm toán viên nhanh chóng nhận biết trường dữ liệu nào đã thay đổi.
+20.2.3. Tra cứu nhật ký kiểm toán
+Người dùng có quyền kiểm toán có thể tra cứu danh sách audit log theo nhiều tiêu chí. API hỗ trợ phân trang và lọc theo keyword, người thực hiện, hành động, đối tượng và khoảng thời gian.
+Các chức năng chính:
+Xem danh sách nhật ký kiểm toán.
+Phân trang dữ liệu.
+Lọc theo người thực hiện.
+Lọc theo hành động.
+Lọc theo loại đối tượng.
+Lọc theo khoảng thời gian.
+Tìm kiếm theo từ khóa.
+Minh họa giao diện:
+20.2.4. Xem chi tiết một bản ghi kiểm toán
+Kiểm toán viên có thể mở một bản ghi để xem toàn bộ thông tin lưu vết, bao gồm hành động, đối tượng, người thực hiện, thời gian, IP, User Agent và dữ liệu trước/sau thay đổi.
+Minh họa:
+20.2.5. Truy vết lịch sử của một đối tượng
+Ngoài việc xem từng log riêng lẻ, hệ thống cho phép truy vấn toàn bộ lịch sử thay đổi của một đối tượng nghiệp vụ thông qua Audit Trail.
+Ví dụ đối với một nhân viên:
+EMPLOYEE #1024
+      │
+      ├── 08:30 ─ CREATE
+      │           Hồ sơ nhân viên được tạo
+      │
+      ├── 10:15 ─ UPDATE
+      │           Thay đổi phòng ban
+      │
+      ├── 14:20 ─ UPDATE
+      │           Thay đổi chức danh
+      │
+      ├── 09:15 ─ OVERRIDE
+      │           Điều chỉnh mức lương
+      │
+      └── 16:40 ─ UPDATE
+                  Cập nhật trạng thái
+API tương ứng:
+GET /api/v1/audit-logs/entity/{entityType}/{entityId}
+cho phép lấy toàn bộ dòng lịch sử của một bản ghi nghiệp vụ cụ thể.
+20.2.6. Xuất dữ liệu kiểm toán
+Dữ liệu nhật ký có thể được sử dụng để phục vụ các đợt thanh kiểm tra và kiểm toán định kỳ. Quyền audit.export được tách riêng trong ma trận RBAC.
+Luồng nghiệp vụ:
+20.2.7. Bảo toàn tính bất biến của Audit Log
+Audit Log được thiết kế theo mô hình Immutable / Append-Only. Bảng audit_logs chỉ cho phép INSERT và SELECT, không cho phép UPDATE hoặc DELETE thông qua ứng dụng.
+Điều này giúp đảm bảo lịch sử kiểm toán không bị thay đổi sau khi đã được ghi nhận. 
+20.2.8. Ghi log không làm gián đoạn nghiệp vụ
+Việc ghi Audit Log được thực hiện bất đồng bộ hoặc trong transaction độc lập với REQUIRES_NEW. Nếu quá trình ghi log xảy ra lỗi, lỗi đó không được phép làm rollback nghiệp vụ chính của người dùng.
+21.3. Bảng tổng hợp chức năng của module
+STT
+Nhóm chức năng
+Chức năng
+Mô tả
+1
+Ghi nhận
+Ghi nhận thao tác
+Lưu lại các hành động CREATE, UPDATE, DELETE, APPROVE, REJECT, OVERRIDE, EXPORT,...
+2
+Ghi nhận
+Ghi nhận người thực hiện
+Xác định tài khoản thực hiện thao tác hoặc ghi nhận tác vụ hệ thống khi user_id không có.
+3
+Ghi nhận
+Ghi nhận thông tin truy cập
+Lưu IP Address, User Agent và thời điểm thực hiện.
+4
+Truy vết
+Lưu dữ liệu trước/sau
+Lưu old_value và new_value để đối chiếu thay đổi.
+5
+Tra cứu
+Tra cứu nhật ký
+Tìm kiếm và lọc audit log theo nhiều tiêu chí.
+6
+Tra cứu
+Xem chi tiết log
+Xem đầy đủ thông tin của một bản ghi kiểm toán.
+7
+Audit Trail
+Xem lịch sử đối tượng
+Truy xuất toàn bộ lịch sử thay đổi của một đối tượng nghiệp vụ.
+8
+Báo cáo
+Xuất dữ liệu kiểm toán
+Xuất dữ liệu phục vụ thanh kiểm tra định kỳ.
+9
+Bảo mật
+Bảo toàn nhật ký
+Không cho phép sửa hoặc xóa audit log thông qua ứng dụng.
+10
+Hệ thống
+Ghi log bất đồng bộ
+Tách quá trình ghi log khỏi nghiệp vụ chính để tránh làm gián đoạn request.
+21.4. Mối quan hệ với các module khác
+Audit Log được thiết kế như một hạ tầng dùng chung cho các module nghiệp vụ. Các module không cần truy cập trực tiếp bảng audit_logs mà có thể sử dụng một trong ba cơ chế: @Auditable, AuditLogEvent hoặc gọi trực tiếp AuditLogService.
+Các mối quan hệ chính
+Payroll: truy vết các thay đổi liên quan đến bảng lương hoặc điều chỉnh lương.
+Contract: ghi nhận các thao tác tạo, sửa, phê duyệt hợp đồng.
+Employee: truy vết thay đổi thông tin nhân sự.
+Leave: ghi nhận các thao tác duyệt/từ chối yêu cầu nghỉ phép.
+Discipline: lưu lịch sử các quyết định và thao tác liên quan đến kỷ luật.
+Role & Permission: ghi nhận các thao tác thay đổi quyền hoặc vai trò.

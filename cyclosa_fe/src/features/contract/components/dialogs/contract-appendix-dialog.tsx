@@ -32,6 +32,7 @@ import {
 } from "../../api/contract-api";
 import { ContractStatusBadge } from "../contract-status-badge";
 import type { ContractAppendixDetail, ContractAppendixSummary } from "../../types/contract.types";
+import { ApprovalTimeline } from "@/features/workflow";
 import { toast } from "sonner";
 import {
   FileText,
@@ -106,6 +107,8 @@ export function ContractAppendixDialog({
     }
 
     try {
+      const desc = contentChanges.trim() || reason.trim() || "Điều chỉnh phụ lục hợp đồng";
+
       if (isEdit && appendix?.id) {
         await updateAppendix({
           id: appendix.id,
@@ -114,6 +117,7 @@ export function ContractAppendixDialog({
             appendixType,
             effectiveDate,
             reason: reason.trim() || undefined,
+            description: desc,
             newBaseSalary: newBaseSalary || undefined,
             contentChanges: contentChanges.trim() || undefined,
           },
@@ -127,6 +131,7 @@ export function ContractAppendixDialog({
             appendixType,
             effectiveDate,
             reason: reason.trim() || undefined,
+            description: desc,
             newBaseSalary: newBaseSalary || undefined,
             contentChanges: contentChanges.trim() || undefined,
           },
@@ -377,6 +382,20 @@ export function ContractAppendixDialog({
                   </Button>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Tiến trình phê duyệt Workflow */}
+          {isEdit && appendix?.id && (
+            <div className="pt-3 border-t space-y-2">
+              <Label className="text-xs text-muted-foreground uppercase font-semibold">
+                Tiến trình phê duyệt đa cấp
+              </Label>
+              <ApprovalTimeline
+                referenceId={appendix.id}
+                requestType="CONTRACT_APPENDIX"
+                className="border-border bg-muted/10 shadow-none"
+              />
             </div>
           )}
         </div>

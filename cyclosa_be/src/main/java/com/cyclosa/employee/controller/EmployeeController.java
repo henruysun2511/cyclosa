@@ -31,7 +31,7 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @GetMapping("/employees")
-    @PreAuthorize("@perm.has('employee.view')")
+    @PreAuthorize("@perm.has('employee.view') or @perm.has('career.view') or @perm.has('succession.view')")
     @RequirePermission("employee.view")
     @Operation(summary = "Lấy danh sách nhân viên phân trang", description = "Hỗ trợ lọc theo phòng ban, chi nhánh, chức danh, trạng thái và từ khóa")
     public ResponseEntity<ApiResponse<PageData<EmployeeSummaryResponse>>> getEmployees(

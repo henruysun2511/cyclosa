@@ -132,18 +132,9 @@ export default function TimesheetsGridPage() {
       {/* ── Page Header & Breadcrumb & Action Buttons ────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Bảng Tổng hợp Công Tháng
-            </h1>
-            <span
-              className={`badge ${
-                periodLocked ? "badge-inactive" : "badge-active"
-              }`}
-            >
-              {periodLocked ? "Đã khóa kỳ công" : "Kỳ công đang mở"}
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Bảng tổng hợp công tháng
+          </h1>
           <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
             <Link
               href="/"
@@ -160,7 +151,7 @@ export default function TimesheetsGridPage() {
               Chấm công
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Bảng công tháng (ATT-11)</span>
+            <span className="text-foreground font-medium">Bảng công tháng</span>
           </nav>
         </div>
 

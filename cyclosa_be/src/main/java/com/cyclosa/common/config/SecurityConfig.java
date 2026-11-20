@@ -45,6 +45,7 @@ public class SecurityConfig {
             "/api/v1/auth/reset-password",
             "/api/v1/auth/oauth2/**",
             "/api/v1/products/**",
+            "/api/v1/public/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/v3/api-docs/**",

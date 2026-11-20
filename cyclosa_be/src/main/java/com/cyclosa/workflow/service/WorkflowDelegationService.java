@@ -4,7 +4,7 @@ import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
 import com.cyclosa.common.util.SecurityUtils;
 import com.cyclosa.employee.entity.Employee;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
 import com.cyclosa.workflow.dto.request.CreateDelegationRequest;
 import com.cyclosa.workflow.dto.response.WorkflowDelegationResponse;
 import com.cyclosa.workflow.entity.WorkflowDelegation;
@@ -27,12 +27,12 @@ import java.util.UUID;
 public class WorkflowDelegationService {
 
     private final WorkflowDelegationRepository workflowDelegationRepository;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
 
     @Transactional
     public WorkflowDelegationResponse create(CreateDelegationRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId)
+        Employee currentEmployee = employeeService.findByUserId(currentUserId)
                 .orElseThrow(() -> new AppException(WorkflowErrorCode.NOT_ASSIGNED_APPROVER));
 
         if (currentEmployee.getId().equals(request.getDelegateeEmployeeId())) {
@@ -61,7 +61,7 @@ public class WorkflowDelegationService {
     @Transactional(readOnly = true)
     public PageData<WorkflowDelegationResponse> getMyDelegations(int page, int size) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId)
+        Employee currentEmployee = employeeService.findByUserId(currentUserId)
                 .orElseThrow(() -> new AppException(WorkflowErrorCode.NOT_ASSIGNED_APPROVER));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -74,7 +74,7 @@ public class WorkflowDelegationService {
     @Transactional
     public void revoke(UUID id) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
-        Employee currentEmployee = employeeRepository.findByUserId(currentUserId)
+        Employee currentEmployee = employeeService.findByUserId(currentUserId)
                 .orElseThrow(() -> new AppException(WorkflowErrorCode.NOT_ASSIGNED_APPROVER));
 
         WorkflowDelegation delegation = workflowDelegationRepository.findById(id)
@@ -89,8 +89,10 @@ public class WorkflowDelegationService {
     }
 
     private WorkflowDelegationResponse toResponse(WorkflowDelegation d) {
-        String delegatorName = employeeRepository.findById(d.getDelegatorEmployeeId()).map(Employee::getFullName).orElse("---");
-        String delegateeName = employeeRepository.findById(d.getDelegateeEmployeeId()).map(Employee::getFullName).orElse("---");
+        String delegatorName = employeeService.getEmployeeFullName(d.getDelegatorEmployeeId());
+        if (delegatorName.isBlank()) delegatorName = "---";
+        String delegateeName = employeeService.getEmployeeFullName(d.getDelegateeEmployeeId());
+        if (delegateeName.isBlank()) delegateeName = "---";
 
         return WorkflowDelegationResponse.builder()
                 .id(d.getId())

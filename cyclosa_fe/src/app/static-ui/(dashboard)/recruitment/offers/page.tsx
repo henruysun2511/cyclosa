@@ -118,7 +118,7 @@ export default function RecruitmentOffersPage() {
               Tuyển dụng
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Thư mời nhận việc (REC-26)</span>
+            <span className="text-foreground font-medium">Thư mời nhận việc</span>
           </nav>
         </div>
 

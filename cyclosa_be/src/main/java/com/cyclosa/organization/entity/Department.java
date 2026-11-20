@@ -38,4 +38,11 @@ public class Department extends BaseEntity {
     @OrderBy("effectiveFrom DESC")
     @Builder.Default
     private List<DepartmentVersion> versions = new ArrayList<>();
+
+    public String getName() {
+        if (versions != null && !versions.isEmpty()) {
+            return versions.get(0).getName();
+        }
+        return code;
+    }
 }

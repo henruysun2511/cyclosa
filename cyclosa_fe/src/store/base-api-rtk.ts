@@ -53,7 +53,7 @@ class SimpleMutex {
 const mutex = new SimpleMutex();
 
 // ── Base query: Gắn Bearer token & Multi-tenancy header ───────────────────────
-const baseQuery = fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
   baseUrl: env.API_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
     const state = getState() as RootState;
@@ -63,20 +63,40 @@ const baseQuery = fetchBaseQuery({
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    if (state.auth.currentCompanyId) {
-      headers.set("X-Company-Id", state.auth.currentCompanyId);
-    }
+    const companyId = state.auth.currentCompanyId || "00000000-0000-0000-0000-000000000001";
+    headers.set("X-Company-Id", companyId);
 
     return headers;
   },
 });
+
+/**
+ * Tự động loại bỏ prefix "/api/v1" hoặc "api/v1" nếu endpoint lỡ truyền vào,
+ * vì baseUrl đã bao gồm /api/v1, tránh lỗi nhân đôi path (/api/v1/api/v1/...).
+ */
+const sanitizeEndpointUrl = (url: string): string => {
+  if (url.startsWith("/api/v1/")) return url.slice(7);
+  if (url.startsWith("api/v1/")) return url.slice(6);
+  return url;
+};
+
+const sanitizeArgs = (args: string | FetchArgs): string | FetchArgs => {
+  if (typeof args === "string") {
+    return sanitizeEndpointUrl(args);
+  }
+  if (args && typeof args.url === "string") {
+    return { ...args, url: sanitizeEndpointUrl(args.url) };
+  }
+  return args;
+};
 
 // ── Re-auth wrapper: Tự động refresh token có Mutex bảo vệ ──────────────────
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
-> = async (args, api, extraOptions) => {
+> = async (rawArgs, api, extraOptions) => {
+  const args = sanitizeArgs(rawArgs);
   // Lấy đường dẫn request để kiểm tra loại trừ
   const requestUrl = typeof args === "string" ? args : args.url;
   const isAuthAuthEndpoint =
@@ -91,7 +111,7 @@ const baseQueryWithReauth: BaseQueryFn<
     await mutex.waitForUnlock();
   }
 
-  let result = await baseQuery(args, api, extraOptions);
+  let result = await rawBaseQuery(args, api, extraOptions);
 
   // Chỉ kích hoạt refresh token khi gặp 401 trên các API nghiệp vụ thông thường
   if (result.error?.status === 401 && !isAuthAuthEndpoint) {
@@ -104,7 +124,7 @@ const baseQueryWithReauth: BaseQueryFn<
           state.auth.refreshToken || tokenStorage.getRefreshToken();
 
         if (refreshToken) {
-          const refreshResult = await baseQuery(
+          const refreshResult = await rawBaseQuery(
             {
               url: AUTH_ENDPOINTS.REFRESH,
               method: "POST",
@@ -127,7 +147,7 @@ const baseQueryWithReauth: BaseQueryFn<
             );
 
             // Retry lại request ban đầu với Access Token mới
-            result = await baseQuery(args, api, extraOptions);
+            result = await rawBaseQuery(args, api, extraOptions);
           } else {
             api.dispatch(logout());
           }
@@ -140,7 +160,7 @@ const baseQueryWithReauth: BaseQueryFn<
     } else {
       // Đợi request refresh token đang chạy hoàn tất rồi retry
       await mutex.waitForUnlock();
-      result = await baseQuery(args, api, extraOptions);
+      result = await rawBaseQuery(args, api, extraOptions);
     }
   }
 
@@ -174,6 +194,67 @@ export const baseApi = createApi({
     "WorkflowRequest",
     "WorkflowStats",
     "WorkflowDelegation",
+    "Notification",
+    "NotificationUnreadCount",
+    "AuditLog",
+    "Payroll",
+    "RecruitmentRequest",
+    "JobOpening",
+    "RecruitmentChannel",
+    "Candidate",
+    "Application",
+    "Interview",
+    "Scorecard",
+    "Offer",
+    "InternalOpportunity",
+    "OnboardingTemplate",
+    "OnboardingProcess",
+    "OnboardingTask",
+    "OrientationSession",
+    "ItAccountType",
+    "ItAccountRequest",
+    "LeaveType",
+    "LeavePolicy",
+    "LeaveBalance",
+    "LeaveRequest",
+    "LeaveCalendar",
+    "AttendanceShift",
+    "ShiftAssignment",
+    "AttendanceLog",
+    "AttendanceDailyRecord",
+    "MonthlyTimesheetSummary",
+    "AttendanceException",
+    "AttendanceRequest",
+    "AttendanceAdjustment",
+    "TimesheetPeriod",
+    "TimesheetSnapshot",
+    "Reward",
+    "Discipline",
+    "Complaint",
+    "PerformanceCycle",
+    "Kpi",
+    "PerformanceReview",
+    "PerformanceGoal",
+    "Offboarding",
+    "Transfer",
+    "Asset",
+    "AssetCategory",
+    "CareerPath",
+    "SuccessionPlan",
+    "TalentPool",
+    "CareerSimulation",
+    "OrgScenario",
+    "Workplace",
+    "RetentionPolicy",
+    "DocumentType",
+    "Dossier",
+    "DigitalDocument",
+    "LegalHold",
+    "DestructionProposal",
+    "AiConversation",
+    "AiKnowledgeDoc",
+    "AiKnowledgeGap",
+    "Dashboard",
   ],
   endpoints: () => ({}),
 });

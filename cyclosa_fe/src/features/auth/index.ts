@@ -6,3 +6,4 @@ export * from "./components/login-form";
 export * from "./components/forgot-password-form";
 export * from "./components/reset-password-form";
 export * from "./components/activate-account-form";
+export * from "./utils/role-redirect";

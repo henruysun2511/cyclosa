@@ -70,6 +70,7 @@ import { DependentDialog } from "@/features/employee/components/dialogs/dependen
 import { EmergencyContactDialog } from "@/features/employee/components/dialogs/emergency-contact-dialog";
 import { StatusChangeDialog } from "@/features/employee/components/dialogs/status-change-dialog";
 import { ProbationEvaluationDialog } from "@/features/employee/components/dialogs/probation-evaluation-dialog";
+import { ApprovalTimeline } from "@/features/workflow";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -253,7 +254,7 @@ export default function EmployeeDetailPage({ params }: PageProps) {
   const tenure = calculateTenure(employee.startDate);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 pb-16">
       {/* ── 1. Top Header & Điều hướng ───────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
         <div>
@@ -641,7 +642,7 @@ export default function EmployeeDetailPage({ params }: PageProps) {
                 <div className="flex items-center gap-2.5">
                   <Briefcase className="h-4 w-4 text-primary" />
                   <CardTitle className="text-sm font-bold text-foreground">
-                    Thông tin Vị trí & Cơ cấu Tổ chức (Bộ 3 Chiều)
+                    Thông tin Vị trí & Cơ cấu Tổ chức
                   </CardTitle>
                 </div>
                 <Button
@@ -881,7 +882,7 @@ export default function EmployeeDetailPage({ params }: PageProps) {
               <div className="flex items-center gap-2">
                 <FileBadge className="h-4 w-4 text-primary" />
                 <CardTitle className="text-sm font-bold text-foreground">
-                  Giấy tờ Định danh cá nhân (CCCD / Hộ chiếu)
+                  Giấy tờ Định danh cá nhân
                 </CardTitle>
               </div>
               <Button
@@ -1034,7 +1035,7 @@ export default function EmployeeDetailPage({ params }: PageProps) {
             <div className="flex items-center gap-2">
               <History className="h-4 w-4 text-primary" />
               <CardTitle className="text-sm font-bold text-foreground">
-                Lịch sử Bổ nhiệm & Luân chuyển Công tác (Bộ 3 Chiều)
+                Lịch sử Bổ nhiệm & Luân chuyển Công tác
               </CardTitle>
             </div>
             <Button
@@ -1342,24 +1343,42 @@ export default function EmployeeDetailPage({ params }: PageProps) {
                 {employee.probationEvaluations?.map((evalItem) => (
                   <div
                     key={evalItem.id}
-                    className="p-4 rounded-xl border border-border bg-muted/20 text-xs space-y-1.5"
+                    className="p-4 rounded-xl border border-border bg-muted/20 text-xs space-y-2.5"
                   >
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        className={
-                          evalItem.result === "PASSED"
-                            ? "bg-emerald-600 text-white"
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={
+                            evalItem.result === "PASSED"
+                              ? "bg-emerald-600 text-white"
+                              : evalItem.result === "FAILED"
+                              ? "bg-rose-600 text-white"
+                              : "bg-amber-600 text-white"
+                          }
+                        >
+                          {evalItem.result === "PASSED"
+                            ? "Đạt thử việc (PASSED)"
                             : evalItem.result === "FAILED"
-                            ? "bg-rose-600 text-white"
-                            : "bg-amber-600 text-white"
-                        }
-                      >
-                        {evalItem.result === "PASSED"
-                          ? "Đạt thử việc (PASSED)"
-                          : evalItem.result === "FAILED"
-                          ? "Không đạt (FAILED)"
-                          : "Kéo dài thử việc (EXTENDED)"}
-                      </Badge>
+                            ? "Không đạt (FAILED)"
+                            : "Kéo dài thử việc (EXTENDED)"}
+                        </Badge>
+
+                        {evalItem.status === "APPROVED" && (
+                          <Badge className="bg-emerald-700 text-white">
+                            Đã duyệt
+                          </Badge>
+                        )}
+                        {evalItem.status === "REJECTED" && (
+                          <Badge className="bg-rose-700 text-white">
+                            Bị từ chối
+                          </Badge>
+                        )}
+                        {(!evalItem.status || evalItem.status === "PENDING") && (
+                          <Badge className="bg-amber-600 text-white">
+                            Chờ phê duyệt
+                          </Badge>
+                        )}
+                      </div>
                       <span className="font-mono text-muted-foreground text-[11px]">
                         Ngày đánh giá: {evalItem.evaluationDate}
                       </span>
@@ -1374,6 +1393,15 @@ export default function EmployeeDetailPage({ params }: PageProps) {
                         {evalItem.comment}
                       </p>
                     )}
+
+                    {/* Tiến trình duyệt đa cấp */}
+                    <div className="pt-2 border-t border-border/60">
+                      <ApprovalTimeline
+                        referenceId={evalItem.id}
+                        requestType="PROBATION_EVAL"
+                        className="border-border bg-card shadow-xs"
+                      />
+                    </div>
                   </div>
                 ))}
 
@@ -1394,7 +1422,7 @@ export default function EmployeeDetailPage({ params }: PageProps) {
           <CardHeader className="py-4 px-6 border-b border-border bg-muted/20">
             <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
               <Scan className="h-4 w-4 text-primary" />
-              Đăng ký Khuôn mặt Sinh trắc học (Face ID Chấm công)
+              Đăng ký Khuôn mặt Sinh trắc học
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">

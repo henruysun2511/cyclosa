@@ -1,0 +1,39 @@
+# Root / IDE
+.idea/
+.vscode/
+*.log
+.DS_Store
+.pytest_cache/
+
+# Frontend (Next.js / TypeScript / Node)
+cyclosa_fe/node_modules/
+cyclosa_fe/.next/
+cyclosa_fe/out/
+cyclosa_fe/build/
+cyclosa_fe/.env.local
+cyclosa_fe/.env.*.local
+cyclosa_fe/npm-debug.log*
+cyclosa_fe/yarn-debug.log*
+cyclosa_fe/yarn-error.log*
+cyclosa_fe/pnpm-debug.log*
+
+# Backend (Java / Spring Boot / Maven)
+cyclosa_be/target/
+cyclosa_be/*.class
+cyclosa_be/.mvn/
+cyclosa_be/src/main/resources/application-local.properties
+cyclosa_be/*.jar
+cyclosa_be/*.war
+
+# AI Service (Python / FastAPI)
+cyclosa_ai/__pycache__/
+cyclosa_ai/*.py[cod]
+cyclosa_ai/*$py.class
+cyclosa_ai/.venv/
+cyclosa_ai/venv/
+cyclosa_ai/env/
+cyclosa_ai/.pytest_cache/
+cyclosa_ai/*.pt
+cyclosa_ai/*.pth
+cyclosa_ai/*.onnx
+cyclosa_ai/.env

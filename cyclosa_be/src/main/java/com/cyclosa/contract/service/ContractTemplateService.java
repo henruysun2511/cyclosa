@@ -10,11 +10,12 @@ import com.cyclosa.contract.entity.enums.TemplateKind;
 import com.cyclosa.contract.exception.ContractErrorCode;
 import com.cyclosa.contract.repository.ContractTemplateRepository;
 import com.cyclosa.contract.repository.ContractTemplateVersionRepository;
-import com.cyclosa.organization.repository.BranchRepository;
-import com.cyclosa.organization.repository.CompanyRepository;
-import com.cyclosa.organization.repository.DepartmentRepository;
-import com.cyclosa.organization.repository.DepartmentVersionRepository;
-import com.cyclosa.organization.repository.JobTitleRepository;
+import com.cyclosa.organization.entity.Branch;
+import com.cyclosa.organization.entity.DepartmentVersion;
+import com.cyclosa.organization.entity.JobTitle;
+import com.cyclosa.organization.service.BranchService;
+import com.cyclosa.organization.service.DepartmentService;
+import com.cyclosa.organization.service.JobTitleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,11 +33,9 @@ public class ContractTemplateService {
 
     private final ContractTemplateRepository templateRepository;
     private final ContractTemplateVersionRepository versionRepository;
-    private final CompanyRepository companyRepository;
-    private final DepartmentRepository departmentRepository;
-    private final DepartmentVersionRepository departmentVersionRepository;
-    private final BranchRepository branchRepository;
-    private final JobTitleRepository jobTitleRepository;
+    private final DepartmentService departmentService;
+    private final BranchService branchService;
+    private final JobTitleService jobTitleService;
 
     @Transactional(readOnly = true)
     public PageData<ContractTemplateDto.TemplateResponse> getTemplates(
@@ -289,13 +288,13 @@ public class ContractTemplateService {
 
     public ContractTemplateDto.TemplateResponse mapToTemplateResponse(ContractTemplate t) {
         String jobTitleName = t.getJobTitleId() != null
-                ? jobTitleRepository.findById(t.getJobTitleId()).map(j -> j.getName()).orElse(null)
+                ? jobTitleService.findJobTitleEntityById(t.getJobTitleId()).map(JobTitle::getName).orElse(null)
                 : null;
         String deptName = t.getDepartmentId() != null
-                ? departmentVersionRepository.findLatestVersion(t.getDepartmentId()).map(v -> v.getName()).orElse(null)
+                ? departmentService.findLatestVersion(t.getDepartmentId()).map(DepartmentVersion::getName).orElse(null)
                 : null;
         String branchName = t.getBranchId() != null
-                ? branchRepository.findById(t.getBranchId()).map(b -> b.getName()).orElse(null)
+                ? branchService.findBranchEntityById(t.getBranchId()).map(Branch::getName).orElse(null)
                 : null;
 
         int vCount = t.getVersions() != null ? t.getVersions().size() : 0;

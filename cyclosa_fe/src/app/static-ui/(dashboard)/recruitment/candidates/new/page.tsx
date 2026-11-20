@@ -76,7 +76,7 @@ export default function NewCandidateUploadPage() {
               Tuyển dụng
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Trích xuất CV (REC-13)</span>
+            <span className="text-foreground font-medium">Trích xuất CV</span>
           </nav>
         </div>
 

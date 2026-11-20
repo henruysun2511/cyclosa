@@ -63,9 +63,16 @@ export const workflowDefinitionFormSchema = z.object({
   companyId: z.string().min(1, "Vui lòng chọn công ty áp dụng"),
   requestType: z.enum([
     "CONTRACT",
-    "RESIGNATION",
-    "OVERTIME",
+    "CONTRACT_APPENDIX",
+    "RECRUITMENT_REQUEST",
+    "OFFER",
+    "LEAVE_REQUEST",
     "LEAVE",
+    "OVERTIME",
+    "TRANSFER_REQUEST",
+    "RESIGNATION",
+    "PROBATION_EVAL",
+    "ORG_SCENARIO",
     "SALARY_ADJUSTMENT",
   ]),
   name: z

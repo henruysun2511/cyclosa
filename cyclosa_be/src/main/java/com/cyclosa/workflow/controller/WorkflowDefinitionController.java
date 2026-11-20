@@ -1,5 +1,6 @@
 package com.cyclosa.workflow.controller;
 
+import com.cyclosa.common.annotation.RequirePermission;
 import com.cyclosa.common.response.ApiResponse;
 import com.cyclosa.common.response.PageData;
 import com.cyclosa.workflow.dto.request.CreateWorkflowDefinitionRequest;
@@ -29,7 +30,8 @@ public class WorkflowDefinitionController {
     private final WorkflowDefinitionService workflowDefinitionService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Lấy danh sách quy trình phê duyệt có phân trang và bộ lọc")
     public ResponseEntity<ApiResponse<PageData<WorkflowDefinitionResponse>>> search(
             @Valid @ParameterObject WorkflowDefinitionFilterRequest filter
@@ -39,7 +41,8 @@ public class WorkflowDefinitionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Tạo mới định nghĩa quy trình phê duyệt kèm danh sách các bước")
     public ResponseEntity<ApiResponse<WorkflowDefinitionDetailResponse>> create(
             @Valid @RequestBody CreateWorkflowDefinitionRequest request
@@ -49,7 +52,8 @@ public class WorkflowDefinitionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Xem chi tiết quy trình phê duyệt và các bước cấu hình")
     public ResponseEntity<ApiResponse<WorkflowDefinitionDetailResponse>> getDetail(@PathVariable UUID id) {
         WorkflowDefinitionDetailResponse data = workflowDefinitionService.getDetail(id);
@@ -57,7 +61,8 @@ public class WorkflowDefinitionController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Cập nhật thông tin và danh sách các bước của quy trình")
     public ResponseEntity<ApiResponse<WorkflowDefinitionDetailResponse>> update(
             @PathVariable UUID id,
@@ -68,7 +73,8 @@ public class WorkflowDefinitionController {
     }
 
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Kích hoạt áp dụng quy trình phê duyệt")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable UUID id) {
         workflowDefinitionService.activate(id);
@@ -76,7 +82,8 @@ public class WorkflowDefinitionController {
     }
 
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Ngừng kích hoạt quy trình phê duyệt")
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable UUID id) {
         workflowDefinitionService.deactivate(id);
@@ -84,7 +91,8 @@ public class WorkflowDefinitionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('workflow.manage') or hasRole('ADMIN')")
+    @PreAuthorize("@perm.has('workflow.manage') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @RequirePermission("workflow.manage")
     @Operation(summary = "Xóa định nghĩa quy trình phê duyệt")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         workflowDefinitionService.delete(id);

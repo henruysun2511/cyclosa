@@ -212,7 +212,9 @@ export interface ContractFilterParams {
 
 export interface CreateContractInput {
   companyId: string;
+  employerCompanyId?: string;
   employeeId: string;
+  employerRepresentativeId?: string;
   templateVersionId?: string;
   contractNumber: string;
   contractType: ContractType;
@@ -221,11 +223,15 @@ export interface CreateContractInput {
   startDate: string;
   endDate?: string;
   baseSalary: number;
+  insuranceSalary?: number;
   jobTitleId?: string;
   departmentId?: string;
+  branchId?: string;
   workLocation?: string;
   workingTimeNote?: string;
+  workingTimeDescription?: string;
   salaryPaymentMethod: SalaryPaymentMethod;
+  payDayOfMonth?: number;
   bankAccount?: string;
   bankName?: string;
   probationPercentage?: number;
@@ -311,10 +317,15 @@ export interface CreateAppendixInput {
   appendixType: string;
   effectiveDate: string;
   reason?: string;
+  description?: string;
   newJobTitleId?: string;
   newDepartmentId?: string;
+  newBranchId?: string;
+  newWorkLocation?: string;
   newBaseSalary?: number;
+  newInsuranceSalary?: number;
   contentChanges?: string;
+  templateVersionId?: string;
   allowances?: ContractAllowance[];
   signers?: {
     side: SignerSide;

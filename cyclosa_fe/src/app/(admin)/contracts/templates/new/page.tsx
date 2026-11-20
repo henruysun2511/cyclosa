@@ -5,7 +5,7 @@ import { ContractTemplateEditor } from "@/features/contract";
 
 export default function NewContractTemplatePage() {
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <ContractTemplateEditor isEdit={false} />
     </div>
   );

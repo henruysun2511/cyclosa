@@ -1,6 +1,7 @@
 package com.cyclosa.employee.dto.response;
 
 import com.cyclosa.employee.entity.enums.ProbationResult;
+import com.cyclosa.workflow.enums.WorkflowOverallStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class ProbationEvaluationResponse {
     private UUID id;
     private UUID employeeId;
     private ProbationResult result;
+    private WorkflowOverallStatus status;
     private LocalDate evaluationDate;
     private UUID evaluatedByEmployeeId;
     private String evaluatedByEmployeeName;

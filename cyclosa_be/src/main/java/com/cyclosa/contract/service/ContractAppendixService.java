@@ -9,8 +9,12 @@ import com.cyclosa.contract.entity.enums.SignerStatus;
 import com.cyclosa.contract.entity.enums.SigningMethod;
 import com.cyclosa.contract.exception.ContractErrorCode;
 import com.cyclosa.contract.repository.*;
-import com.cyclosa.organization.repository.BranchRepository;
-import com.cyclosa.organization.repository.JobTitleRepository;
+import com.cyclosa.employee.service.EmployeeService;
+import com.cyclosa.organization.service.BranchService;
+import com.cyclosa.organization.service.JobTitleService;
+import com.cyclosa.workflow.dto.request.SubmitWorkflowRequest;
+import com.cyclosa.workflow.enums.RequestType;
+import com.cyclosa.workflow.service.WorkflowExecutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +32,10 @@ public class ContractAppendixService {
     private final ContractRepository contractRepository;
     private final ContractVersionRepository versionRepository;
     private final ContractSignerRepository signerRepository;
-    private final JobTitleRepository jobTitleRepository;
-    private final BranchRepository branchRepository;
+    private final JobTitleService jobTitleService;
+    private final BranchService branchService;
+    private final EmployeeService employeeService;
+    private final WorkflowExecutionService workflowExecutionService;
 
     @Transactional(readOnly = true)
     public List<ContractAppendixDto.ContractAppendixResponse> getAppendices(UUID contractId) {
@@ -143,8 +149,32 @@ public class ContractAppendixService {
     public void submitAppendix(UUID appendixId) {
         ContractAppendix appendix = appendixRepository.findById(appendixId)
                 .orElseThrow(() -> new AppException(ContractErrorCode.APPENDIX_NOT_FOUND));
+
+        if (appendix.getStatus() != ContractStatus.DRAFT) {
+            throw new AppException(ContractErrorCode.CONTRACT_NOT_IN_DRAFT);
+        }
+
         appendix.setStatus(ContractStatus.PENDING_APPROVAL);
         appendixRepository.save(appendix);
+
+        Contract contract = appendix.getContract();
+        String employeeName = "";
+        if (contract != null && contract.getEmployeeId() != null) {
+            employeeName = employeeService.getEmployeeFullName(contract.getEmployeeId());
+        }
+
+        UUID companyId = contract != null ? contract.getEmployerCompanyId() : null;
+        String contractNo = contract != null ? contract.getContractNo() : "HD";
+
+        workflowExecutionService.submit(SubmitWorkflowRequest.builder()
+                .companyId(companyId)
+                .requestType(RequestType.CONTRACT_APPENDIX)
+                .referenceId(appendix.getId())
+                .referenceCode(contractNo + "-PL" + appendix.getAppendixNo())
+                .title("Phê duyệt Phụ lục HĐ: " + contractNo + " (PL số " + appendix.getAppendixNo() + ")" + (employeeName.isBlank() ? "" : " - " + employeeName))
+                .requesterEmployeeId(contract != null ? contract.getEmployeeId() : null)
+                .requestAmount(appendix.getNewBaseSalary())
+                .build());
     }
 
     @Transactional
@@ -173,10 +203,10 @@ public class ContractAppendixService {
 
     public ContractAppendixDto.ContractAppendixResponse mapToResponse(ContractAppendix a) {
         String jobTitleName = a.getNewJobTitleId() != null
-                ? jobTitleRepository.findById(a.getNewJobTitleId()).map(j -> j.getName()).orElse(null)
+                ? jobTitleService.findJobTitleEntityById(a.getNewJobTitleId()).map(j -> j.getName()).orElse(null)
                 : null;
         String branchName = a.getNewBranchId() != null
-                ? branchRepository.findById(a.getNewBranchId()).map(b -> b.getName()).orElse(null)
+                ? branchService.findBranchEntityById(a.getNewBranchId()).map(b -> b.getName()).orElse(null)
                 : null;
 
         List<ContractAppendixDto.AppendixAllowanceDto> allowances = appendixAllowanceRepository.findByAppendixId(a.getId()).stream()

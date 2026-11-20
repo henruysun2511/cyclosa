@@ -1,11 +1,10 @@
 package com.cyclosa.workflow.service;
 
 import com.cyclosa.authorization.entity.Role;
-import com.cyclosa.authorization.repository.RoleRepository;
+import com.cyclosa.authorization.service.RoleService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
-import com.cyclosa.employee.entity.Employee;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
 import com.cyclosa.workflow.dto.request.CreateWorkflowDefinitionRequest;
 import com.cyclosa.workflow.dto.request.CreateWorkflowStepRequest;
 import com.cyclosa.workflow.dto.request.UpdateWorkflowDefinitionRequest;
@@ -34,8 +33,8 @@ public class WorkflowDefinitionService {
 
     private final WorkflowDefinitionRepository workflowDefinitionRepository;
     private final WorkflowDefinitionStepRepository workflowDefinitionStepRepository;
-    private final RoleRepository roleRepository;
-    private final EmployeeRepository employeeRepository;
+    private final RoleService roleService;
+    private final EmployeeService employeeService;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("createdAt", "name", "requestType", "isActive");
 
@@ -64,9 +63,9 @@ public class WorkflowDefinitionService {
         }
 
         // Tự động deactive quy trình cũ nếu đang có quy trình active cùng loại
-        Optional<WorkflowDefinition> activeOld = workflowDefinitionRepository
-                .findByCompanyIdAndRequestTypeAndIsActiveTrue(request.getCompanyId(), request.getRequestType());
-        activeOld.ifPresent(old -> old.setIsActive(false));
+        List<WorkflowDefinition> activeOld = workflowDefinitionRepository
+                .findAllByCompanyIdAndRequestTypeAndIsActiveTrue(request.getCompanyId(), request.getRequestType());
+        activeOld.forEach(old -> old.setIsActive(false));
 
         WorkflowDefinition definition = WorkflowDefinition.builder()
                 .companyId(request.getCompanyId())
@@ -80,6 +79,7 @@ public class WorkflowDefinitionService {
         definition = workflowDefinitionRepository.save(definition);
 
         int order = 1;
+        List<WorkflowDefinitionStep> stepList = new ArrayList<>();
         for (CreateWorkflowStepRequest s : request.getSteps()) {
             WorkflowDefinitionStep step = WorkflowDefinitionStep.builder()
                     .workflowDefinition(definition)
@@ -88,13 +88,15 @@ public class WorkflowDefinitionService {
                     .approverType(s.getApproverType())
                     .approverRoleId(s.getApproverRoleId())
                     .approverEmployeeId(s.getApproverEmployeeId())
-                    .conditionType(s.getConditionType())
+                    .conditionType(s.getConditionType() != null ? s.getConditionType() : com.cyclosa.workflow.enums.StepConditionType.ALWAYS)
                     .conditionThreshold(s.getConditionThreshold())
                     .build();
-            definition.getSteps().add(step);
+            stepList.add(step);
             order++;
         }
 
+        workflowDefinitionStepRepository.saveAll(stepList);
+        definition.setSteps(stepList);
         workflowDefinitionRepository.save(definition);
         return getDetail(definition.getId());
     }
@@ -109,11 +111,11 @@ public class WorkflowDefinitionService {
         List<WorkflowStepDefinitionResponse> stepResponses = steps.stream().map(s -> {
             String roleName = null;
             if (s.getApproverRoleId() != null) {
-                roleName = roleRepository.findById(s.getApproverRoleId()).map(Role::getName).orElse(null);
+                roleName = roleService.findRoleEntityById(s.getApproverRoleId()).map(Role::getName).orElse(null);
             }
             String empName = null;
             if (s.getApproverEmployeeId() != null) {
-                empName = employeeRepository.findById(s.getApproverEmployeeId()).map(Employee::getFullName).orElse(null);
+                empName = employeeService.getEmployeeFullName(s.getApproverEmployeeId());
             }
             return WorkflowStepDefinitionResponse.builder()
                     .id(s.getId())

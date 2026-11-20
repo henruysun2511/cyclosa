@@ -1,5 +1,7 @@
 package com.cyclosa.auth.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.auth.dto.request.BulkCreateUserItem;
 import com.cyclosa.auth.dto.request.BulkCreateUserRequest;
 import com.cyclosa.auth.dto.request.CreateUserRequest;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 import com.cyclosa.auth.dto.request.UserFilterRequest;
 import com.cyclosa.auth.dto.response.UserResponse;
 import com.cyclosa.auth.entity.User;
@@ -47,6 +50,7 @@ public class UserService {
      * Quản trị viên khởi tạo tài khoản nhân viên mới (PENDING_ACTIVATION) và gửi mail 48h
      */
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "USER", entityIdExpression = "#result.id", description = "Tạo mới tài khoản người dùng")
     public UserResponse createUser(CreateUserRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         log.info("Admin tạo tài khoản nhân viên mới: {}", email);
@@ -106,6 +110,7 @@ public class UserService {
     /**
      * Gửi lại mã kích hoạt cho tài khoản PENDING_ACTIVATION
      */
+    @Auditable(action = AuditAction.UPDATE, entityType = "USER", entityIdExpression = "#userId", description = "Gửi lại email kích hoạt tài khoản")
     public void resendActivation(UUID userId) {
         User user = findUserOrThrow(userId);
 
@@ -128,6 +133,7 @@ public class UserService {
      * Khóa tài khoản và ngắt phiên làm việc
      */
     @Transactional
+    @Auditable(action = AuditAction.LOCK, entityType = "USER", entityIdExpression = "#userId", description = "Khóa tài khoản người dùng")
     public void lockUser(UUID userId) {
         log.warn("Khóa tài khoản user id={}", userId);
         User user = findUserOrThrow(userId);
@@ -144,6 +150,7 @@ public class UserService {
      * Mở khóa tài khoản người dùng
      */
     @Transactional
+    @Auditable(action = AuditAction.UNLOCK, entityType = "USER", entityIdExpression = "#userId", description = "Mở khóa tài khoản người dùng")
     public void unlockUser(UUID userId) {
         log.info("Mở khóa tài khoản user id={}", userId);
         User user = findUserOrThrow(userId);
@@ -252,6 +259,27 @@ public class UserService {
                 .createdUsers(createdUsers)
                 .errors(errors)
                 .build();
+    }
+
+    public Optional<User> findUserEntityById(UUID userId) {
+        return userRepository.findByIdAndDeletedFalse(userId);
+    }
+
+    public Optional<User> findUserEntityByEmail(String email) {
+        return userRepository.findByEmailAndDeletedFalse(email);
+    }
+
+    public Optional<User> findUserEntityByUsernameOrEmail(String identifier) {
+        return userRepository.findByEmailAndDeletedFalse(identifier)
+                .or(() -> userRepository.findByUsernameAndDeletedFalse(identifier));
+    }
+
+    public boolean isEmailExists(String email) {
+        return userRepository.existsByEmailAndDeletedFalse(email);
+    }
+
+    public List<UUID> getActiveUserIds() {
+        return userRepository.findUserIdsByStatus(UserStatus.ACTIVE);
     }
 
     private User findUserOrThrow(UUID userId) {

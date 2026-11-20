@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -109,6 +110,10 @@ public class BranchService {
     public Branch findBranchOrThrow(UUID id) {
         return branchRepository.findById(id)
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.BRANCH_NOT_FOUND));
+    }
+
+    public Optional<Branch> findBranchEntityById(UUID id) {
+        return branchRepository.findById(id);
     }
 
     private Region findRegionOrThrow(UUID regionId) {

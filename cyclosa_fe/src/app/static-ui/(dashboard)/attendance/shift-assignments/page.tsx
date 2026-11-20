@@ -277,13 +277,9 @@ export default function ATT02ShiftAssignmentsPage() {
             <span>/</span>
             <span className="text-foreground font-medium">Lưới phân ca</span>
           </nav>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Phân ca làm việc tuần
-            
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Lưới điều phối ma trận Nhân viên × Ca trực tuần. Hỗ trợ gán ca linh hoạt, phát hiện vi phạm giờ nghỉ ngơi và phân ca thông minh.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

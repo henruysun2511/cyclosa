@@ -1,7 +1,9 @@
 package com.cyclosa.authorization.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.repository.UserRepository;
+import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.enums.DataScope;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.authorization.dto.request.AssignUserRoleRequest;
@@ -30,7 +32,7 @@ public class UserRoleService {
 
     private final UserRoleAssignmentRepository userRoleAssignmentRepository;
     private final RoleRepository roleRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final RolePermissionRepository rolePermissionRepository;
     private final RoleCacheService roleCacheService;
 
@@ -43,13 +45,22 @@ public class UserRoleService {
         return list.stream().map(this::toAssignmentResponse).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getUserRoleCodes(UUID userId) {
+        return userRoleAssignmentRepository.findAllWithRoleByUserId(userId).stream()
+                .map(a -> a.getRole().getCode())
+                .distinct()
+                .toList();
+    }
+
     /**
      * Gán vai trò cho người dùng tại một công ty cụ thể
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "USER_ROLE", entityIdExpression = "#userId", description = "Gán vai trò cho người dùng")
     public UserRoleAssignmentResponse assignRoleToUser(UUID userId, AssignUserRoleRequest request) {
         // 1. Kiểm tra User tồn tại
-        User user = userRepository.findById(userId)
+        User user = userService.findUserEntityById(userId)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy người dùng"));
 
         // 2. Kiểm tra Role tồn tại
@@ -80,6 +91,7 @@ public class UserRoleService {
      * Thu hồi vai trò đã gán cho người dùng
      */
     @Transactional
+    @Auditable(action = AuditAction.DELETE, entityType = "USER_ROLE", entityIdExpression = "#assignmentId", description = "Thu hồi vai trò của người dùng")
     public void revokeRoleAssignment(UUID assignmentId) {
         UserRoleAssignment assignment = userRoleAssignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new AppException(RoleErrorCode.ASSIGNMENT_NOT_FOUND));
@@ -147,6 +159,11 @@ public class UserRoleService {
                         .build())
                 .sorted(Comparator.comparing(EffectivePermissionResponse::getPermissionCode))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> findUserIdsByRoleId(UUID roleId) {
+        return userRoleAssignmentRepository.findUserIdsByRoleId(roleId);
     }
 
     private UserRoleAssignmentResponse toAssignmentResponse(UserRoleAssignment a) {

@@ -26,8 +26,11 @@ export const jobTitleApi = baseApi.injectEndpoints({
           : [{ type: "JobTitle", id: "LIST" }],
     }),
 
-    getAllJobTitles: builder.query<JobTitle[], string>({
-      query: (companyId) => ({ url: `/job-titles/all?companyId=${companyId}`, method: "GET" }),
+    getAllJobTitles: builder.query<JobTitle[], string | void>({
+      query: (companyId) => ({
+        url: companyId ? `/job-titles/all?companyId=${companyId}` : `/job-titles/all`,
+        method: "GET",
+      }),
       transformResponse: (res: ApiResponse<JobTitle[]>) => res.data,
       providesTags: [{ type: "JobTitle", id: "LIST" }],
     }),

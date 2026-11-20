@@ -31,7 +31,7 @@ public class JobTitleController {
     private final JobTitleService jobTitleService;
 
     @GetMapping
-    @PreAuthorize("@perm.has('org.view')")
+    @PreAuthorize("@perm.has('org.view') or @perm.has('career.view') or @perm.has('succession.view') or @perm.has('employee.view')")
     @RequirePermission("org.view")
     @Operation(summary = "Lấy danh sách chức danh theo công ty có phân trang", description = "Hỗ trợ lọc từ khóa và phân trang")
     public ResponseEntity<ApiResponse<PageData<JobTitleResponse>>> getJobTitles(@ParameterObject @Valid JobTitleFilterRequest filter) {
@@ -40,12 +40,12 @@ public class JobTitleController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("@perm.has('org.view')")
+    @PreAuthorize("@perm.has('org.view') or @perm.has('career.view') or @perm.has('succession.view') or @perm.has('employee.view')")
     @RequirePermission("org.view")
     @Operation(summary = "Lấy toàn bộ chức danh theo công ty (cho dropdown)")
     public ResponseEntity<ApiResponse<List<JobTitleResponse>>> getAllJobTitles(
-            @Parameter(description = "ID công ty", required = true)
-            @RequestParam UUID companyId) {
+            @Parameter(description = "ID công ty")
+            @RequestParam(required = false) UUID companyId) {
         List<JobTitleResponse> result = jobTitleService.getAllJobTitlesByCompany(companyId);
         return ResponseEntity.ok(ApiResponse.ok(result, "Lấy danh sách chức danh thành công"));
     }

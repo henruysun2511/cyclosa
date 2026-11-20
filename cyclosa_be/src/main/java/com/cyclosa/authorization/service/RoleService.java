@@ -1,5 +1,7 @@
 package com.cyclosa.authorization.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
 import com.cyclosa.authorization.dto.request.AssignRolePermissionsRequest;
@@ -59,6 +61,7 @@ public class RoleService {
      * Tạo mới vai trò tùy chỉnh
      */
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "ROLE", entityIdExpression = "#result.id", description = "Tạo mới vai trò người dùng")
     public RoleResponse createRole(CreateRoleRequest request) {
         String cleanCode = request.getCode().trim().toUpperCase();
 
@@ -86,6 +89,7 @@ public class RoleService {
      * Cập nhật thông tin vai trò (tên hiển thị và mô tả)
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "ROLE", entityIdExpression = "#roleId", description = "Cập nhật thông tin vai trò")
     public RoleResponse updateRole(UUID roleId, UpdateRoleRequest request) {
         Role role = findRoleEntity(roleId);
 
@@ -99,6 +103,7 @@ public class RoleService {
      * Xóa mềm vai trò
      */
     @Transactional
+    @Auditable(action = AuditAction.DELETE, entityType = "ROLE", entityIdExpression = "#roleId", description = "Xóa vai trò người dùng")
     public void deleteRole(UUID roleId) {
         Role role = findRoleEntity(roleId);
 
@@ -130,6 +135,7 @@ public class RoleService {
      * Gán toàn bộ ma trận quyền kèm data_scope cho vai trò
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "ROLE_PERMISSION", entityIdExpression = "#roleId", description = "Cập nhật phân quyền cho vai trò")
     public List<RolePermissionResponse> assignPermissions(UUID roleId, AssignRolePermissionsRequest request) {
         Role role = findRoleEntity(roleId);
 
@@ -201,5 +207,9 @@ public class RoleService {
     public Role findRoleEntity(UUID roleId) {
         return roleRepository.findByIdAndDeletedFalse(roleId)
                 .orElseThrow(() -> new AppException(RoleErrorCode.ROLE_NOT_FOUND));
+    }
+
+    public Optional<Role> findRoleEntityById(UUID roleId) {
+        return roleRepository.findById(roleId);
     }
 }

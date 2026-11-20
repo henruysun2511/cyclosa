@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -294,7 +294,7 @@ export default function MyWorkplacePage() {
               <span>Phòng họp sắp tới</span>
             </CardTitle>
             <Button asChild variant="ghost" size="sm" className="h-7 text-xs text-primary p-0 hover:bg-transparent">
-              <Link href="/workplace/admin/room-bookings">
+              <Link href="/workplace/room-bookings">
                 <span>Đặt phòng</span>
               </Link>
             </Button>

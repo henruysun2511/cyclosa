@@ -1,11 +1,10 @@
 package com.cyclosa.workflow.service;
 
-import com.cyclosa.authorization.repository.UserRoleAssignmentRepository;
+import com.cyclosa.authorization.service.UserRoleService;
 import com.cyclosa.employee.entity.Employee;
 import com.cyclosa.employee.entity.EmployeeWorkAssignment;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
 import com.cyclosa.organization.entity.Department;
-import com.cyclosa.organization.repository.DepartmentRepository;
 import com.cyclosa.workflow.entity.WorkflowDelegation;
 import com.cyclosa.workflow.enums.ApproverType;
 import com.cyclosa.workflow.enums.RequestType;
@@ -25,9 +24,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ApproverResolverService {
 
-    private final EmployeeRepository employeeRepository;
-    private final DepartmentRepository departmentRepository;
-    private final UserRoleAssignmentRepository userRoleAssignmentRepository;
+    private final EmployeeService employeeService;
+    private final UserRoleService userRoleService;
     private final WorkflowDelegationRepository workflowDelegationRepository;
 
     @Transactional(readOnly = true)
@@ -48,7 +46,7 @@ public class ApproverResolverService {
 
             case DIRECT_MANAGER:
                 if (requesterEmployeeId != null) {
-                    Employee requester = employeeRepository.findById(requesterEmployeeId).orElse(null);
+                    Employee requester = employeeService.findEntityById(requesterEmployeeId).orElse(null);
                     if (requester != null && requester.getWorkAssignments() != null) {
                         for (EmployeeWorkAssignment wa : requester.getWorkAssignments()) {
                             if (wa.getManager() != null) {
@@ -68,7 +66,7 @@ public class ApproverResolverService {
 
             case DEPARTMENT_HEAD:
                 if (requesterEmployeeId != null) {
-                    Employee requester = employeeRepository.findById(requesterEmployeeId).orElse(null);
+                    Employee requester = employeeService.findEntityById(requesterEmployeeId).orElse(null);
                     if (requester != null && requester.getWorkAssignments() != null && !requester.getWorkAssignments().isEmpty()) {
                         Department dept = requester.getWorkAssignments().get(0).getDepartment();
                         if (dept != null && dept.getVersions() != null && !dept.getVersions().isEmpty()) {
@@ -80,9 +78,9 @@ public class ApproverResolverService {
 
             case ROLE:
                 if (approverRoleId != null) {
-                    List<UUID> userIds = userRoleAssignmentRepository.findUserIdsByRoleId(approverRoleId);
+                    List<UUID> userIds = userRoleService.findUserIdsByRoleId(approverRoleId);
                     for (UUID uid : userIds) {
-                        Optional<Employee> emp = employeeRepository.findByUserId(uid);
+                        Optional<Employee> emp = employeeService.findByUserId(uid);
                         if (emp.isPresent()) {
                             initialAssignee = emp.get().getId();
                             break;
@@ -97,7 +95,7 @@ public class ApproverResolverService {
             if (requesterEmployeeId != null) {
                 initialAssignee = requesterEmployeeId;
             } else {
-                List<Employee> emps = employeeRepository.findAll();
+                List<Employee> emps = employeeService.findAllEntities();
                 if (!emps.isEmpty()) {
                     initialAssignee = emps.get(0).getId();
                 }

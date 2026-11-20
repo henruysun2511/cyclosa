@@ -8,17 +8,31 @@ import type {
 
 export const REQUEST_TYPE_OPTIONS: { value: RequestType; label: string }[] = [
   { value: "CONTRACT", label: "Hợp đồng lao động" },
-  { value: "RESIGNATION", label: "Nghỉ việc / Thôi việc" },
-  { value: "OVERTIME", label: "Làm thêm giờ (OT)" },
+  { value: "CONTRACT_APPENDIX", label: "Phụ lục hợp đồng" },
+  { value: "RECRUITMENT_REQUEST", label: "Yêu cầu tuyển dụng" },
+  { value: "OFFER", label: "Thư mời nhận việc" },
+  { value: "LEAVE_REQUEST", label: "Đơn xin nghỉ phép" },
   { value: "LEAVE", label: "Nghỉ phép" },
+  { value: "OVERTIME", label: "Làm thêm giờ (OT)" },
+  { value: "TRANSFER_REQUEST", label: "Điều chuyển nhân sự" },
+  { value: "RESIGNATION", label: "Nghỉ việc / Thôi việc" },
+  { value: "PROBATION_EVAL", label: "Đánh giá thử việc" },
+  { value: "ORG_SCENARIO", label: "Phương án tái cơ cấu" },
   { value: "SALARY_ADJUSTMENT", label: "Điều chỉnh lương" },
 ];
 
 export const REQUEST_TYPE_MAP: Record<RequestType, string> = {
   CONTRACT: "Hợp đồng lao động",
-  RESIGNATION: "Nghỉ việc / Thôi việc",
-  OVERTIME: "Làm thêm giờ (OT)",
+  CONTRACT_APPENDIX: "Phụ lục hợp đồng",
+  RECRUITMENT_REQUEST: "Yêu cầu tuyển dụng",
+  OFFER: "Thư mời nhận việc",
+  LEAVE_REQUEST: "Đơn xin nghỉ phép",
   LEAVE: "Nghỉ phép",
+  OVERTIME: "Làm thêm giờ (OT)",
+  TRANSFER_REQUEST: "Điều chuyển nhân sự",
+  RESIGNATION: "Nghỉ việc / Thôi việc",
+  PROBATION_EVAL: "Đánh giá thử việc",
+  ORG_SCENARIO: "Phương án tái cơ cấu",
   SALARY_ADJUSTMENT: "Điều chỉnh lương",
 };
 

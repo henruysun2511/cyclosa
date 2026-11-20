@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
@@ -789,7 +789,7 @@ export default function SeatMap2DPage() {
 
           {/* Nút Chỉnh sửa Editor (dành cho Admin) */}
           <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
-            <Link href="/workplace/admin/floors/fl_01/editor">
+            <Link href="/workplace/floors/fl_01/editor">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               <span>Chỉnh sửa bản đồ</span>
             </Link>
@@ -1572,7 +1572,7 @@ export default function SeatMap2DPage() {
 
                 <div className="pt-2 border-t border-border">
                   <Button asChild className="w-full text-xs h-8.5 bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Link href="/workplace/admin/room-bookings">
+                    <Link href="/workplace/room-bookings">
                       <Calendar className="h-3.5 w-3.5 mr-1" />
                       <span>Quản lý lịch phòng họp</span>
                     </Link>

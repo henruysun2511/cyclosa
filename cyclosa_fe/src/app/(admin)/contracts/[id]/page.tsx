@@ -215,7 +215,7 @@ export default function ContractDetailPage({ params }: PageProps) {
   const totalIncome = (Number(contract.baseSalary) || 0) + totalAllowances;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 pb-16">
       {/* ── 1. Top Header & Điều hướng ───────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
         <div>
@@ -877,7 +877,7 @@ export default function ContractDetailPage({ params }: PageProps) {
                 <CardHeader className="py-3 px-5 border-b border-border bg-muted/20">
                   <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    Tính toàn vẹn dữ liệu (SHA-256)
+                    Tính toàn vẹn dữ liệu
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-1.5 text-xs">
@@ -1253,7 +1253,7 @@ export default function ContractDetailPage({ params }: PageProps) {
           <CardHeader className="py-3.5 px-5 border-b border-border bg-muted/20">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <History className="w-4 h-4 text-primary" />
-              Lịch sử Thay đổi Phiên bản Hợp đồng (Audit Trail)
+              Lịch sử Thay đổi Phiên bản Hợp đồng
             </CardTitle>
           </CardHeader>
           <CardContent className="p-5 space-y-3 text-xs">

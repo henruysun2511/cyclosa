@@ -2,6 +2,7 @@ package com.cyclosa.employee.entity;
 
 import com.cyclosa.common.entity.BaseEntity;
 import com.cyclosa.employee.entity.enums.ProbationResult;
+import com.cyclosa.workflow.enums.WorkflowOverallStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -31,6 +32,11 @@ public class ProbationEvaluation extends BaseEntity {
     @Column(name = "result", nullable = false, length = 20)
     @Builder.Default
     private ProbationResult result = ProbationResult.PASSED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 30)
+    @Builder.Default
+    private WorkflowOverallStatus status = WorkflowOverallStatus.PENDING;
 
     @Column(name = "evaluation_date", nullable = false)
     private LocalDate evaluationDate;

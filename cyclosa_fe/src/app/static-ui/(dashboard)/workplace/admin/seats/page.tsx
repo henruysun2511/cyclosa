@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
@@ -192,7 +192,7 @@ export default function SeatsManagementPage() {
           </Button>
 
           <Button asChild size="sm" className="h-8.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-1.5 shadow-xs">
-            <Link href="/workplace/admin/floors/fl_03/editor">
+            <Link href="/workplace/floors/fl_03/editor">
               <Plus className="h-3.5 w-3.5" />
               <span>Thêm bàn trên Editor</span>
             </Link>

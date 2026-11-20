@@ -60,7 +60,7 @@ export function ProbationEvaluationDialog({
         },
       }).unwrap();
 
-      toast.success("Ghi nhận biên bản đánh giá thử việc thành công!");
+      toast.success("Ghi nhận biên bản đánh giá và đã gửi phê duyệt thành công!");
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
@@ -91,9 +91,9 @@ export function ProbationEvaluationDialog({
                 <SelectValue placeholder="Chọn kết quả" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="PASSED" label="Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức (Passed)">Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức (Passed)</SelectItem>
-                <SelectItem value="EXTENDED" label="Gia hạn thời gian thử việc tối đa theo quy định (Extended)">Gia hạn thời gian thử việc tối đa theo quy định (Extended)</SelectItem>
-                <SelectItem value="FAILED" label="Không đạt yêu cầu - Chấm dứt thử việc (Failed)">Không đạt yêu cầu - Chấm dứt thử việc (Failed)</SelectItem>
+                <SelectItem value="PASSED" label="Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức">Đạt yêu cầu - Đề xuất ký HĐLĐ chính thức</SelectItem>
+                <SelectItem value="EXTENDED" label="Gia hạn thời gian thử việc tối đa theo quy định">Gia hạn thời gian thử việc tối đa theo quy định</SelectItem>
+                <SelectItem value="FAILED" label="Không đạt yêu cầu - Chấm dứt thử việc">Không đạt yêu cầu - Chấm dứt thử việc</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -130,7 +130,7 @@ export function ProbationEvaluationDialog({
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Đang lưu..." : "Lưu biên bản đánh giá"}
+              {isLoading ? "Đang xử lý..." : "Lưu & Gửi phê duyệt"}
             </Button>
           </DialogFooter>
         </form>

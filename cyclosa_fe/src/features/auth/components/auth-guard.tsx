@@ -4,20 +4,38 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { SpiderIcon } from "@/components/shared";
+import { isEmployeeOnly } from "../utils/role-redirect";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export interface AuthGuardProps {
+  children: React.ReactNode;
+  /**
+   * Nếu bật requireAdmin = true: Chỉ cho phép người dùng có vai trò Quản trị / Quản lý truy cập.
+   * Nếu là nhân viên (EMPLOYEE thuần túy), tự động chuyển hướng sang Cổng nhân viên (/me).
+   */
+  requireAdmin?: boolean;
+}
+
+export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isInitialized } = useAppSelector(
+  const { isAuthenticated, isInitialized, user } = useAppSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
+    if (!isInitialized) return;
+
+    if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(pathname);
       router.replace(`/login?returnUrl=${returnUrl}`);
+      return;
     }
-  }, [isInitialized, isAuthenticated, router, pathname]);
+
+    // Nếu trang này yêu cầu quyền quản trị nhưng người dùng là nhân viên thuần túy
+    if (requireAdmin && isEmployeeOnly(user?.roles)) {
+      router.replace("/me");
+    }
+  }, [isInitialized, isAuthenticated, user, requireAdmin, router, pathname]);
 
   // Tránh nhấp nháy FOUC: khi chưa khởi tạo xong phiên
   if (!isInitialized) {
@@ -35,11 +53,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Nếu đã khởi tạo và chưa đăng nhập, trả về null trong lúc router chuyển hướng
-  if (!isAuthenticated) {
+  // Nếu chưa đăng nhập, hoặc route yêu cầu Admin mà chỉ là Employee
+  if (!isAuthenticated || (requireAdmin && isEmployeeOnly(user?.roles))) {
     return null;
   }
 
   return <>{children}</>;
 }
-

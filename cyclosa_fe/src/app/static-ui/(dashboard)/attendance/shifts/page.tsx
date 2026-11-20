@@ -115,13 +115,9 @@ export default function ATT01Page() {
             <span>/</span>
             <span className="text-foreground font-medium">{"Danh mục ca làm việc"}</span>
           </nav>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            {"Danh mục ca làm việc"}
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● Đang hoạt động</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Danh mục ca làm việc
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {"Tạo/sửa ca (giờ vào/ra, nghỉ giữa ca, định mức công, ân hạn, ca qua đêm); kích hoạt/ngừng; xóa ca chưa được phân"}
-          </p>
         </div>
 
         {/* Action Buttons */}

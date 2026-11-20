@@ -25,7 +25,7 @@ export const workflowApi = baseApi.injectEndpoints({
       WorkflowDefinitionFilterRequest
     >({
       query: (params) => ({
-        url: "/api/v1/workflow-definitions",
+        url: "/workflow-definitions",
         method: "GET",
         params,
       }),
@@ -45,7 +45,7 @@ export const workflowApi = baseApi.injectEndpoints({
       WorkflowDefinitionDetailResponse,
       string
     >({
-      query: (id) => `/api/v1/workflow-definitions/${id}`,
+      query: (id) => `/workflow-definitions/${id}`,
       transformResponse: (
         res: ApiResponse<WorkflowDefinitionDetailResponse>
       ) => res.data,
@@ -57,7 +57,7 @@ export const workflowApi = baseApi.injectEndpoints({
       CreateWorkflowDefinitionRequest
     >({
       query: (body) => ({
-        url: "/api/v1/workflow-definitions",
+        url: "/workflow-definitions",
         method: "POST",
         body,
       }),
@@ -75,7 +75,7 @@ export const workflowApi = baseApi.injectEndpoints({
       { id: string; body: UpdateWorkflowDefinitionRequest }
     >({
       query: ({ id, body }) => ({
-        url: `/api/v1/workflow-definitions/${id}`,
+        url: `/workflow-definitions/${id}`,
         method: "PUT",
         body,
       }),
@@ -93,7 +93,7 @@ export const workflowApi = baseApi.injectEndpoints({
       string
     >({
       query: (id) => ({
-        url: `/api/v1/workflow-definitions/${id}/toggle-status`,
+        url: `/workflow-definitions/${id}/toggle-status`,
         method: "PATCH",
       }),
       transformResponse: (
@@ -107,7 +107,7 @@ export const workflowApi = baseApi.injectEndpoints({
 
     deleteWorkflowDefinition: builder.mutation<void, string>({
       query: (id) => ({
-        url: `/api/v1/workflow-definitions/${id}`,
+        url: `/workflow-definitions/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: [
@@ -118,7 +118,7 @@ export const workflowApi = baseApi.injectEndpoints({
 
     // ── THỐNG KÊ DASHBOARD ──────────────────────────────────────────────────
     getWorkflowStats: builder.query<WorkflowStatsResponse, void>({
-      query: () => "/api/v1/workflow-requests/stats",
+      query: () => "/workflow-requests/stats",
       transformResponse: (res: ApiResponse<WorkflowStatsResponse>) => res.data,
       providesTags: [{ type: "WorkflowStats", id: "CURRENT" }],
     }),
@@ -129,7 +129,7 @@ export const workflowApi = baseApi.injectEndpoints({
       WorkflowInboxFilterRequest
     >({
       query: (params) => ({
-        url: "/api/v1/workflow-requests/inbox",
+        url: "/workflow-requests/inbox",
         method: "GET",
         params,
       }),
@@ -141,7 +141,7 @@ export const workflowApi = baseApi.injectEndpoints({
       WorkflowInboxFilterRequest
     >({
       query: (params) => ({
-        url: "/api/v1/workflow-requests/my-submitted",
+        url: "/workflow-requests/my-submitted",
         method: "GET",
         params,
       }),
@@ -153,7 +153,7 @@ export const workflowApi = baseApi.injectEndpoints({
       WorkflowInboxFilterRequest
     >({
       query: (params) => ({
-        url: "/api/v1/workflow-requests/history",
+        url: "/workflow-requests/history",
         method: "GET",
         params,
       }),
@@ -165,7 +165,7 @@ export const workflowApi = baseApi.injectEndpoints({
       WorkflowRequestDetailResponse,
       string
     >({
-      query: (id) => `/api/v1/workflow-requests/${id}`,
+      query: (id) => `/workflow-requests/${id}`,
       transformResponse: (
         res: ApiResponse<WorkflowRequestDetailResponse>
       ) => res.data,
@@ -177,7 +177,7 @@ export const workflowApi = baseApi.injectEndpoints({
       { referenceId: string; requestType: RequestType }
     >({
       query: ({ referenceId, requestType }) => ({
-        url: "/api/v1/workflow-requests/by-reference",
+        url: "/workflow-requests/by-reference",
         method: "GET",
         params: { referenceId, requestType },
       }),
@@ -195,7 +195,7 @@ export const workflowApi = baseApi.injectEndpoints({
       SubmitWorkflowRequest
     >({
       query: (body) => ({
-        url: "/api/v1/workflow-requests/submit",
+        url: "/workflow-requests/submit",
         method: "POST",
         body,
       }),
@@ -215,7 +215,7 @@ export const workflowApi = baseApi.injectEndpoints({
       { requestId: string; stepId: string; body: ApproveStepRequest }
     >({
       query: ({ requestId, stepId, body }) => ({
-        url: `/api/v1/workflow-requests/${requestId}/steps/${stepId}/approve`,
+        url: `/workflow-requests/${requestId}/steps/${stepId}/approve`,
         method: "POST",
         body,
       }),
@@ -236,7 +236,7 @@ export const workflowApi = baseApi.injectEndpoints({
       { requestId: string; stepId: string; body: RejectStepRequest }
     >({
       query: ({ requestId, stepId, body }) => ({
-        url: `/api/v1/workflow-requests/${requestId}/steps/${stepId}/reject`,
+        url: `/workflow-requests/${requestId}/steps/${stepId}/reject`,
         method: "POST",
         body,
       }),
@@ -257,7 +257,7 @@ export const workflowApi = baseApi.injectEndpoints({
       { requestId: string; body: CancelWorkflowRequest }
     >({
       query: ({ requestId, body }) => ({
-        url: `/api/v1/workflow-requests/${requestId}/cancel`,
+        url: `/workflow-requests/${requestId}/cancel`,
         method: "POST",
         body,
       }),

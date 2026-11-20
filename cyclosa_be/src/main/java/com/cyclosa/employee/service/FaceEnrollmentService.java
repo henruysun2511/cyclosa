@@ -1,7 +1,7 @@
 package com.cyclosa.employee.service;
 
 import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.repository.UserRepository;
+import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.employee.dto.request.EnrollFaceRequest;
 import com.cyclosa.employee.dto.response.FaceEnrollmentResponse;
@@ -31,7 +31,7 @@ public class FaceEnrollmentService {
 
     private final EmployeeRepository employeeRepository;
     private final FaceEnrollmentRepository faceEnrollmentRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final EmployeeMapper employeeMapper;
 
     public FaceEnrollmentResponse getFaceEnrollment(UUID employeeId) {
@@ -120,8 +120,7 @@ public class FaceEnrollmentService {
             throw new AppException(EmployeeErrorCode.EMPLOYEE_NOT_FOUND);
         }
         String principal = auth.getName();
-        User user = userRepository.findByEmailAndDeletedFalse(principal)
-                .or(() -> userRepository.findByUsernameAndDeletedFalse(principal))
+        User user = userService.findUserEntityByUsernameOrEmail(principal)
                 .orElseThrow(() -> new AppException(EmployeeErrorCode.EMPLOYEE_NOT_FOUND));
 
         return employeeRepository.findByUserId(user.getId())

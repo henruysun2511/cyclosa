@@ -1,5 +1,7 @@
 package com.cyclosa.auth.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.auth.dto.request.*;
 import com.cyclosa.auth.dto.response.AuthTokenResponse;
 import com.cyclosa.auth.dto.response.UserProfileResponse;
@@ -11,7 +13,7 @@ import com.cyclosa.auth.repository.UserRepository;
 import com.cyclosa.auth.security.JwtUtil;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.util.SecurityUtils;
-import com.cyclosa.authorization.repository.UserRoleAssignmentRepository;
+import com.cyclosa.authorization.service.UserRoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,13 +39,14 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final UserRoleAssignmentRepository userRoleAssignmentRepository;
+    private final UserRoleService userRoleService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     /**
      * ÄÄƒng nháº­p báº±ng Email vÃ  Máº­t kháº©u
      */
     @Transactional
+    @Auditable(action = AuditAction.LOGIN, entityType = "AUTH", description = "Đăng nhập hệ thống")
     public AuthTokenResponse login(LoginRequest request) {
         log.info("Xác thực đăng nhập username: {}", request.getUsername());
 
@@ -82,6 +85,7 @@ public class AuthService {
      * KÃ­ch hoáº¡t tÃ i khoáº£n nhÃ¢n viÃªn qua mÃ£ token 48 giá» vÃ  Ä‘áº·t máº­t kháº©u láº§n Ä‘áº§u
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "AUTH", description = "Kích hoạt tài khoản người dùng")
     public AuthTokenResponse activateAccount(ActivateAccountRequest request) {
         log.info("Xá»­ lÃ½ kÃ­ch hoáº¡t tÃ i khoáº£n báº±ng token");
 
@@ -192,6 +196,7 @@ public class AuthService {
      * Cập nhật thông tin cá nhân (Profile) của người dùng đang đăng nhập
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "USER", description = "Cập nhật hồ sơ tài khoản cá nhân")
     public UserProfileResponse updateCurrentUser(UpdateProfileRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
         log.info("Xử lý cập nhật thông tin cá nhân cho user ID: {}", currentUserId);
@@ -252,6 +257,7 @@ public class AuthService {
      * XÃ¡c thá»±c mÃ£ OTP vÃ  Ä‘áº·t láº¡i máº­t kháº©u má»›i
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "AUTH", description = "Đặt lại mật khẩu bằng mã OTP")
     public void resetPassword(ResetPasswordRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         log.info("Xá»­ lÃ½ Ä‘áº·t láº¡i máº­t kháº©u báº±ng OTP cho email: {}", email);
@@ -311,6 +317,7 @@ public class AuthService {
      * Cáº­p nháº­t / Äá»•i máº­t kháº©u cÃ¡ nhÃ¢n cho ngÆ°á»i dÃ¹ng Ä‘ang Ä‘Äƒng nháº­p
      */
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "AUTH", description = "Đổi mật khẩu người dùng")
     public void changePassword(ChangePasswordRequest request) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
         log.info("Xá»­ lÃ½ Ä‘á»•i máº­t kháº©u cho user ID: {}", currentUserId);
@@ -364,10 +371,7 @@ public class AuthService {
     }
 
     private List<String> resolveUserRoles(UUID userId) {
-        List<String> roles = userRoleAssignmentRepository.findAllWithRoleByUserId(userId).stream()
-                .map(a -> a.getRole().getCode())
-                .distinct()
-                .toList();
+        List<String> roles = userRoleService.getUserRoleCodes(userId);
         if (roles.isEmpty()) {
             return List.of("EMPLOYEE");
         }

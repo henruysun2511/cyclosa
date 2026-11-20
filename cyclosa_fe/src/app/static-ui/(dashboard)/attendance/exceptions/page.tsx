@@ -115,13 +115,9 @@ export default function ATT09Page() {
             <span>/</span>
             <span className="text-foreground font-medium">{"Ngoại lệ cần xử lý"}</span>
           </nav>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            {"Ngoại lệ cần xử lý"}
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● Đang hoạt động</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Ngoại lệ chấm công
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {"Thiếu chấm công, xác thực lỗi, vắng không phép; lối tắt tạo/xử lý giải trình"}
-          </p>
         </div>
 
         {/* Action Buttons */}

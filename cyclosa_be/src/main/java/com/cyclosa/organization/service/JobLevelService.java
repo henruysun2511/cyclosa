@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -102,6 +103,10 @@ public class JobLevelService {
     public JobLevel findJobLevelOrThrow(UUID id) {
         return jobLevelRepository.findById(id)
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.JOB_LEVEL_NOT_FOUND));
+    }
+
+    public Optional<JobLevel> findJobLevelEntityById(UUID id) {
+        return jobLevelRepository.findById(id);
     }
 
     private void verifyCompanyExists(UUID companyId) {

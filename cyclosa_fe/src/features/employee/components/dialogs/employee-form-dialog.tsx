@@ -171,7 +171,7 @@ export function EmployeeFormDialog({
   }, [open, employee, form]);
 
   const onSubmit = async (values: EmployeeFormValues) => {
-    if (!companyId) {
+    if (!effectiveCompanyId) {
       toast.error("Vui lòng chọn công ty làm việc!");
       return;
     }
@@ -240,7 +240,7 @@ export function EmployeeFormDialog({
       <DialogContent className="max-w-5xl w-[94vw] sm:max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">
-            {isEdit ? "Chỉnh sửa hồ sơ nhân sự" : "Tiếp nhận nhân sự mới (Onboarding)"}
+            {isEdit ? "Chỉnh sửa hồ sơ nhân sự" : "Tiếp nhận nhân sự mới"}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             {isEdit

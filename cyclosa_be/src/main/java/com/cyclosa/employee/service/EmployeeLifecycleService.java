@@ -1,8 +1,6 @@
 package com.cyclosa.employee.service;
 
-import com.cyclosa.auth.entity.User;
-import com.cyclosa.auth.enums.UserStatus;
-import com.cyclosa.auth.repository.UserRepository;
+import com.cyclosa.auth.service.UserService;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.employee.dto.request.ChangeStatusRequest;
 import com.cyclosa.employee.dto.request.CreateProbationEvaluationRequest;
@@ -19,6 +17,10 @@ import com.cyclosa.employee.mapper.EmployeeMapper;
 import com.cyclosa.employee.repository.EmployeeRepository;
 import com.cyclosa.employee.repository.EmployeeStatusHistoryRepository;
 import com.cyclosa.employee.repository.ProbationEvaluationRepository;
+import com.cyclosa.workflow.dto.request.SubmitWorkflowRequest;
+import com.cyclosa.workflow.enums.RequestType;
+import com.cyclosa.workflow.enums.WorkflowOverallStatus;
+import com.cyclosa.workflow.service.WorkflowExecutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,8 +41,9 @@ public class EmployeeLifecycleService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeStatusHistoryRepository statusHistoryRepository;
     private final ProbationEvaluationRepository probationEvaluationRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final EmployeeMapper employeeMapper;
+    private final WorkflowExecutionService workflowExecutionService;
 
     public List<StatusHistoryResponse> getStatusHistory(UUID employeeId) {
         if (!employeeRepository.existsById(employeeId)) {
@@ -78,11 +81,7 @@ public class EmployeeLifecycleService {
 
         // Nếu chuyển sang trạng thái Thôi việc (TERMINATED) -> khóa tài khoản User đăng nhập
         if (request.getStatus() == EmployeeStatus.TERMINATED && employee.getUserId() != null) {
-            Optional<User> userOpt = userRepository.findById(employee.getUserId());
-            userOpt.ifPresent(u -> {
-                u.setStatus(UserStatus.LOCKED);
-                userRepository.save(u);
-            });
+            userService.lockUser(employee.getUserId());
         }
 
         return employeeMapper.toStatusHistoryResponse(saved);
@@ -109,12 +108,27 @@ public class EmployeeLifecycleService {
         ProbationEvaluation eval = ProbationEvaluation.builder()
                 .employee(employee)
                 .result(request.getResult())
+                .status(WorkflowOverallStatus.PENDING)
                 .evaluationDate(request.getEvaluationDate())
                 .evaluatedBy(evaluator)
                 .comment(request.getComment())
                 .build();
 
         ProbationEvaluation saved = probationEvaluationRepository.save(eval);
+
+        if (employee.getCompanyId() != null) {
+            String resultText = request.getResult() == ProbationResult.PASSED ? "Đạt thử việc (PASSED)"
+                    : request.getResult() == ProbationResult.FAILED ? "Không đạt (FAILED)" : "Kéo dài thử việc (EXTENDED)";
+            workflowExecutionService.submit(SubmitWorkflowRequest.builder()
+                    .companyId(employee.getCompanyId())
+                    .requestType(RequestType.PROBATION_EVAL)
+                    .referenceId(saved.getId())
+                    .referenceCode("DGTV-" + employee.getEmployeeCode())
+                    .title("Đánh giá kết quả thử việc: " + employee.getFullName() + " (" + employee.getEmployeeCode() + ") - " + resultText)
+                    .requesterEmployeeId(evaluator.getId())
+                    .build());
+        }
+
         return employeeMapper.toProbationEvaluationResponse(saved);
     }
 
@@ -141,11 +155,13 @@ public class EmployeeLifecycleService {
 
         boolean hasPassed = probationEvaluationRepository
                 .findTopByEmployeeIdOrderByEvaluationDateDesc(employeeId)
-                .map(e -> e.getResult() == ProbationResult.PASSED)
+                .map(e -> e.getResult() == ProbationResult.PASSED && e.getStatus() == WorkflowOverallStatus.APPROVED)
                 .orElse(false);
 
         boolean eligible = hasPassed;
-        String reason = eligible ? "Đủ điều kiện chuyển nhân viên chính thức." : "Chưa đạt đánh giá thử việc kết quả PASSED.";
+        String reason = eligible
+                ? "Đủ điều kiện chuyển nhân viên chính thức (Đã hoàn tất phê duyệt đánh giá thử việc đạt)."
+                : "Chưa đạt đánh giá thử việc hoặc biên bản đánh giá chưa được phê duyệt hoàn tất.";
 
         return OfficialEligibilityResponse.builder()
                 .employeeId(employeeId)

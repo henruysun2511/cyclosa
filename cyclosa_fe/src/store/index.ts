@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { baseApi } from "@/store/base-api-rtk";
 import { uiSlice } from "./slices/ui.slice";
 import { authSlice } from "./slices/auth.slice";
+import { rtkErrorMiddleware } from "./middleware/rtk-error-middleware";
 
 export const makeStore = () =>
   configureStore({
@@ -11,7 +12,9 @@ export const makeStore = () =>
       [authSlice.name]: authSlice.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(baseApi.middleware),
+      getDefaultMiddleware()
+        .concat(baseApi.middleware)
+        .concat(rtkErrorMiddleware),
     devTools: process.env.NODE_ENV !== "production",
   });
 

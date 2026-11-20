@@ -1,5 +1,7 @@
 package com.cyclosa.contract.service;
 
+import com.cyclosa.audit.aop.Auditable;
+import com.cyclosa.audit.enums.AuditAction;
 import com.cyclosa.common.exception.AppException;
 import com.cyclosa.common.response.PageData;
 import com.cyclosa.contract.dto.ContractAppendixDto;
@@ -10,17 +12,22 @@ import com.cyclosa.contract.entity.enums.*;
 import com.cyclosa.contract.exception.ContractErrorCode;
 import com.cyclosa.contract.repository.*;
 import com.cyclosa.employee.entity.Employee;
-import com.cyclosa.employee.repository.EmployeeRepository;
+import com.cyclosa.employee.service.EmployeeService;
+import com.cyclosa.organization.entity.Branch;
 import com.cyclosa.organization.entity.Company;
-import com.cyclosa.organization.repository.BranchRepository;
-import com.cyclosa.organization.repository.CompanyRepository;
-import com.cyclosa.organization.repository.DepartmentRepository;
-import com.cyclosa.organization.repository.DepartmentVersionRepository;
-import com.cyclosa.organization.repository.JobTitleRepository;
+import com.cyclosa.organization.entity.DepartmentVersion;
+import com.cyclosa.organization.entity.JobTitle;
+import com.cyclosa.notification.enums.NotificationType;
+import com.cyclosa.notification.event.SendNotificationEvent;
+import com.cyclosa.organization.service.BranchService;
+import com.cyclosa.organization.service.CompanyService;
+import com.cyclosa.organization.service.DepartmentService;
+import com.cyclosa.organization.service.JobTitleService;
 import com.cyclosa.workflow.dto.request.SubmitWorkflowRequest;
 import com.cyclosa.workflow.enums.RequestType;
 import com.cyclosa.workflow.service.WorkflowExecutionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,14 +52,14 @@ public class ContractService {
     private final ContractVersionRepository versionRepository;
     private final ContractSignerRepository signerRepository;
 
-    private final EmployeeRepository employeeRepository;
-    private final CompanyRepository companyRepository;
-    private final DepartmentRepository departmentRepository;
-    private final DepartmentVersionRepository departmentVersionRepository;
-    private final BranchRepository branchRepository;
-    private final JobTitleRepository jobTitleRepository;
+    private final EmployeeService employeeService;
+    private final CompanyService companyService;
+    private final DepartmentService departmentService;
+    private final BranchService branchService;
+    private final JobTitleService jobTitleService;
     private final ContractComplianceService complianceService;
     private final WorkflowExecutionService workflowExecutionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public PageData<ContractDto.ContractSummaryResponse> getContracts(
@@ -93,6 +100,7 @@ public class ContractService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "CONTRACT", entityIdExpression = "#result.id", description = "Tạo mới hợp đồng lao động")
     public ContractDto.ContractDetailResponse createContract(ContractDto.CreateContractRequest request) {
         // Sinh mã hợp đồng duy nhất: HDLD-{YYYY}/{4 số ngẫu nhiên}
         String contractNo = generateContractNo();
@@ -185,6 +193,7 @@ public class ContractService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "CONTRACT", entityIdExpression = "#id", description = "Cập nhật điều chỉnh hợp đồng lao động")
     public ContractDto.ContractDetailResponse updateContract(UUID id, ContractDto.UpdateContractRequest request) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new AppException(ContractErrorCode.CONTRACT_NOT_FOUND));
@@ -222,6 +231,7 @@ public class ContractService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.APPROVE, entityType = "CONTRACT", entityIdExpression = "#id", description = "Gửi phê duyệt hợp đồng lao động")
     public void submitContract(UUID id) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new AppException(ContractErrorCode.CONTRACT_NOT_FOUND));
@@ -242,8 +252,7 @@ public class ContractService {
 
         String employeeName = "";
         if (contract.getEmployeeId() != null) {
-            employeeName = employeeRepository.findById(contract.getEmployeeId())
-                    .map(Employee::getFullName).orElse("");
+            employeeName = employeeService.getEmployeeFullName(contract.getEmployeeId());
         }
 
         workflowExecutionService.submit(SubmitWorkflowRequest.builder()
@@ -258,15 +267,29 @@ public class ContractService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.UPDATE, entityType = "CONTRACT", entityIdExpression = "#id", description = "Phát lệnh ký số điện tử hợp đồng")
     public void sendForSignature(UUID id) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new AppException(ContractErrorCode.CONTRACT_NOT_FOUND));
 
         contract.setStatus(ContractStatus.PENDING_SIGNATURE);
         contractRepository.save(contract);
+
+        if (contract.getEmployeeId() != null) {
+            employeeService.findEntityById(contract.getEmployeeId())
+                    .map(Employee::getUserId)
+                    .ifPresent(userId -> eventPublisher.publishEvent(SendNotificationEvent.ofSingle(
+                            userId,
+                            NotificationType.CONTRACT,
+                            "Yêu cầu ký hợp đồng lao động",
+                            "Hợp đồng số " + contract.getContractNo() + " đang chờ bạn ký kết điện tử",
+                            "/contracts/" + contract.getId()
+                    )));
+        }
     }
 
     @Transactional
+    @Auditable(action = AuditAction.REJECT, entityType = "CONTRACT", entityIdExpression = "#id", description = "Hủy hợp đồng lao động")
     public void cancelContract(UUID id) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new AppException(ContractErrorCode.CONTRACT_NOT_FOUND));
@@ -280,6 +303,7 @@ public class ContractService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.CREATE, entityType = "CONTRACT", entityIdExpression = "#result.id", description = "Gia hạn / Tái ký hợp đồng lao động")
     public ContractDto.ContractDetailResponse renewContract(UUID id) {
         Contract previous = contractRepository.findById(id)
                 .orElseThrow(() -> new AppException(ContractErrorCode.CONTRACT_NOT_FOUND));
@@ -315,6 +339,7 @@ public class ContractService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.LOCK, entityType = "CONTRACT", entityIdExpression = "#id", description = "Lưu trữ / Đóng hồ sơ hợp đồng")
     public void archiveContract(UUID id) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new AppException(ContractErrorCode.CONTRACT_NOT_FOUND));
@@ -345,11 +370,11 @@ public class ContractService {
     }
 
     public ContractDto.ContractSummaryResponse mapToSummaryResponse(Contract c) {
-        Employee emp = employeeRepository.findById(c.getEmployeeId()).orElse(null);
-        Company company = companyRepository.findById(c.getEmployerCompanyId()).orElse(null);
-        String jobTitleName = jobTitleRepository.findById(c.getJobTitleId()).map(j -> j.getName()).orElse(null);
-        String deptName = departmentVersionRepository.findLatestVersion(c.getDepartmentId()).map(v -> v.getName()).orElse(null);
-        String branchName = branchRepository.findById(c.getBranchId()).map(b -> b.getName()).orElse(null);
+        Employee emp = employeeService.findEntityById(c.getEmployeeId()).orElse(null);
+        Company company = companyService.findCompanyEntityById(c.getEmployerCompanyId()).orElse(null);
+        String jobTitleName = jobTitleService.findJobTitleEntityById(c.getJobTitleId()).map(JobTitle::getName).orElse(null);
+        String deptName = departmentService.findLatestVersion(c.getDepartmentId()).map(DepartmentVersion::getName).orElse(null);
+        String branchName = branchService.findBranchEntityById(c.getBranchId()).map(Branch::getName).orElse(null);
 
         Integer daysUntilExpiry = null;
         if (c.getEndDate() != null && c.getStatus() == ContractStatus.ACTIVE) {
@@ -380,13 +405,13 @@ public class ContractService {
     }
 
     public ContractDto.ContractDetailResponse mapToDetailResponse(Contract c) {
-        Employee emp = employeeRepository.findById(c.getEmployeeId()).orElse(null);
-        Employee rep = employeeRepository.findById(c.getEmployerRepresentativeId()).orElse(null);
-        Company company = companyRepository.findById(c.getEmployerCompanyId()).orElse(null);
+        Employee emp = employeeService.findEntityById(c.getEmployeeId()).orElse(null);
+        Employee rep = employeeService.findEntityById(c.getEmployerRepresentativeId()).orElse(null);
+        Company company = companyService.findCompanyEntityById(c.getEmployerCompanyId()).orElse(null);
 
-        String jobTitleName = jobTitleRepository.findById(c.getJobTitleId()).map(j -> j.getName()).orElse(null);
-        String deptName = departmentVersionRepository.findLatestVersion(c.getDepartmentId()).map(v -> v.getName()).orElse(null);
-        String branchName = branchRepository.findById(c.getBranchId()).map(b -> b.getName()).orElse(null);
+        String jobTitleName = jobTitleService.findJobTitleEntityById(c.getJobTitleId()).map(JobTitle::getName).orElse(null);
+        String deptName = departmentService.findLatestVersion(c.getDepartmentId()).map(DepartmentVersion::getName).orElse(null);
+        String branchName = branchService.findBranchEntityById(c.getBranchId()).map(Branch::getName).orElse(null);
 
         Integer daysUntilExpiry = null;
         if (c.getEndDate() != null && c.getStatus() == ContractStatus.ACTIVE) {
@@ -411,7 +436,7 @@ public class ContractService {
         if (!versions.isEmpty()) {
             signers = signerRepository.findByContractVersionIdOrderBySigningOrderAsc(versions.get(0).getId()).stream()
                     .map(s -> {
-                        Employee sEmp = employeeRepository.findById(s.getSignerEmployeeId()).orElse(null);
+                        Employee sEmp = employeeService.findEntityById(s.getSignerEmployeeId()).orElse(null);
                         return ContractSigningDto.ContractSignerResponse.builder()
                                 .id(s.getId())
                                 .contractVersionId(s.getContractVersion().getId())

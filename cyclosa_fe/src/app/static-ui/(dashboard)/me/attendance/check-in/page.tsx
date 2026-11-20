@@ -40,12 +40,11 @@ export default function MobileAttendanceCheckInPage() {
             Về Trang chủ
           </Link>
         </Button>
-        <Badge variant="outline" className="font-mono text-xs">ATT-03</Badge>
       </div>
 
       <div className="text-center space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Chấm Công Khuôn Mặt Di Động
+          Chấm công khuôn mặt
         </h1>
         <p className="text-xs text-muted-foreground">
           Xác thực sinh trắc học Face ID và kiểm tra vị trí GPS tại chi nhánh văn phòng.
@@ -95,7 +94,7 @@ export default function MobileAttendanceCheckInPage() {
         <Card className="shadow-2xs border-border">
           <CardContent className="p-4">
             <CameraCapture
-              title="Điểm danh vào ca (Check-in)"
+              title="Điểm danh vào ca"
               subtitle="Giữ yên khuôn mặt trong khung tròn cho đến khi có tín hiệu quét thành công"
               onCapture={handleCaptureComplete}
             />

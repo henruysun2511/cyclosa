@@ -84,7 +84,7 @@ export default function BlindScorecardPage() {
               Lịch phỏng vấn
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Phiếu chấm điểm (REC-23)</span>
+            <span className="text-foreground font-medium">Phiếu chấm điểm</span>
           </nav>
         </div>
 

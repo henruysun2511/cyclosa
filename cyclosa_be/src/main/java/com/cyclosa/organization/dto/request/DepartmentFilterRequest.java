@@ -14,8 +14,7 @@ import java.util.UUID;
 @Schema(description = "Tham số tìm kiếm và phân trang phòng ban")
 public class DepartmentFilterRequest extends BaseFilterRequest {
 
-    @NotNull(message = "ID công ty không được để trống")
-    @Parameter(description = "ID công ty trực thuộc", required = true)
+    @Parameter(description = "ID công ty trực thuộc")
     private UUID companyId;
 }
 

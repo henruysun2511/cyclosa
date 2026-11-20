@@ -19,6 +19,8 @@ public interface WorkflowDefinitionRepository extends JpaRepository<WorkflowDefi
 
     Optional<WorkflowDefinition> findByCompanyIdAndRequestTypeAndIsActiveTrue(UUID companyId, RequestType requestType);
 
+    List<WorkflowDefinition> findAllByCompanyIdAndRequestTypeAndIsActiveTrue(UUID companyId, RequestType requestType);
+
     List<WorkflowDefinition> findByCompanyIdAndRequestType(UUID companyId, RequestType requestType);
 
     @Query("SELECT d FROM WorkflowDefinition d WHERE (:companyId IS NULL OR d.companyId = :companyId) " +

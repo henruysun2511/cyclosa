@@ -14,10 +14,10 @@ import com.cyclosa.organization.entity.Department;
 import com.cyclosa.organization.entity.JobLevel;
 import com.cyclosa.organization.entity.JobTitle;
 import com.cyclosa.organization.exception.OrganizationErrorCode;
-import com.cyclosa.organization.repository.BranchRepository;
-import com.cyclosa.organization.repository.DepartmentRepository;
-import com.cyclosa.organization.repository.JobLevelRepository;
-import com.cyclosa.organization.repository.JobTitleRepository;
+import com.cyclosa.organization.service.BranchService;
+import com.cyclosa.organization.service.DepartmentService;
+import com.cyclosa.organization.service.JobLevelService;
+import com.cyclosa.organization.service.JobTitleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,10 +37,10 @@ public class EmployeeAssignmentService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeWorkAssignmentRepository workAssignmentRepository;
-    private final DepartmentRepository departmentRepository;
-    private final BranchRepository branchRepository;
-    private final JobTitleRepository jobTitleRepository;
-    private final JobLevelRepository jobLevelRepository;
+    private final DepartmentService departmentService;
+    private final BranchService branchService;
+    private final JobTitleService jobTitleService;
+    private final JobLevelService jobLevelService;
     private final EmployeeMapper employeeMapper;
 
     public List<WorkAssignmentResponse> getWorkAssignments(UUID employeeId) {
@@ -74,16 +74,16 @@ public class EmployeeAssignmentService {
             throw new AppException(EmployeeErrorCode.SELF_MANAGEMENT_NOT_ALLOWED);
         }
 
-        Department department = departmentRepository.findById(request.getDepartmentId())
+        Department department = departmentService.findDepartmentEntityById(request.getDepartmentId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.DEPARTMENT_NOT_FOUND));
 
-        Branch branch = branchRepository.findById(request.getBranchId())
+        Branch branch = branchService.findBranchEntityById(request.getBranchId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.BRANCH_NOT_FOUND));
 
-        JobTitle jobTitle = jobTitleRepository.findById(request.getJobTitleId())
+        JobTitle jobTitle = jobTitleService.findJobTitleEntityById(request.getJobTitleId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.JOB_TITLE_NOT_FOUND));
 
-        JobLevel jobLevel = jobLevelRepository.findById(request.getJobLevelId())
+        JobLevel jobLevel = jobLevelService.findJobLevelEntityById(request.getJobLevelId())
                 .orElseThrow(() -> new AppException(OrganizationErrorCode.JOB_LEVEL_NOT_FOUND));
 
         Employee manager = null;
