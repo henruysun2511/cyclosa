@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. DATABASE & CACHE INFRASTRUCTURE
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: cyclosa-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: cyclosa_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./cyclosa_be/src/main/resources/db/seed_all_modules_master_data.sql:/docker-entrypoint-initdb.d/01_seed_master_data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cyclosa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles: ["all", "infra"]
+
+  redis:
+    image: redis:7-alpine
+    container_name: cyclosa-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    profiles: ["all", "infra"]
+
+  # ==========================================
+  # 2. CYCLOSA AI SERVICE (Python / FastAPI)
+  # ==========================================
+  cyclosa-ai:
+    build:
+      context: ./cyclosa_ai
+      dockerfile: Dockerfile
+    container_name: cyclosa-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=true
+      - ENVIRONMENT=production
+      - INTERNAL_API_KEY=cyclosa-internal-ai-secret-key-2026
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles: ["all", "ai"]
+
+  # ==========================================
+  # 3. CYCLOSA BACKEND (Java / Spring Boot)
+  # ==========================================
+  cyclosa-be:
+    build:
+      context: ./cyclosa_be
+      dockerfile: Dockerfile
+    container_name: cyclosa-be
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/cyclosa_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CYCLOSA_AI_URL=http://cyclosa-ai:8000
+      - CYCLOSA_AI_BASE_URL=http://cyclosa-ai:8000
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:5173
+      - FRONTEND_REDIRECT_URI=http://localhost:3000/oauth2/callback
+      - FRONTEND_RESET_PASSWORD_URL=http://localhost:3000/reset-password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      cyclosa-ai:
+        condition: service_started
+    profiles: ["all", "be"]
+
+  # ==========================================
+  # 4. CYCLOSA FRONTEND (Next.js 14 / TypeScript)
+  # ==========================================
+  cyclosa-fe:
+    build:
+      context: ./cyclosa_fe
+      dockerfile: Dockerfile
+    container_name: cyclosa-fe
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1
+      - NEXT_PUBLIC_APP_NAME=CYCLOSA HRM
+    depends_on:
+      - cyclosa-be
+    profiles: ["all", "fe"]
+
+networks:
+  default:
+    name: cyclosa-network
+
+volumes:
+  postgres_data:
+  redis_data:
